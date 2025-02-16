@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analysis - Data Analysis Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        const app = initializeApp(firebaseConfig);
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+        const auth = getAuth(app);
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Enable all menu buttons
+                document.querySelectorAll(".menu-left li").forEach(li => li.classList.remove("disabled"));
+                document.querySelector('.menu-right').innerHTML = `
+                    <li style="margin-right: 15px;">Logged in as: ${user.email}</li>
+                    <li style="margin-right: 30px;">
+                        <a href="logout.html">Logout</a>
+                    </li>
+                `;
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li class="current"><a href="index.html">Home</a></li>
+                <li class="disabled"><a href="dashboard.html">Dashboard</a></li>
+                <li class="disabled"><a href="about.html">About</a></li>
+                <li class="disabled"><a href="services.html">Services</a></li>
+                <li class="disabled"><a href="risk-assessment.html">Risk Assessment</a></li>
+                <li class="disabled"><a href="data-analysis.html">Data Analysis</a></li>
+            </ul>
+            <ul class="menu-right">
+                <li style="margin-right: 30px;">
+                    <a href="login.html">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="data-analysis">
+        <h1>Data Analysis</h1>
+        <p>Details about data analysis and insights.</p>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p>
+    </footer>
+</body>
+</html>
