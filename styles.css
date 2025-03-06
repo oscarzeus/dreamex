@@ -12,7 +12,7 @@ header {
     width: 100%;
     padding: 15px;
     /* Updated menu bar background to gradient color */
-    background: linear-gradient(135deg, #222, #555);
+    background-color: #34495e;
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     z-index: 1000;
@@ -76,6 +76,9 @@ footer {
     justify-content: space-between;
     align-items: center;
     font-size: 12px;
+    height: 30px;
+    line-height: 30px;
+    box-sizing: border-box;
 }
 
 .menu-bar ul {
@@ -95,14 +98,18 @@ footer {
 }
 
 .menu-bar li a:hover {
-    color: #3b82f6; /* Accent color on hover */
+    color: white; /* Accent color on hover */
 }
 
 .menu-bar li.current a {
-    color: #3b82f6; /* Highlight current page */
+    color: white; /* Highlight current page */
 }
 
 .navbar {
     height: 60px;
     /* add more styling as needed */
+}
+
+.hidden {
+    display: none;
 }

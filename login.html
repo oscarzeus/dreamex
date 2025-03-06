@@ -31,8 +31,8 @@
         .or-text {
             font-size: 16px;
             margin: 10px 0;
-            font-weight: bold;
-            color: #666;
+            font-weight: normal;
+            color: #706c6c;
         }
         input {
             width: 100%;
@@ -77,6 +77,42 @@
         .hidden {
             display: none;
         }
+        /* Optional: Style for the forgot password link */
+        #forgot-password-link {
+            font-size: 14px;
+            color: #1877f2;
+            text-decoration: none;
+            margin: 5px 0;
+            display: inline-block;
+            cursor: pointer;
+
+        }
+        #forgot-password-link:hover {
+            text-decoration: underline;
+        }
+        /* Style for the forgot password modal */
+        #forgot-password-modal {
+            display: none;
+            background: #fff;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 300px;
+            margin: 1rem auto;
+            text-align: center;
+        }
+        #forgot-password-modal input {
+            margin: 0.5rem 0;
+        }
+        /* Ensure the reset email field and cancel button have the same width */
+        #forgot-password-modal input,
+        #forgot-password-modal button {
+            width: 100%;
+        }
+        input, button {
+            height: 45px;
+            box-sizing: border-box;
+        }
     </style>
 </head>
 <body>
@@ -85,12 +121,23 @@
             <img src='https://cdn-icons-png.flaticon.com/512/2919/2919600.png' alt='Login Icon' width='50'>
             <input type="email" id="login-email" placeholder="Email" required>
             <input type="password" id="login-password" placeholder="Password" required>
+            <!-- Modified forgot password option -->
+            <p><a href="#" id="forgot-password-link">Forgot Password?</a></p>
             <button class="login-button" onclick="login()">Login</button>
             <p class="error" id="login-error-message"></p>
             <div class="or-text">Or</div>
             <button class="register-button" id="register-btn">Register</button>
         </div>
         
+        <!-- Forgot Password Modal -->
+        <div id="forgot-password-modal" class="form-container">
+            <h3>Reset Password</h3>
+            <input type="email" id="reset-email" placeholder="Enter your email" required>
+            <button class="login-button" id="send-reset-btn">Send Reset Link</button>
+            <button class="exit-button" id="cancel-reset-btn">Cancel</button>
+            <p class="error" id="reset-error-message"></p>
+        </div>
+
         <div class="form-container hidden" id="register-container">
             <h2>Register</h2>
             <input type="email" id="register-email" placeholder="Email" required>
@@ -100,9 +147,6 @@
             <button class="login-button" id="back-to-login">Back to Login</button>
         </div>
         
-        <div class="exit-button-container">
-            <button class="exit-button" id="exit-button">Exit</button>
-        </div>
     </div>
     
     <script type="module">
@@ -124,7 +168,7 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
 
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
         const auth = getAuth(app);
 
@@ -136,10 +180,6 @@
         document.getElementById("back-to-login").addEventListener("click", function() {
             document.getElementById("register-container").classList.add("hidden");
             document.getElementById("login-container").classList.remove("hidden");
-        });
-
-        document.getElementById("exit-button").addEventListener("click", () => {
-            window.location.href = "index.html";
         });
 
         // Added functions for account creation and login
@@ -166,6 +206,37 @@
                     document.getElementById("register-error-message").textContent = error.message;
                 });
         }
+
+        // Show forgot password modal on link click: hide login container and show modal
+        document.getElementById("forgot-password-link").addEventListener("click", function(e) {
+            e.preventDefault();
+            document.getElementById("login-container").style.display = "none"; // hide login container
+            document.getElementById("forgot-password-modal").style.display = "block";
+        });
+
+        // Cancel forgot password modal: hide modal and unhide login container
+        document.getElementById("cancel-reset-btn").addEventListener("click", function() {
+            document.getElementById("forgot-password-modal").style.display = "none";
+            document.getElementById("login-container").style.display = "block"; // unhide login container
+            document.getElementById("reset-error-message").textContent = "";
+        });
+
+        // Send password reset email on button click inside modal
+        document.getElementById("send-reset-btn").addEventListener("click", function() {
+            const email = document.getElementById("reset-email").value;
+            if (email) {
+                sendPasswordResetEmail(auth, email)
+                    .then(() => {
+                        alert("Password reset email sent!");
+                        document.getElementById("forgot-password-modal").style.display = "none";
+                    })
+                    .catch((error) => {
+                        document.getElementById("reset-error-message").textContent = error.message;
+                    });
+            } else {
+                alert("Please enter your email address.");
+            }
+        });
     </script>
 </body>
 </html>
