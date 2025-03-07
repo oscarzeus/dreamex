@@ -24,7 +24,7 @@
 
         /* New wrapper for the risk table */
         .table-wrapper {
-            max-height: 300px;
+            max-height: calc(100vh - 400px); /* Adjust height dynamically */
             overflow-y: auto;
             position: relative;
         }
@@ -702,1537 +702,1613 @@
             color: #34495e; /* Darker color on hover */
         }
 
-        /* New classes to adjust risk report table size and margins */
-        .risk-report--small {
-            width: 40% !important;
-            margin: 10px auto !important;
-            margin-top: 10x;
-        }
-        .risk-report--large {
-            width: 80% !important;
-            margin: 30px auto !important;
-        }
-
-        /* New class to left align the risk report table */
-        .risk-report--left {
-            width: 40% !important;
-            margin: 2px 0 20px 20px !important;
-            text-align: left;
+        /* Reduce the width of the risk summary table */
+        #riskReportTable {
+            width: 20%; /* Reduced from 25% */
+            margin-left: 10px; /* Adjusted left margin */
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 10px;
+            border-radius: 0;
         }
 
-        /* ...existing CSS... */
-
-        /* New CSS to ensure footer stays at bottom */
-        html, body {
-            margin: 0;
-            padding: 0;
-            min-height: 100%;
-        }
-        body {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        main {
-            flex: 1;
-        }
-        footer {
-            margin-top: auto;
+        /* Reduce the distance between the risk table and the risk summary report table */
+        #reportContainer {
+            margin: 10px 10px 20px 10px; /* Adjusted margins */
         }
 
-        /* New rule: add extra bottom padding to the container to prevent footer overlap */
-        .container {
-            padding-bottom: 80px; /* adjust value as needed */
-        }
-
-        /* New rule: hide the footer on this page */
+        /* Hide the footer */
         footer {
             display: none;
         }
     </style>
-    <!-- Add Chart.js library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <main>
-        <script type="module">
-            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-            // TODO: Add SDKs for Firebase products that you want to use
-            // https://firebase.google.com/docs/web/setup#available-libraries
-            
-            const firebaseConfig = {
-                apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
-                authDomain: "users-8be65.firebaseapp.com",
-                projectId: "users-8be65",
-                storageBucket: "users-8be65.firebasestorage.app",
-                messagingSenderId: "829083030831",
-                appId: "1:829083030831:web:36a370e62691e560bc3dda"
-            };
-            const app = initializeApp(firebaseConfig);
-            import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        const app = initializeApp(firebaseConfig);
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    document.querySelectorAll(".menu-left li")
-                        .forEach(li => li.classList.remove("disabled"));
-                    document.querySelector('.menu-right').innerHTML = `
-                        <li style="margin-right: 15px;">Logged in as: ${user.email}</li>
-                        <li style="margin-right: 30px;">
-                            <a href="logout.html">Logout</a>
-                        </li>
-                    `;
-                } else {
-                    window.location.href = "login.html";
-                }
-            });
-        </script>
-        <header>
-            <nav class="menu-bar">
-                <ul class="menu-left">
-                    <li class=""><a href="index.html">Home</a></li>
-                    <li class="hidden"><a href="dashboard.html">Dashboard</a></li>
-                    <li class="hidden"><a href="about.html">About</a></li>
-                    <li class="hidden"><a href="services.html">Services</a></li>
-                    <li class="dropdown current">
-                        <a href="#" onclick="return false;">Risk Assessment</a>
-                        <div class="dropdown-content">
-                            <a href="risktable.html">Risk Table</a>
-                        </div>
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.querySelectorAll(".menu-left li")
+                    .forEach(li => li.classList.remove("disabled"));
+                document.querySelector('.menu-right').innerHTML = `
+                    <li style="margin-right: 15px;">Logged in as: ${user.email}</li>
+                    <li style="margin-right: 30px;">
+                        <a href="logout.html">Logout</a>
                     </li>
-                    <li class="hidden"><a href="data-analysis.html">Data Analysis</a></li>
-                </ul>
-                <ul class="menu-right">
-                    <!-- Adjusted export button margin -->
-                    <li style="margin-right: 1px;">
-                        <button class="export-btn" onclick="exportTableAndChartsToWord('riskTable')" title="Export Report">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
-                                <path d="M4 22h16a2 2 0 0 0 2-2V8l-6-6H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                            </svg>
-                        </button>
-                    </li>
-                    <li class="risk-actions" style="display: flex; align-items: center; height: 100%;">
-                        <button class="add-risk-btn toolbar-risk-btn">+</button>
-                        <button id="delete-selected-btn" class="add-risk-btn toolbar-risk-btn" style="margin-left: 10px;">&minus;</button>
-                    </li>
-                    <li>
-                        <!-- New Save Progress Button -->
-                        <button id="save-progress-btn" class="toolbar-risk-btn" onclick="saveRiskTableProgress()" aria-label="Save Risk Table Progress">💾</button>
-                    </li>
-                    <!-- NEW: Matrix Size Selector -->
-                    <li style="display: none;">
-                        <select id="matrix-size-select" aria-label="Matrix Size">
-                            <option value="5x5" selected>5x5 Matrix</option>
-                            <option value="3x3">3x3 Matrix</option>
-                        </select>
-                    </li>
-                    <!-- New Settings Dropdown Icon -->
-                    <li class="dropdown">
-                        <button class="settings-icon-btn" onclick="return false;" aria-label="Settings">⚙️</button>
-                        <div class="dropdown-content">
-                            <a href="#" onclick="setMatrixSize('3x3'); return false;">3X3 Matrix</a>
-                            <a href="#" onclick="setMatrixSize('5x5'); return false;">5X5 Matrix</a>
-                        </div>
-                    </li>
-                    <li>
-                        <!-- Updated Import Risk File Button with filled SVG arrow -->
-                        <button id="import-risk-btn" class="toolbar-risk-btn" onclick="document.getElementById('import-risk-file').click()" aria-label="Import Risk File">
-                            <svg width="20" height="20" viewBox="0 0 24 24">
-                                <path d="M12 2L5 9h4v7h6V9h4z" fill="currentColor"/>
-                            </svg>
-                        </button>
-                    </li>
-                    <li>
-                        <!-- Update download button SVG to match the '+' sign size -->
-                        <button class="download-icon-btn" onclick="downloadRiskFile()" aria-label="Download Risk File">
-                            <svg width="30" height="90" style="font-size: 24px;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="7 10 12 15 17 10"/>
-                                <line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                        </button>
-                    </li>
-                    <!-- New Upload Icon -->
-                    <!-- Remove the risk upload trigger button from the toolbar -->
-                    <li style="display: flex; align-items: center; margin-right: 30px;">
-                        <a href="login.html" class="circle-login">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                            </svg>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </header>
-
-        <section id="risk-assessment">
-            <h1>Risk Assessment</h1>
-            <!-- Description above the risk table removed -->
-        </section>
-
-        <div class="container">
-            <!-- Updated Risk Table -->
-            <div class="table-wrapper">
-                <table id="riskTable" aria-describedby="riskTable-description">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="selectAll"></th>
-                            <th onclick="showColumnInfo(event, 'ID', 'Enter a unique risk ID. If omitted, it is auto-assigned.')">
-                                ID
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Name', 'Provide a short descriptive name for the risk.')">
-                                Name
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Description', 'Summarize the risk details clearly and concisely.')">
-                                Description
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Likelihood', `
-        <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
-            <thead style='background-color: #ecf0f1;'>
-                <tr>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Scale</th>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Qualitative</th>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Quantitative</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Rare</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>May occur once in 10+ years (or in very exceptional circumstances)</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>< 5%</td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Unlikely</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>May occur once every 5–10 years</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>5%–15%</td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Possible</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>May occur once every 1–5 years</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>15% – 40%</td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Likely</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>May occur at least once per year</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>40% – 70%</td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Almost Certain</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>occur multiple times per year or is an ongoing/continuous risk</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>> 70%</td>
-                </tr>
-            </tbody>
-        </table>
-    `)">
-                                Likelihood
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Impact', `
-        <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
-            <thead style='background-color: #ecf0f1;'>
-                <tr>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Level</th>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Qualitative</th>
-                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Quantitative</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Insignificant</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Little to no measurable impact on objectives or operations. No injuries or only very minor first-aid cases.</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Negligible cost impact (e.g., <$10k)</td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Minor</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Impact is noticeable but easily managed without major changes to plans. Minor injuries requiring simple medical attention (e.g., one-time clinic visit).</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Low cost impact (e.g., $10k–$50k</td>
-                </td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Moderate</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Significant impact requiring additional resources or management attention. injuries requiring hospital treatment, possibly resulting in temporary work restrictions.</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Moderate cost impact (e.g., $50k–$250k)</td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Major</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Major disruption to objectives; requires substantial rework or contingency. Serious injuries (e.g., fractures, long recovery) causing prolonged absence.</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>High cost impact (e.g., $250k–$1M)</td>
-                </tr>
-                <tr>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Catastrophic</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Critical impact threatening overall success; extensive intervention needed. Life-threatening injuries or death, or any occurrence causing permanent disability.</td>
-                    <td style='border: 1px solid #ddd; padding: 8px;'>Potentially > $1M</td>
-                </tr>
-            </tbody>
-        </table>
-    `)">
-                                Impact
-                            </th>
-                            <th class="score-column" onclick="showColumnInfo(event, 'Score', 'Automatically calculated based on Likelihood x Impact.')">
-                                Score
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Level', 'Determined by the Risk Score: Low, Medium, or High.')">
-                                Level
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Strategy', `
-                <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
-                    <thead style='background-color: #ecf0f1;'>
-                        <tr>
-                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Strategy</th>
-                            <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Mitigate</td>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Reduce the likelihood or impact of the risk.</td>
-                        </tr>
-                        <tr>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Transfer</td>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Shift the risk to a third party.</td>
-                        </tr>
-                        <tr>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Avoid</td>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Eliminate the risk by not engaging in the activity.</td>
-                        </tr>
-                        <tr>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Accept</td>
-                            <td style='border: 1px solid #ddd; padding: 8px;'>Acknowledge the risk and decide to bear it.</td>
-                        </tr>
-                    </tbody>
-                </table>
-    `)">
-                                Strategy
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Status', 'The current state of the risk management process.')">
-                                Status
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Control', 'Controls in place to manage this risk.')">
-                                Control
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Responsible', 'Person responsible for monitoring and managing the risk.')">
-                                Responsible
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Closing Date', 'The planned closing date for this risk, if applicable.')">
-                                Closing Date
-                            </th>
-                            <th onclick="showColumnInfo(event, 'Residual Risk', 'The level of risk remaining after risk treatment.')">
-                                Residual Risk
-                            </th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Initially empty -->
-                    </tbody>
-                </table>
-            </div>
-            <!-- Updated Export Buttons: Removed Export to Excel button -->
-            <!-- Moved Risk Summary Report Table, just below the risk table -->
-            <div id="reportContainer" style="margin: 5px 20px 20px 20px;">
-                <!-- Removed "Risk Report Summary" heading -->
-                <div style="overflow-x:auto;">
-                    <table id="riskReportTable" class="risk-report--left" style="width:60%; border-collapse:collapse; background:#fff; box-shadow:0 4px 8px rgba(0,0,0,0.1); font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:10px; border-radius:0; margin: 2px 0 20px 10px !important; text-align: left;">
-                        <thead style="background: linear-gradient(90deg, #2980b9, #2c3e50); color: #fff;">
-                            <tr>
-                                <th style="padding: 12px; text-align: left;">Risk Level</th>
-                                <th style="padding: 12px; text-align: left;">Not Started</th>
-                                <th style="padding: 12px; text-align: left;">In Progress</th>
-                                <th style="padding: 12px; text-align: left;">Completed</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr style="border-bottom: 1px solid #f2f2f2;">
-                                <td style="padding: 12px; font-weight: bold; color: #27ae60;">Low</td>
-                                <td id="low-NotStarted" style="padding: 12px; text-align: center;">0</td>
-                                <td id="low-InProgress" style="padding: 12px; text-align: center;">0</td>
-                                <td id="low-Completed" style="padding: 12px; text-align: center;">0</td>
-                            </tr>
-                            <tr style="background: #f9f9f9; border-bottom: 1px solid #f2f2f2;">
-                                <td style="padding: 12px; font-weight: bold; color: #e74c3c;">High</td>
-                                <td id="high-NotStarted" style="padding: 12px; text-align: center;">0</td>
-                                <td id="high-InProgress" style="padding: 12px; text-align: center;">0</td>
-                                <td id="high-Completed" style="padding: 12px; text-align: center;">0</td>
-                            </tr>
-                            <tr>
-                                <td style="padding: 12px; font-weight: bold; color: #f39c12;">Medium</td>
-                                <td id="medium-NotStarted" style="padding: 12px; text-align: center;">0</td>
-                                <td id="medium-InProgress" style="padding: 12px; text-align: center;">0</td>
-                                <td id="medium-Completed" style="padding: 12px; text-align: center;">0</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>dth:60%; margin:20px auto;">
-                <p style="text-align: center; font-size: 14px; color: #7f8c8d; margin-top: 20px;"><canvas id="riskBarChart"></canvas>
-                    Analysis and findings go here.div>
-                <p style="text-align: center; font-size: 14px; color: #7f8c8d; margin-top: 20px;">  </p>
-                    Analysis and findings go here.            </div>
-                </p>
-            </div>
-        </div> on button click -->
-
-        <!-- New script to create a new risk row on button click -->            // Add a global counter for Risk IDs
-        <script>
-            // Add a global counter for Risk IDs
-            let riskIdCounter = 1;w (optional)
- {
-            // Function to delete a risk row (optional)   btn.closest('tr').remove();
-            function deleteRow(btn) {                updateRiskReport();
-                btn.closest('tr').remove();
-                updateRiskReport();
-            } ID if missing and freeze row
-
-            // Modified saveRow: generate risk ID if missing and freeze row);
-            function saveRow(btn) { is not editable and has a risk ID
-                const row = btn.closest('tr');
-                // Ensure the ID cell (index 1) is not editable and has a risk IDt.trim()) {
-                const idCell = row.cells[1];   idCell.innerText = "RISK" + riskIdCounter;
-                if (!idCell.innerText.trim()) {
-                    idCell.innerText = "RISK" + riskIdCounter;
-                    riskIdCounter++;
-                }true"]').forEach(cell => {
-                // Freeze contenteditable cells cell.contentEditable = "false";
-                row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-                    cell.contentEditable = "false";
-                    cell.style.backgroundColor = "#eee";owns and date inputs
-                });.querySelectorAll('select').forEach(select => {
-                // Disable all select dropdowns and date inputs
-                row.querySelectorAll('select').forEach(select => {
-                    select.disabled = true;.querySelectorAll('input[type="date"]').forEach(input => {
-                }); true;
-                row.querySelectorAll('input[type="date"]').forEach(input => {
-                    input.disabled = true;
-                });   console.log('Risk saved and row frozen:', row);
-                btn.disabled = true;                // ...additional save logic...
-                console.log('Risk saved and row frozen:', row);
-                // ...additional save logic...
-            } a frozen row
-
-            // New function: enable editing on a frozen row
-            function editRow(btn) {
-                const row = btn.closest('tr'); cell.contentEditable = "true";
-                row.querySelectorAll('[contenteditable]').forEach(cell => {eze styling
-                    cell.contentEditable = "true";
-                    cell.style.backgroundColor = ""; // remove freeze styling.querySelectorAll('select').forEach(select => {
-                });
-                row.querySelectorAll('select').forEach(select => {
-                    select.disabled = false;.querySelectorAll('input[type="date"]').forEach(input => {
-                });
-                row.querySelectorAll('input[type="date"]').forEach(input => {
-                    input.disabled = false;
-                });   row.querySelector('.save-btn').disabled = false;
-                // Re-enable the Save button                console.log('Row is now editable:', row);
-                row.querySelector('.save-btn').disabled = false;
-                console.log('Row is now editable:', row);
-            }
-
-            // Function to compute score and update risk level with color codinghood-select');
-            function computeScoreAndRisk(row) {ect');
-                const likelihoodSelect = row.querySelector('.likelihood-select');
-                const impactSelect = row.querySelector('.impact-select');
-                const scoreCell = row.querySelector('.score-cell');at(likelihoodSelect.value) || 0;
-                const levelCell = row.querySelector('.level-cell');.value) || 0;
-                const likelihood = parseFloat(likelihoodSelect.value) || 0;
-                const impact = parseFloat(impactSelect.value) || 0;ikelihood * impact;
-                if (likelihood && impact) {ontent = score;
-                    const score = likelihood * impact;
-                    scoreCell.textContent = score;
-                    let level = '';
-                    let color = '';
-                    if(score <= 4) {; // green
-                        level = 'Low';
-                        color = '#28a745'; // greenl = 'Medium';
-                    } else if(score <= 10) {7'; // yellow
-                        level = 'Medium';
-                        color = '#ffc107'; // yellow   level = 'High';
-                    } else {
-                        level = 'High';
-                        color = '#dc3545'; // red
-                    }lCell.style.backgroundColor = color;
-                    levelCell.textContent = level;ff';
-                    levelCell.style.backgroundColor = color;
-                    levelCell.style.color = '#fff';
-                } else {   levelCell.textContent = '';
-                    scoreCell.textContent = '';.backgroundColor = '';
-                    levelCell.textContent = '';   }
-                    levelCell.style.backgroundColor = '';                updateRiskReport();
-                }
-                updateRiskReport();
-            }ariable and option lists
-
-            // NEW: Global matrix size variable and option lists
-            let currentMatrixSize = '5x5';
-            const likelihoodOptions5 = `ion>
-                <option value="">Select</option>on>
-                <option value="1">Very Unlikely</option>
-                <option value="3">Unliible</option>  <option value="4">Possy</option>
-                <option value="2">Likelkely</option>ry Likely</option>
-                <option value="4">Possy</option>
-                <option value="5">Very Likely</option>
-            `;
-            const impactOptions5 = `n>
-                <option value="">Select</option>
-                <option value="1">Negligible</option>
-                <option value="2">Minor</option>  <option value="4">Major</option>
-                <option value="3">Moderate</option>rophic</option>
-                <option value="4">Major</option>
-                <option value="5">Catastrophic</option>
-            `;
-            const likelihoodOptions3 = `
-                <option value="">Select</option>  <option value="2">Medium</option>
-                <option value="1">Low</option>
-                <option value="2">Medium</option>            `;
-                <option value="3">High</option> same options for impact
-            `;
-            const impactOptions3 = likelihoodOptions3; // same options for impact 7x7 matrix
-
-            // NEW: Additional option sets for 7x7 matrix
-            const likelihoodOptions7 = `
-              <option value="">Select</option>n>
-              <option value="1">Very Unlikely</option>ion>
-              <option value="2">Unlikely</option>
-              <option value="3">Somewhat Likely</option>
-              <option value="4">Likely</option><option value="6">Extremely Likely</option>
-              <option value="5">Very Likely</option>st Certain</option>
-              <option value="6">Extremely Likely</option>
-              <option value="7">Almost Certain</option>
-            `;
-            const impactOptions7 = `n>
-              <option value="">Select</option>
-              <option value="1">Negligible</option>n>
-              <option value="2">Minor</option>
-              <option value="3">Moderate</option>
-              <option value="4">Major</option><option value="6">Critical</option>
-              <option value="5">Severe</option>              <option value="7">Catastrophic</option>
-              <option value="6">Critical</option>
-              <option value="7">Catastrophic</option>
-            `;
-
-            // NEW: Update matrix options in all existing rowsns3 : currentMatrixSize === '7x7' ? likelihoodOptions7 : likelihoodOptions5;
-            function updateMatrixOptions() {ize === '3x3' ? impactOptions3 : currentMatrixSize === '7x7' ? impactOptions7 : impactOptions5;
-                const newLikOptions = currentMatrixSize === '3x3' ? likelihoodOptions3 : currentMatrixSize === '7x7' ? likelihoodOptions7 : likelihoodOptions5;d-select').forEach(select => {
-                const newImpOptions = currentMatrixSize === '3x3' ? impactOptions3 : currentMatrixSize === '7x7' ? impactOptions7 : impactOptions5;value;
-                document.querySelectorAll('.likelihood-select').forEach(select => { select.innerHTML = newLikOptions;
-                    const currentVal = select.value;
-                    select.innerHTML = newLikOptions;
-                    select.value = currentVal;lect').forEach(select => {
-                });value;
-                document.querySelectorAll('.impact-select').forEach(select => { select.innerHTML = newImpOptions;
-                    const currentVal = select.value;       select.value = currentVal;
-                    select.innerHTML = newImpOptions;                });
-                    select.value = currentVal;
-                });
-            }es
-atrix-size-select').addEventListener('change', function() {
-            // NEW: Listen to matrix size changes currentMatrixSize = this.value;
-            document.getElementById('matrix-size-select').addEventListener('change', function() {                updateMatrixOptions();
-                currentMatrixSize = this.value;
-                updateMatrixOptions();
-            });ble
-risk-btn').addEventListener('click', function() {
-            // In add-risk-btn click event, ensure ID cell is not editableody');
-            document.querySelector('.risk-actions .add-risk-btn').addEventListener('click', function() {
-                var tbody = document.querySelector('#riskTable tbody');
-                var row = document.createElement('tr');
-                // Use dynamic options based on currentMatrixSize= currentMatrixSize === '3x3' ? impactOptions3 : currentMatrixSize === '7x7' ? impactOptions7 : impactOptions5;
-                const likOptions = currentMatrixSize === '3x3' ? likelihoodOptions3 : currentMatrixSize === '7x7' ? likelihoodOptions7 : likelihoodOptions5;ID, Name, Description, Likelihood, Impact, Score, Level, Strategy, Status, Control, Responsible, Closing Date, Residual Risk Level, Action
-                const impOptions = currentMatrixSize === '3x3' ? impactOptions3 : currentMatrixSize === '7x7' ? impactOptions7 : impactOptions5;
-                // 15 columns per header: checkbox, ID, Name, Description, Likelihood, Impact, Score, Level, Strategy, Status, Control, Responsible, Closing Date, Residual Risk Level, Action
-                row.innerHTML = `n not editable -->
-                    <td><input type="checkbox"></td>contenteditable="true"></td>
-                    <td contenteditable="false"></td> <!-- ID column not editable -->down -->
-                    <td contenteditable="true"></td>
-                    <!-- Replace Description cell with dropdown -->
-                    <td>n>
-                        <select class="description-select">
-                            <option value="" disabled selected>Select Risk Type</option>
-                            <option value="Strategic Risk">Strategic Risk</option>ing) Risk</option>
-                            <option value="Operational Risk">Operational Risk</option>
-                            <option value="Financial (Reporting) Risk">Financial (Reporting) Risk</option>
-                            <option value="Compliance (Legal/Regulatory) Risk">Compliance (Legal/Regulatory) Risk</option>on value="Cybersecurity (Information Security) Risk">Cybersecurity (Information Security) Risk</option>
-                            <option value="Reputational Risk">Reputational Risk</option>   <option value="Environmental, Social, and Governance (ESG) Risk">Environmental, Social, and Governance (ESG) Risk</option>
-                            <option value="Cybersecurity (Information Security) Risk">Cybersecurity (Information Security) Risk</option>
-                            <option value="Environmental, Social, and Governance (ESG) Risk">Environmental, Social, and Governance (ESG) Risk</option>>
-                        </select>
-                    </td>
-                    <!-- Likelihood dropdown -->lass="likelihood-select">
-                    <td>   ${likOptions}
-                        <select class="likelihood-select">
-                            ${likOptions}>
-                        </select>
-                    </td>
-                    <!-- Impact dropdown -->lass="impact-select">
-                    <td>   ${impOptions}
-                        <select class="impact-select">
-                            ${impOptions}
-                        </select>
-                    </td>column"></td>
-                    <!-- Score (computed) -->color code) -->
-                    <td class="score-cell score-column"></td>class="level-cell"></td>
-                    <!-- Level (computed with color code) -->
-                    <td class="level-cell"></td>
-                    <!-- Strategy dropdown -->
-                    <td>Strategy</option>
-                        <select class="strategy-select">ption>
-                            <option value="" disabled selected>Select Strategy</option>ion>
-                            <option value="Mitigate">Mitigate</option>on value="Avoid">Avoid</option>
-                            <option value="Transfer">Transfer</option>   <option value="Accept">Accept</option>
-                            <option value="Avoid">Avoid</option>
-                            <option value="Accept">Accept</option>>
-                        </select>dropdown -->
-                    </td>
-                    <!-- Status dropdown -->
-                    <td>
-                        <select>n>
-                            <option value="">Select</option>on value="2">In Progress</option>
-                            <option value="1">Not Started</option>   <option value="3">Completed</option>
-                            <option value="2">In Progress</option>
-                            <option value="3">Completed</option>
-                        </select>
-                    </td>
-                    <td contenteditable="true"></td>
-                    <td contenteditable="true"></td><input type="date" class="date-input"></td>
-                    <!-- Closing Date as a selectable date field -->ontenteditable attribute -->
-                    <td><input type="date" class="date-input"></td>
-                    <!-- Residual Risk Level cell: removed contenteditable attribute -->span class="residual-value"></span>
-                        <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
-                    </td><span class="residual-value"></span>
-                        <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
-                    <td>
-                        <button class="edit-btn" onclick="editRow(this)"><i class="fa fa-edit"></i></button>
-                    <td>button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>
-                        <button class="edit-btn" onclick="editRow(this)"><i class="fa fa-edit"></i></button>      <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>
-                        <button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>
-                        <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>                `;
-                    </td>
                 `;
-                tbody.appendChild(row);recalculate score when dropdowns change
-.querySelector('.likelihood-select').addEventListener('change', function() {
-                // Attach event listeners to recalculate score when dropdowns change
-                row.querySelector('.likelihood-select').addEventListener('change', function() {
-                    computeScoreAndRisk(row);.querySelector('.impact-select').addEventListener('change', function() {
-                });Risk(row);
-                row.querySelector('.impact-select').addEventListener('change', function() { });
-                    computeScoreAndRisk(row);                updateRiskReport();
-                });
-                updateRiskReport();
-            });
-n() {
-            // New delete selected function with confirmationSelector('#riskTable tbody');
-            document.getElementById('delete-selected-btn').addEventListener('click', function() {
-                const tbody = document.querySelector('#riskTable tbody');0) {
-                const checkboxes = tbody.querySelectorAll('input[type="checkbox"]:checked');'Are you sure you want to delete the selected risk rows?');
-                if (checkboxes.length > 0) {
-                    const confirmDelete = confirm('Are you sure you want to delete the selected risk rows?');ckboxes.forEach(cb => {
-                    if (confirmDelete) {
-                        checkboxes.forEach(cb => {   });
-                            cb.closest('tr').remove();console.log('Selected risk rows deleted.');
-                        });
-                        console.log('Selected risk rows deleted.'); else {
-                    }rows selected for deletion.');
-                } else { }
-                    alert('No risk rows selected for deletion.');                updateRiskReport();
-                }
-                updateRiskReport();
-            });
-hange", function() {
-            // New functionality: select/deselect all risk rows when header checkbox is toggled const checkboxes = document.querySelectorAll("#riskTable tbody input[type='checkbox']");
-            document.getElementById("selectAll").addEventListener("change", function() {                checkboxes.forEach(cb => cb.checked = this.checked);
-                const checkboxes = document.querySelectorAll("#riskTable tbody input[type='checkbox']");
-                checkboxes.forEach(cb => cb.checked = this.checked);
-            });            // Global variable to track the last clicked header for pop up toggling
-
-            // Global variable to track the last clicked header for pop up toggling
-            let lastClickedHeader = null;column info with dynamic content based on matrix size
-
-            // Updated function to show column info with dynamic content based on matrix size
-            function showColumnInfo(event, columnName, infoContent) {
-                event.stopPropagation();and popup is open, close it and reset lastClickedHeader
-                const popup = document.getElementById('colInfoPopup');nt.currentTarget && popup.style.display === 'block') {
-                // If the same header is clicked and popup is open, close it and reset lastClickedHeadertyle.display = 'none';
-                if (lastClickedHeader === event.currentTarget && popup.style.display === 'block') {   lastClickedHeader = null;
-                    popup.style.display = 'none';
-                    lastClickedHeader = null;
-                    return;
-                }rentTarget;
-                // Otherwise, update lastClickedHeader to current header                // Close any currently open pop up before displaying new content
-                lastClickedHeader = event.currentTarget;
-                // Close any currently open pop up before displaying new content
-                popup.style.display = 'none';ased on currentMatrixSize
-
-                // Update content based on currentMatrixSize
-                if (columnName === "Description") {="width:100%; border-collapse:collapse;">
-                    infoContent = `
-                        <table style="width:100%; border-collapse:collapse;">
-                            <thead>h>
-                                <tr>th style="border:1px solid #ddd; padding:8px; text-align:left;">Description</th>
-                                    <th style="border:1px solid #ddd; padding:8px; text-align:left;">Risk Type</th><th style="border:1px solid #ddd; padding:8px; text-align:left;">Example</th>
-                                    <th style="border:1px solid #ddd; padding:8px; text-align:left;">Description</th>r>
-                                    <th style="border:1px solid #ddd; padding:8px; text-align:left;">Example</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>td style="border:1px solid #ddd; padding:8px;">Risks from strategic decisions affecting long-term goals.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Strategic Risk</td><td style="border:1px solid #ddd; padding:8px;">E.g., merger failures</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Risks from strategic decisions affecting long-term goals.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">E.g., merger failures</td>
-                                </tr>
-                                <tr>td style="border:1px solid #ddd; padding:8px;">Risks arising from internal processes, systems or human errors.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Operational Risk</td><td style="border:1px solid #ddd; padding:8px;">E.g., system downtime</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Risks arising from internal processes, systems or human errors.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">E.g., system downtime</td>
-                                </tr>
-                                <tr>td style="border:1px solid #ddd; padding:8px;">Risks impacting the accuracy of financial reporting.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Financial (Reporting) Risk</td><td style="border:1px solid #ddd; padding:8px;">E.g., misstatements in reports</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Risks impacting the accuracy of financial reporting.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">E.g., misstatements in reports</td>
-                                </tr>y) Risk</td>
-                                <tr>td style="border:1px solid #ddd; padding:8px;">Risks related to breaches in legal or regulatory requirements.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Compliance (Legal/Regulatory) Risk</td><td style="border:1px solid #ddd; padding:8px;">E.g., regulatory fines</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Risks related to breaches in legal or regulatory requirements.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">E.g., regulatory fines</td>
-                                </tr>
-                                <tr>td style="border:1px solid #ddd; padding:8px;">Risks that may damage the organization’s reputation.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Reputational Risk</td><td style="border:1px solid #ddd; padding:8px;">E.g., negative publicity</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Risks that may damage the organization’s reputation.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">E.g., negative publicity</td>
-                                </tr>ation Security) Risk</td>
-                                <tr>td style="border:1px solid #ddd; padding:8px;">Risks of data breaches or cyber attacks.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Cybersecurity (Information Security) Risk</td><td style="border:1px solid #ddd; padding:8px;">E.g., data leaks</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Risks of data breaches or cyber attacks.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">E.g., data leaks</td>
-                                </tr>ESG) Risk</td>
-                                <tr>td style="border:1px solid #ddd; padding:8px;">Risks related to environmental impact, social responsibility and governance.</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Environmental, Social, and Governance (ESG) Risk</td><td style="border:1px solid #ddd; padding:8px;">E.g., environmental non-compliance</td>
-                                    <td style="border:1px solid #ddd; padding:8px;">Risks related to environmental impact, social responsibility and governance.</td></tr>
-                                    <td style="border:1px solid #ddd; padding:8px;">E.g., environmental non-compliance</td>      </tbody>
-                                </tr>
-                            </tbody>
-                        </table>xSize === '3x3') {
-                    `;
-                } else if (currentMatrixSize === '3x3') {
-                    if (columnName === 'Likelihood') {='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
-                        infoContent = `
-                            <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
-                                <thead style='background-color: #ecf0f1;'>
-                                    <tr>th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Occurrence</th>
-                                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Scale</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
-                                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Occurrence</th>r>
-                                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>td style='border: 1px solid #ddd; padding: 8px;'>Rare</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>1 - Low</td><td style='border: 1px solid #ddd; padding: 8px;'>Happens only in exceptional circumstances.</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Rare</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Happens only in exceptional circumstances.</td>
-                                    </tr>
-                                    <tr>td style='border: 1px solid #ddd; padding: 8px;'>Possible</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>2 - Medium</td><td style='border: 1px solid #ddd; padding: 8px;'>Occurs occasionally under normal conditions.</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Possible</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Occurs occasionally under normal conditions.</td>
-                                    </tr>
-                                    <tr>td style='border: 1px solid #ddd; padding: 8px;'>Likely</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>3 - High</td><td style='border: 1px solid #ddd; padding: 8px;'>Expected in many circumstances.</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Likely</td></tr>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Expected in many circumstances.</td>      </tbody>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        `;
-                    } else if (columnName === 'Impact') {='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
-                        infoContent = `
-                            <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
-                                <thead style='background-color: #ecf0f1;'>
-                                    <tr>th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Rating</th>
-                                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Level</th><th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
-                                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Rating</th>r>
-                                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>td style='border: 1px solid #ddd; padding: 8px;'>Minor</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>1 - Low</td><td style='border: 1px solid #ddd; padding: 8px;'>Negligible impact.</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Minor</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Negligible impact.</td>
-                                    </tr>
-                                    <tr>td style='border: 1px solid #ddd; padding: 8px;'>Moderate</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>2 - Medium</td><td style='border: 1px solid #ddd; padding: 8px;'>Moderate impact.</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Moderate</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Moderate impact.</td>
-                                    </tr>
-                                    <tr>td style='border: 1px solid #ddd; padding: 8px;'>Severe</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>3 - High</td><td style='border: 1px solid #ddd; padding: 8px;'>Significant impact.</td>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Severe</td></tr>
-                                        <td style='border: 1px solid #ddd; padding: 8px;'>Significant impact.</td>      </tbody>
-                                    </tr>       </table>
-                                </tbody>       `;
-                            </table>                    }
-                        `;
-                    }
-                }
-
-                // Set new content and display the pop up
-                popup.innerHTML = `${infoContent}`;
-                const tableHead = event.currentTarget.closest('thead');
-                const headRect = tableHead.getBoundingClientRect();ttom + window.scrollY - 80) + 'px';
-                const headerRect = event.currentTarget.getBoundingClientRect();   popup.style.left = (headerRect.left + window.scrollX + 80) + 'px';
-                popup.style.top = (headRect.bottom + window.scrollY - 80) + 'px';                popup.style.display = 'block';
-                popup.style.left = (headerRect.left + window.scrollX + 80) + 'px';
-                popup.style.display = 'block';
-            }d within it (optional)
-Popup').addEventListener('click', function(event) {
-            // Close the popup if clicked within it (optional) event.stopPropagation();
-            document.getElementById('colInfoPopup').addEventListener('click', function(event) {                this.style.display = 'none';
-                event.stopPropagation();
-                this.style.display = 'none';
-            });lose popup on any other click
-ument.addEventListener('click', function() {
-            // Global listener to close popup on any other click                closeColumnPopup();
-            document.addEventListener('click', function() {
-                closeColumnPopup();
-            });
-
-            // New function to close the column info pop uptElementById('colInfoPopup');
-            function closeColumnPopup() {   popup.style.display = 'none';
-                const popup = document.getElementById('colInfoPopup');                lastClickedHeader = null;
-                popup.style.display = 'none';
-                lastClickedHeader = null;
+            } else {
+                window.location.href = "login.html";
             }
-skFile() {
-            // New function: Download risks from localStorage as a JSON risk file..querySelectorAll("#riskTable tbody tr");
-            function downloadRiskFile() {
-                const riskRows = document.querySelectorAll("#riskTable tbody tr");=> {
-                let risks = [];ll("td");
-                riskRows.forEach(row => {
-                    const cells = row.querySelectorAll("td");ndex) => {
-                    let rowData = [];e the text from the <span class="residual-value">
-                    cells.forEach((cell, index) => {
-                        // For the residual risk column, assumed at index 13, store the text from the <span class="residual-value">
-                        if(index === 13) {Text.trim() : "");
-                            const valSpan = cell.querySelector('.residual-value'); else if (index !== 14) { // Skip the settings icon column
-                            rowData.push(valSpan ? valSpan.innerText.trim() : "");     rowData.push(cell.innerText.trim());
-                        } else if (index !== 14) { // Skip the settings icon column
-                            rowData.push(cell.innerText.trim()); });
-                        }
-                    });
-                    risks.push(rowData);," + encodeURIComponent(JSON.stringify(risks));
-                });
-                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(risks));r);
-                const downloadAnchor = document.createElement('a');bute("download", "risks.json");
-                downloadAnchor.setAttribute("href", dataStr);d(downloadAnchor);
-                downloadAnchor.setAttribute("download", "risks.json");   downloadAnchor.click();
-                document.body.appendChild(downloadAnchor);                downloadAnchor.remove();
-                downloadAnchor.click();
-                downloadAnchor.remove();
-            }te Risk Report Table
-
-            // Updated function: Save risk table progress to localStorage and update Risk Report Tablelect and save risk table rows' text to localStorage
-            function saveRiskTableProgress(){.querySelectorAll("#riskTable tbody tr");
-                // Example: Collect and save risk table rows' text to localStorage
-                const riskRows = document.querySelectorAll("#riskTable tbody tr");=> {
-                let risks = [];
-                riskRows.forEach(row => {
-                    const cells = row.querySelectorAll("td"); cells.forEach(cell => rowData.push(cell.innerText.trim()));
-                    let rowData = [];
-                    cells.forEach(cell => rowData.push(cell.innerText.trim()));
-                    risks.push(rowData);
-                });   alert("Risk table progress saved!");
-                localStorage.setItem("risks", JSON.stringify(risks));                updateRiskReport(); // <-- synchronize report table with saved content
-                alert("Risk table progress saved!");
-                updateRiskReport(); // <-- synchronize report table with saved content
-            }rt table is synced on page load
-dow.addEventListener("load", function() {
-            // New: Ensure the report table is synced on page load                updateRiskReport();
-            window.addEventListener("load", function() {
-                updateRiskReport();
-            });ile data
-
-            // New helper function to update the residual risk cell from file dataor('.residual-value');
-            function updateResidualRiskFromFile(row) {ntent = originalSpan.textContent.trim();
-                const originalSpan = row.querySelector('.residual-value');oat(textContent);
-                let textContent = originalSpan.textContent.trim();
-                let score = parseFloat(textContent);
-                let level;f (["Low", "Medium", "High"].includes(textContent)) {
-                if (isNaN(score)) {level = textContent;
-                    if (["Low", "Medium", "High"].includes(textContent)) {
-                        level = textContent; else {
-                    }score <= 4 ? 'Low' : score <= 10 ? 'Medium' : 'High';
-                } else {
-                    level = score <= 4 ? 'Low' : score <= 10 ? 'Medium' : 'High';
-                }8a745' : level === 'Medium' ? '#ffc107' : '#dc3545';
-                if (level) {'td');
-                    const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : '#dc3545';r;
-                    const cell = originalSpan.closest('td');   originalSpan.style.color = '#fff';
-                    cell.style.backgroundColor = color;       originalSpan.textContent = level;
-                    originalSpan.style.color = '#fff';                }
-                    originalSpan.textContent = level;
-                }
-            }ith all properties
-ta) {
-            // New helper function to create a risk row with all properties
-            function createRiskRow(data) {
-                const row = document.createElement('tr');
-                // Column 1: Checkboxe)
-                row.innerHTML += '<td><input type="checkbox"></td>';; // ID column
-                // Column 2: ID (non-editable)
-                row.innerHTML += `<td contenteditable="false">${data[1] || ""}</td>`; // ID columncontenteditable="true">${data[2] || ""}</td>`;
-                // Column 3: Name (editable)
-                row.innerHTML += `<td contenteditable="true">${data[2] || ""}</td>`;
-                // Column 4: Description dropdown
-                row.innerHTML += `<td>
-                    <select class="description-select">
-                        <option value="" disabled>Select Risk Type</option>
-                        <option value="Strategic Risk">Strategic Risk</option>ing) Risk</option>
-                        <option value="Operational Risk">Operational Risk</option>
-                        <option value="Financial (Reporting) Risk">Financial (Reporting) Risk</option>
-                        <option value="Compliance (Legal/Regulatory) Risk">Compliance (Legal/Regulatory) Risk</option>on value="Cybersecurity (Information Security) Risk">Cybersecurity (Information Security) Risk</option>
-                        <option value="Reputational Risk">Reputational Risk</option> <option value="Environmental, Social, and Governance (ESG) Risk">Environmental, Social, and Governance (ESG) Risk</option>
-                        <option value="Cybersecurity (Information Security) Risk">Cybersecurity (Information Security) Risk</option>
-                        <option value="Environmental, Social, and Governance (ESG) Risk">Environmental, Social, and Governance (ESG) Risk</option>
-                    </select>scription-select').value = data[3] || "";
-                </td>`;
-                row.querySelector('.description-select').value = data[3] || "";
-                // Column 5: Likelihood dropdown
-                row.innerHTML += `<td>
-                    <select class="likelihood-select">ion>
-                        <option value="">Select</option>on>
-                        <option value="1">Very Unlikely</option>
-                        <option value="3">Unliible</option>on value="4">Possy</option>
-                        <option value="2">Likelkely</option> <option value="5">Very Likely</option>
-                        <option value="4">Possy</option>
-                        <option value="5">Very Likely</option>
-                    </select>kelihood-select').value = data[4] || "";
-                </td>`;
-                row.querySelector('.likelihood-select').value = data[4] || "";
-                // Column 6: Impact dropdown
-                row.innerHTML += `<td>
-                    <select class="impact-select">n>
-                        <option value="">Select</option>
-                        <option value="1">Negligible</option>
-                        <option value="2">Minor</option>on value="4">Major</option>
-                        <option value="3">Moderate</option> <option value="5">Catastrophic</option>
-                        <option value="4">Major</option>
-                        <option value="5">Catastrophic</option>
+        });
+    </script>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li class=""><a href="index.html">Home</a></li>
+                <li class="hidden"><a href="dashboard.html">Dashboard</a></li>
+                <li class="hidden"><a href="about.html">About</a></li>
+                <li class="hidden"><a href="services.html">Services</a></li>
+                <li class="dropdown current">
+                    <a href="#" onclick="return false;">Risk Assessment</a>
+                    <div class="dropdown-content">
+                        <a href="risktable.html">Risk Table</a>
+                    </div>
+                </li>
+                <li class="hidden"><a href="data-analysis.html">Data Analysis</a></li>
+            </ul>
+            <ul class="menu-right">
+                <!-- Adjusted export button margin -->
+                <li style="margin-right: 1px;">
+                    <button class="export-btn" onclick="exportTableAndChartsToWord('riskTable')" title="Export Report">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M4 22h16a2 2 0 0 0 2-2V8l-6-6H4a2 2 0 0 0-2 2v12a 2 2 0 0 0 2 2z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    </button>
+                </li>
+                <li class="risk-actions" style="display: flex; align-items: center; height: 100%;">
+                    <button class="add-risk-btn toolbar-risk-btn">+</button>
+                    <button id="delete-selected-btn" class="add-risk-btn toolbar-risk-btn" style="margin-left: 10px;">&minus;</button>
+                </li>
+                <li>
+                    <!-- New Save Progress Button -->
+                    <button id="save-progress-btn" class="toolbar-risk-btn" onclick="saveRiskTableProgress()" aria-label="Save Risk Table Progress">💾</button>
+                </li>
+                <!-- NEW: Matrix Size Selector -->
+                <li style="display: none;">
+                    <select id="matrix-size-select" aria-label="Matrix Size">
+                        <option value="5x5" selected>5x5 Matrix</option>
+                        <option value="3x3">3x3 Matrix</option>
                     </select>
-                </td>`;
-                row.querySelector('.impact-select').value = data[5] || "";|| ""}</td>`;
-                // Column 7: Score (computed)
-                row.innerHTML += `<td class="score-cell score-column">${data[6] || ""}</td>`;class="level-cell">${data[7] || ""}</td>`;
-                // Column 8: Level (computed)
-                row.innerHTML += `<td class="level-cell">${data[7] || ""}</td>`;
-                // Column 9: Strategy dropdown
-                row.innerHTML += `<td>/option>
-                    <select class="strategy-select">ption>
-                        <option value="" disabled>Select Strategy</option>ion>
-                        <option value="Mitigate">Mitigate</option>on value="Avoid">Avoid</option>
-                        <option value="Transfer">Transfer</option> <option value="Accept">Accept</option>
+                </li>
+                <!-- New Settings Dropdown Icon -->
+                <li class="dropdown">
+                    <button class="settings-icon-btn" onclick="return false;" aria-label="Settings">⚙️</button>
+                    <div class="dropdown-content">
+                        <a href="#" onclick="setMatrixSize('3x3'); return false;">3X3 Matrix</a>
+                        <a href="#" onclick="setMatrixSize('5x5'); return false;">5X5 Matrix</a>
+                    </div>
+                </li>
+                <li>
+                    <!-- Updated Import Risk File Button with filled SVG arrow -->
+                    <button id="import-risk-btn" class="toolbar-risk-btn" onclick="document.getElementById('import-risk-file').click()" aria-label="Import Risk File">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path d="M12 2L5 9h4v7h6V9h4z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </li>
+                <li>
+                    <!-- Update download button SVG to match the '+' sign size -->
+                    <button class="download-icon-btn" onclick="downloadRiskFile()" aria-label="Download Risk File">
+                        <svg width="30" height="90" style="font-size: 24px;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                </li>
+                <!-- New Upload Icon -->
+                <!-- Remove the risk upload trigger button from the toolbar -->
+                <li style="display: flex; align-items: center; margin-right: 30px;">
+                    <a href="login.html" class="circle-login">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="risk-assessment">
+        <h1>Risk Assessment</h1>
+        <!-- Description above the risk table removed -->
+    </section>
+
+    <div class="container">
+        <!-- Updated Risk Table -->
+        <div class="table-wrapper">
+            <table id="riskTable" aria-describedby="riskTable-description">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th onclick="showColumnInfo(event, 'ID', 'Enter a unique risk ID. If omitted, it is auto-assigned.')">
+                            ID
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Name', 'Provide a short descriptive name for the risk.')">
+                            Name
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Description', 'Summarize the risk details clearly and concisely.')">
+                            Description
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Likelihood', `
+    <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
+        <thead style='background-color: #ecf0f1;'>
+            <tr>
+                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Scale</th>
+                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Qualitative</th>
+                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Quantitative</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Rare</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>May occur once in 10+ years (or in very exceptional circumstances)</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>< 5%</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Unlikely</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>May occur once every 5–10 years</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>5%–15%</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Possible</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>May occur once every 1–5 years</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>15% – 40%</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Likely</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>May occur at least once per year</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>40% – 70%</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Almost Certain</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>occur multiple times per year or is an ongoing/continuous risk</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>> 70%</td>
+            </tr>
+        </tbody>
+    </table>
+`)">
+                            Likelihood
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Impact', `
+    <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
+        <thead style='background-color: #ecf0f1;'>
+            <tr>
+                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Level</th>
+                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Qualitative</th>
+                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Quantitative</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Insignificant</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Little to no measurable impact on objectives or operations. No injuries or only very minor first-aid cases.</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Negligible cost impact (e.g., <$10k)</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Minor</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Impact is noticeable but easily managed without major changes to plans. Minor injuries requiring simple medical attention (e.g., one-time clinic visit).</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Low cost impact (e.g., $10k–$50k</td>
+            </td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Moderate</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Significant impact requiring additional resources or management attention. injuries requiring hospital treatment, possibly resulting in temporary work restrictions.</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Moderate cost impact (e.g., $50k–$250k)</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Major</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Major disruption to objectives; requires substantial rework or contingency. Serious injuries (e.g., fractures, long recovery) causing prolonged absence.</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>High cost impact (e.g., $250k–$1M)</td>
+            </tr>
+            <tr>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Catastrophic</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Critical impact threatening overall success; extensive intervention needed. Life-threatening injuries or death, or any occurrence causing permanent disability.</td>
+                <td style='border: 1px solid #ddd; padding: 8px;'>Potentially > $1M</td>
+            </tr>
+        </tbody>
+    </table>
+`)">
+                            Impact
+                        </th>
+                        <th class="score-column" onclick="showColumnInfo(event, 'Score', 'Automatically calculated based on Likelihood x Impact.')">
+                            Score
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Level', 'Determined by the Risk Score: Low, Medium, or High.')">
+                            Level
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Strategy', `
+            <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
+                <thead style='background-color: #ecf0f1;'>
+                    <tr>
+                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Strategy</th>
+                        <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Mitigate</td>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Reduce the likelihood or impact of the risk.</td>
+                    </tr>
+                    <tr>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Transfer</td>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Shift the risk to a third party.</td>
+                    </tr>
+                    <tr>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Avoid</td>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Eliminate the risk by not engaging in the activity.</td>
+                    </tr>
+                    <tr>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Accept</td>
+                        <td style='border: 1px solid #ddd; padding: 8px;'>Acknowledge the risk and decide to bear it.</td>
+                    </tr>
+                </tbody>
+            </table>
+`)">
+                            Strategy
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Status', 'The current state of the risk management process.')">
+                            Status
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Control', 'Controls in place to manage this risk.')">
+                            Control
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Responsible', 'Person responsible for monitoring and managing the risk.')">
+                            Responsible
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Closing Date', 'The planned closing date for this risk, if applicable.')">
+                            Closing Date
+                        </th>
+                        <th onclick="showColumnInfo(event, 'Residual Risk', 'The level of risk remaining after risk treatment.')">
+                            Residual Risk
+                        </th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Initially empty -->
+                </tbody>
+            </table>
+        </div>
+        <!-- Updated Export Buttons: Removed Export to Excel button -->
+    </div>
+
+    <!-- New script to create a new risk row on button click -->
+    <script>
+        // Add a global counter for Risk IDs
+        let riskIdCounter = 1;
+
+        // Function to delete a risk row (optional)
+        function deleteRow(btn) {
+            btn.closest('tr').remove();
+            updateRiskReport();
+        }
+
+        // Modified saveRow: generate risk ID if missing and freeze row
+        function saveRow(btn) {
+            const row = btn.closest('tr');
+            // Ensure the ID cell (index 1) is not editable and has a risk ID
+            const idCell = row.cells[1];
+            if (!idCell.innerText.trim()) {
+                idCell.innerText = "RISK" + riskIdCounter;
+                riskIdCounter++;
+            }
+            // Freeze contenteditable cells
+            row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.contentEditable = "false";
+                cell.style.backgroundColor = "#eee";
+            });
+            // Disable all select dropdowns and date inputs
+            row.querySelectorAll('select').forEach(select => {
+                select.disabled = true;
+            });
+            row.querySelectorAll('input[type="date"]').forEach(input => {
+                input.disabled = true;
+            });
+            btn.disabled = true;
+            console.log('Risk saved and row frozen:', row);
+            // ...additional save logic...
+        }
+
+        // New function: enable editing on a frozen row
+        function editRow(btn) {
+            const row = btn.closest('tr');
+            row.querySelectorAll('[contenteditable]').forEach(cell => {
+                cell.contentEditable = "true";
+                cell.style.backgroundColor = ""; // remove freeze styling
+            });
+            row.querySelectorAll('select').forEach(select => {
+                select.disabled = false;
+            });
+            row.querySelectorAll('input[type="date"]').forEach(input => {
+                input.disabled = false;
+            });
+            // Re-enable the Save button
+            row.querySelector('.save-btn').disabled = false;
+            console.log('Row is now editable:', row);
+        }
+
+        // Function to compute score and update risk level with color coding
+        function computeScoreAndRisk(row) {
+            const likelihoodSelect = row.querySelector('.likelihood-select');
+            const impactSelect = row.querySelector('.impact-select');
+            const scoreCell = row.querySelector('.score-cell');
+            const levelCell = row.querySelector('.level-cell');
+            const likelihood = parseFloat(likelihoodSelect.value) || 0;
+            const impact = parseFloat(impactSelect.value) || 0;
+            if (likelihood && impact) {
+                const score = likelihood * impact;
+                scoreCell.textContent = score;
+                let level = '';
+                let color = '';
+                if(score <= 4) {
+                    level = 'Low';
+                    color = '#28a745'; // green
+                } else if(score <= 10) {
+                    level = 'Medium';
+                    color = '#ffc107'; // yellow
+                } else {
+                    level = 'High';
+                    color = '#dc3545'; // red
+                }
+                levelCell.textContent = level;
+                levelCell.style.backgroundColor = color;
+                levelCell.style.color = '#fff';
+            } else {
+                scoreCell.textContent = '';
+                levelCell.textContent = '';
+                levelCell.style.backgroundColor = '';
+            }
+            updateRiskReport();
+        }
+
+        // NEW: Global matrix size variable and option lists
+        let currentMatrixSize = '5x5';
+        const likelihoodOptions5 = `
+            <option value="">Select</option>
+            <option value="1">Very Unlikely</option>
+            <option value="3">Unliible</option>
+            <option value="2">Likelkely</option>
+            <option value="4">Possy</option>
+            <option value="5">Very Likely</option>
+        `;
+        const impactOptions5 = `
+            <option value="">Select</option>
+            <option value="1">Negligible</option>
+            <option value="2">Minor</option>
+            <option value="3">Moderate</option>
+            <option value="4">Major</option>
+            <option value="5">Catastrophic</option>
+        `;
+        const likelihoodOptions3 = `
+            <option value="">Select</option>
+            <option value="1">Low</option>
+            <option value="2">Medium</option>
+            <option value="3">High</option>
+        `;
+        const impactOptions3 = likelihoodOptions3; // same options for impact
+
+        // NEW: Additional option sets for 7x7 matrix
+        const likelihoodOptions7 = `
+          <option value="">Select</option>
+          <option value="1">Very Unlikely</option>
+          <option value="2">Unlikely</option>
+          <option value="3">Somewhat Likely</option>
+          <option value="4">Likely</option>
+          <option value="5">Very Likely</option>
+          <option value="6">Extremely Likely</option>
+          <option value="7">Almost Certain</option>
+        `;
+        const impactOptions7 = `
+          <option value="">Select</option>
+          <option value="1">Negligible</option>
+          <option value="2">Minor</option>
+          <option value="3">Moderate</option>
+          <option value="4">Major</option>
+          <option value="5">Severe</option>
+          <option value="6">Critical</option>
+          <option value="7">Catastrophic</option>
+        `;
+
+        // NEW: Update matrix options in all existing rows
+        function updateMatrixOptions() {
+            const newLikOptions = currentMatrixSize === '3x3' ? likelihoodOptions3 : currentMatrixSize === '7x7' ? likelihoodOptions7 : likelihoodOptions5;
+            const newImpOptions = currentMatrixSize === '3x3' ? impactOptions3 : currentMatrixSize === '7x7' ? impactOptions7 : impactOptions5;
+            document.querySelectorAll('.likelihood-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = newLikOptions;
+                select.value = currentVal;
+            });
+            document.querySelectorAll('.impact-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = newImpOptions;
+                select.value = currentVal;
+            });
+        }
+
+        // NEW: Listen to matrix size changes
+        document.getElementById('matrix-size-select').addEventListener('change', function() {
+            currentMatrixSize = this.value;
+            updateMatrixOptions();
+        });
+
+        // In add-risk-btn click event, ensure ID cell is not editable
+        document.querySelector('.risk-actions .add-risk-btn').addEventListener('click', function() {
+            var tbody = document.querySelector('#riskTable tbody');
+            var row = document.createElement('tr');
+            // Use dynamic options based on currentMatrixSize
+            const likOptions = currentMatrixSize === '3x3' ? likelihoodOptions3 : currentMatrixSize === '7x7' ? likelihoodOptions7 : likelihoodOptions5;
+            const impOptions = currentMatrixSize === '3x3' ? impactOptions3 : currentMatrixSize === '7x7' ? impactOptions7 : impactOptions5;
+            // 15 columns per header: checkbox, ID, Name, Description, Likelihood, Impact, Score, Level, Strategy, Status, Control, Responsible, Closing Date, Residual Risk Level, Action
+            row.innerHTML = `
+                <td><input type="checkbox"></td>
+                <td contenteditable="false"></td> <!-- ID column not editable -->
+                <td contenteditable="true"></td>
+                <!-- Replace Description cell with dropdown -->
+                <td>
+                    <select class="description-select">
+                        <option value="" disabled selected>Select Description</option>
+                        <option value="Strategic">Strategic</option>
+                        <option value="Operational">Operational</option>
+                        <option value="Financial">Financial</option>
+                        <option value="Compliance & Regulatory">Compliance & Regulatory</option>
+                        <option value="Reputational & Brand">Reputational & Brand</option>
+                        <option value="Environmental, Health & Safety">Environmental, Health & Safety</option>
+                        <option value="Cybersecurity & Technology">Cybersecurity & Technology</option>
+                        <option value="Supply Chain & Logistics">Supply Chain & Logistics</option>
+                        <option value="Social & Ethical">Social & Ethical</option>
+                    </select>
+                </td>
+                <!-- Likelihood dropdown -->
+                <td>
+                    <select class="likelihood-select">
+                        ${likOptions}
+                    </select>
+                </td>
+                <!-- Impact dropdown -->
+                <td>
+                    <select class="impact-select">
+                        ${impOptions}
+                    </select>
+                </td>
+                <!-- Score (computed) -->
+                <td class="score-cell score-column"></td>
+                <!-- Level (computed with color code) -->
+                <td class="level-cell"></td>
+                <!-- Strategy dropdown -->
+                <td>
+                    <select class="strategy-select">
+                        <option value="" disabled selected>Select Strategy</option>
+                        <option value="Mitigate">Mitigate</option>
+                        <option value="Transfer">Transfer</option>
                         <option value="Avoid">Avoid</option>
                         <option value="Accept">Accept</option>
-                    </select>rategy-select').value = data[8] || "";
-                </td>`;: Status dropdown
-                row.querySelector('.strategy-select').value = data[8] || "";
-                // Column 10: Status dropdown
-                row.innerHTML += `<td>
-                    <select>n>
-                        <option value="">Select</option>on value="2">In Progress</option>
-                        <option value="1">Not Started</option> <option value="3">Completed</option>
+                    </select>
+                </td>
+                <!-- Status dropdown -->
+                <td>
+                    <select>
+                        <option value="">Select</option>
+                        <option value="1">Not Started</option>
                         <option value="2">In Progress</option>
                         <option value="3">Completed</option>
                     </select>
-                </td>`;
-                row.querySelector('td:nth-of-type(10) select').value = data[9] || "";
-                // Column 11: Control (editable)ble)
-                row.innerHTML += `<td contenteditable="true">${data[10] || ""}</td>`;
-                // Column 12: Responsible (editable)
-                row.innerHTML += `<td contenteditable="true">${data[11] || ""}</td>`;<input type="date" class="date-input" value="${data[12] || ""}"></td>`;
-                // Column 13: Closing Date inputibute
-                row.innerHTML += `<td><input type="date" class="date-input" value="${data[12] || ""}"></td>`;
-                // Residual Risk Level cell: removed contenteditable attributean class="residual-value">${data[13] || ""}</span>
+                </td>
+                <td contenteditable="true"></td>
+                <td contenteditable="true"></td>
+                <!-- Closing Date as a selectable date field -->
+                <td><input type="date" class="date-input"></td>
+                <!-- Residual Risk Level cell: removed contenteditable attribute -->
+                <td>
+                    <span class="residual-value"></span>
                     <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
-                </td>`;
-                    <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
+                </td>
+                <!-- Action: Edit, Save and Cancel (Trash icon) icon buttons -->
+                <td>
                     <button class="edit-btn" onclick="editRow(this)"><i class="fa fa-edit"></i></button>
-                    <button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>erHTML += `<td>
-                    <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button> class="edit-btn" onclick="editRow(this)"><i class="fa fa-edit"></i></button>
-                </td>`;       <button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>
-                    <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>                return row;
-                </td>`;
+                    <button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>
+                    <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(row);
 
-            // Updated risk file import function to add uploaded rows without erasing current content
-eImport(event) {
-                const file = event.target.files[0];
-                if (!file) return;
-                // NEW: Clear current risk table rows (including residual risk column) before importing new datarget.files[0];
-                const tbody = document.querySelector('#riskTable tbody');
-                tbody.innerHTML = "";ble rows (including residual risk column) before importing new data
-                const reader = new FileReader();dy = document.querySelector('#riskTable tbody');
-                tbody.innerHTML = "";
-                const reader = new FileReader();                    try {
-                        const parsedData = JSON.parse(e.target.result);
+            // Attach event listeners to recalculate score when dropdowns change
+            row.querySelector('.likelihood-select').addEventListener('change', function() {
+                computeScoreAndRisk(row);
+            });
+            row.querySelector('.impact-select').addEventListener('change', function() {
+                computeScoreAndRisk(row);
+            });
+            updateRiskReport();
+        });
 
-                        const parsedData = JSON.parse(e.target.result); an array
-                        const risks = Array.isArray(parsedData) ? parsedData : [];
-                        risks.forEach(item => {
-                            let rowData = [];ata) ? parsedData : [];
-                            if (typeof item === 'object' && !Array.isArray(item)) {
-                                rowData[1] = item.id || "";
-                                rowData[2] = item.name || "";isArray(item)) {
-                                rowData[3] = item.description || "";
-                                rowData[4] = item.likelihood || "";
-                                rowData[5] = item.impact || "";|| "";
-                                rowData[6] = item.score || "";";
-                                rowData[7] = item.level || "";
-                                rowData[8] = item.strategy || "";
-                                rowData[7] = item.level || "";
-                                rowData[10] = item.control || "";
-                                rowData[11] = item.responsible || "";
-                                rowData[12] = item.closingDate || ""; "";
-                                rowData[13] = item.residualRisk || "";  // Use property name as desiredtem.responsible || "";
-                            } else if (Array.isArray(item)) {   rowData[12] = item.closingDate || "";
-                                rowData = item;e property name as desired
-                            }
-                                rowData = item; 14) { rowData.push(""); }
-                            const row = createRiskRow(rowData);
-                            tbody.appendChild(row);
-                            // Attach listeners to recalc score when dropdowns change
-                            row.querySelector('.likelihood-select').addEventListener('change', () => computeScoreAndRisk(row));
-                            row.querySelector('.impact-select').addEventListener('change', () => computeScoreAndRisk(row));c score when dropdowns change
-                            // Set likelihood and impact based on score and level').addEventListener('change', () => computeScoreAndRisk(row));
-                            setLikelihoodAndImpact(row);impact-select').addEventListener('change', () => computeScoreAndRisk(row));
-                            // Apply color code on the level cell level
-                            applyColorCode(row);
-                            // Apply color code on the level cell // Update residual risk cell using file content
-                            updateResidualRiskFromFile(row);
-                        }); residual risk cell using file content
-                            updateResidualRiskFromFile(row);
-                        });
-                        console.error("Error importing risk file:", error);   alert("Risk file imported successfully!");
-                        alert("Failed to import risk file. Ensure it is valid JSON.");  } catch (error) {
-                    }rror importing risk file:", error);
-                        alert("Failed to import risk file. Ensure it is valid JSON.");   };
-                    }                reader.readAsText(file);
-                };
-
-            // New function to set likelihood and impact based on score and level
-
-                const score = parseFloat(row.querySelector('.score-cell').textContent) || 0;
-                const level = row.querySelector('.level-cell').textContent.trim();
-                const likelihoodSelect = row.querySelector('.likelihood-select');                const score = parseFloat(row.querySelector('.score-cell').textContent) || 0;
-                const impactSelect = row.querySelector('.impact-select');Selector('.level-cell').textContent.trim();
-od-select');
-                const impactSelect = row.querySelector('.impact-select');
-                    likelihoodSelect.value = score >= 16 ? '5' : '4';
-                    impactSelect.value = score >= 16 ? '4' : '3';
-                } else if (level === 'Medium') { '4';
-                    likelihoodSelect.value = score >= 8 ? '3' : '2';e >= 16 ? '4' : '3';
-                    impactSelect.value = score >= 8 ? '3' : '2';
-                } else if (level === 'Low') {'2';
-                    likelihoodSelect.value = score <= 4 ? '1' : '2';   impactSelect.value = score >= 8 ? '3' : '2';
-                    impactSelect.value = score <= 4 ? '1' : '2';   } else if (level === 'Low') {
-                }                    likelihoodSelect.value = score <= 4 ? '1' : '2';
-                    impactSelect.value = score <= 4 ? '1' : '2';
-
-            // New function to apply color code based on score
-
-                const score = parseFloat(row.querySelector('.score-cell').textContent) || 0;apply color code based on score
-                const levelCell = row.querySelector('.level-cell');de(row) {
-                let color = '';erySelector('.score-cell').textContent) || 0;
-                const levelCell = row.querySelector('.level-cell');
-                    color = '#28a745'; // green
-                } else if (score <= 10) {e <= 4) {
-                    color = '#28a745'; // greenlow
-                } else { else if (score <= 10) {
-                    color = '#dc3545'; // red
-                } else {
-                levelCell.style.backgroundColor = color;       color = '#dc3545'; // red
-                levelCell.style.color = '#fff';                }
-                levelCell.style.backgroundColor = color;
-                levelCell.style.color = '#fff';
-            }
-            function exportTableToWord(tableID, filename = '') {
-                const table = document.getElementById(tableID);
-                const html = table.outerHTML.replace(/ /g, '%20');
-                const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);bleID);
-                const downloadLink = document.createElement('a');HTML.replace(/ /g, '%20');
-                document.body.appendChild(downloadLink);.ms-word;charset=utf-8,' + encodeURIComponent(html);
-                downloadLink.href = url;document.createElement('a');
-                document.body.appendChild(downloadLink);
-                downloadLink.click();   downloadLink.href = url;
-                document.body.removeChild(downloadLink);                downloadLink.download = filename;
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-            }
-            function exportTableToExcel(tableID, filename = '') {
-                const table = document.getElementById(tableID);
-                const html = table.outerHTML.replace(/ /g, '%20');e = '') {
-                const url = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(html);   const table = document.getElementById(tableID);
-                document.body.removeChild(downloadLink);                const html = table.outerHTML.replace(/ /g, '%20');
-                const url = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(html);
-
-            // NEW: Export table + chart(s) to Word - always in A4 landscape and ensure risk table fits in one page, even during editing
-            function exportTableAndChartsToWord(tableID, filename = 'RiskAssessmentReport.doc') {
-                // Get chart canvases for Level (pie chart) and Status (bar chart)sure risk table fits in one page, even during editing
-                const riskStatusCanvas = document.getElementById('riskStatusChart');ilename = 'RiskAssessmentReport.doc') {
-                const riskLevelCanvas  = document.getElementById('riskLevelChart');s (bar chart)
-                let riskStatusImg = '', riskLevelImg = '';
-                if (riskStatusCanvas && riskStatusCanvas.toDataURL) {onst riskLevelCanvas  = document.getElementById('riskLevelChart');
-                    riskStatusImg = `<img src="${riskStatusCanvas.toDataURL()}" alt="Risk Status Bar Chart" />`;
+        // New delete selected function with confirmation
+        document.getElementById('delete-selected-btn').addEventListener('click', function() {
+            const tbody = document.querySelector('#riskTable tbody');
+            const checkboxes = tbody.querySelectorAll('input[type="checkbox"]:checked');
+            if (checkboxes.length > 0) {
+                const confirmDelete = confirm('Are you sure you want to delete the selected risk rows?');
+                if (confirmDelete) {
+                    checkboxes.forEach(cb => {
+                        cb.closest('tr').remove();
+                    });
+                    console.log('Selected risk rows deleted.');
                 }
-                if (riskLevelCanvas && riskLevelCanvas.toDataURL) {   riskStatusImg = `<img src="${riskStatusCanvas.toDataURL()}" alt="Risk Status Bar Chart" />`;
-                    riskLevelImg = `<img src="${riskLevelCanvas.toDataURL()}" alt="Risk Level Pie Chart" />`;
+            } else {
+                alert('No risk rows selected for deletion.');
+            }
+            updateRiskReport();
+        });
+
+        // New functionality: select/deselect all risk rows when header checkbox is toggled
+        document.getElementById("selectAll").addEventListener("change", function() {
+            const checkboxes = document.querySelectorAll("#riskTable tbody input[type='checkbox']");
+            checkboxes.forEach(cb => cb.checked = this.checked);
+        });
+
+        // Global variable to track the last clicked header for pop up toggling
+        let lastClickedHeader = null;
+
+        // Updated function to show column info with dynamic content based on matrix size
+        function showColumnInfo(event, columnName, infoContent) {
+            event.stopPropagation();
+            const popup = document.getElementById('colInfoPopup');
+            // If the same header is clicked and popup is open, close it and reset lastClickedHeader
+            if (lastClickedHeader === event.currentTarget && popup.style.display === 'block') {
+                popup.style.display = 'none';
+                lastClickedHeader = null;
+                return;
+            }
+            // Otherwise, update lastClickedHeader to current header
+            lastClickedHeader = event.currentTarget;
+            // Close any currently open pop up before displaying new content
+            popup.style.display = 'none';
+
+            // Update content based on currentMatrixSize
+            if (currentMatrixSize === '3x3') {
+                if (columnName === 'Likelihood') {
+                    infoContent = `
+                        <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
+                            <thead style='background-color: #ecf0f1;'>
+                                <tr>
+                                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Scale</th>
+                                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Occurrence</th>
+                                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>1 - Low</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Rare</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Happens only in exceptional circumstances.</td>
+                                </tr>
+                                <tr>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>2 - Medium</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Possible</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Occurs occasionally under normal conditions.</td>
+                                </tr>
+                                <tr>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>3 - High</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Likely</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Expected in many circumstances.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                } else if (columnName === 'Impact') {
+                    infoContent = `
+                        <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
+                            <thead style='background-color: #ecf0f1;'>
+                                <tr>
+                                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Level</th>
+                                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Rating</th>
+                                    <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>1 - Low</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Minor</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Negligible impact.</td>
+                                </tr>
+                                <tr>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>2 - Medium</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Moderate</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Moderate impact.</td>
+                                </tr>
+                                <tr>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>3 - High</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Severe</td>
+                                    <td style='border: 1px solid #ddd; padding: 8px;'>Significant impact.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
                 }
-                    riskLevelImg = `<img src="${riskLevelCanvas.toDataURL()}" alt="Risk Level Pie Chart" />`;
-                const riskReportTable = document.getElementById('riskReportTable');
-                const reportHtml = riskReportTable ? riskReportTable.outerHTML : '';
-                // New: Query risk rows and build custom table with 8 columns (added Residual Risk column)
-                let riskRows = document.querySelectorAll("#riskTable tbody tr");
-                let customTableHtml = '<table class="custom-report-table" style="width:100%; border-collapse: collapse; margin-top:20px;">';nd build custom table with 8 columns (added Residual Risk column)
-                customTableHtml += '<thead><tr><th style="border:1px solid #ddd; padding:8px;">Risk ID</th><th style="border:1px solid #ddd; padding:8px;">Risk Name</th><th style="border:1px solid #ddd; padding:8px;">Risk Level</th><th style="border:1px solid #ddd; padding:8px;">Strategy</th><th style="border:1px solid #ddd; padding:8px;">Control</th><th style="border:1px solid #ddd; padding:8px;">Deadline</th><th style="border:1px solid #ddd; padding:8px;">Owner</th><th style="border:1px solid #ddd; padding:8px;">Residual Risk</th></tr></thead><tbody>';skTable tbody tr");
-                riskRows.forEach(row => {-report-table" style="width:100%; border-collapse: collapse; margin-top:20px;">';
-                    const cells = row.querySelectorAll("td");der:1px solid #ddd; padding:8px;">Risk ID</th><th style="border:1px solid #ddd; padding:8px;">Risk Name</th><th style="border:1px solid #ddd; padding:8px;">Risk Level</th><th style="border:1px solid #ddd; padding:8px;">Strategy</th><th style="border:1px solid #ddd; padding:8px;">Control</th><th style="border:1px solid #ddd; padding:8px;">Deadline</th><th style="border:1px solid #ddd; padding:8px;">Owner</th><th style="border:1px solid #ddd; padding:8px;">Residual Risk</th></tr></thead><tbody>';
-                    let riskID = cells[1].innerText.trim();
-                    let riskName = cells[2].innerText.trim();
-                    let riskLevel = cells[7].innerText.trim();
-                    let strategy = cells[8].innerText.trim();
-                    let control = cells[10].innerText.trim();();
-                    let deadline = (cells[12].querySelector('input[type="date"]')) ? cells[12].querySelector('input[type="date"]').value : '';
-                    let owner = cells[11].innerText.trim();innerText.trim();
-                    let residual = cells[13].innerText.trim();erySelector('input[type="date"]')) ? cells[12].querySelector('input[type="date"]').value : '';
-                    if(riskID || riskName) {
-                        customTableHtml += `<tr>
-                            <td style="border:1px solid #ddd; padding:8px;">${riskID}</td>
-                            <td style="border:1px solid #ddd; padding:8px;">${riskName}</td>
-                            <td style="border:1px solid #ddd; padding:8px;">${riskLevel}</td>
-                            <td style="border:1px solid #ddd; padding:8px;">${strategy}</td>
-                            <td style="border:1px solid #ddd; padding:8px;">${control}</td>/td>
-                            <td style="border:1px solid #ddd; padding:8px;">${deadline}</td>
-                            <td style="border:1px solid #ddd; padding:8px;">${owner}</td> style="border:1px solid #ddd; padding:8px;">${control}</td>
-                            <td style="border:1px solid #ddd; padding:8px;">${residual}</td>       <td style="border:1px solid #ddd; padding:8px;">${deadline}</td>
-                        </tr>`;         <td style="border:1px solid #ddd; padding:8px;">${owner}</td>
-                            <td style="border:1px solid #ddd; padding:8px;">${residual}</td>
-                        </tr>`;
-                    }
-                // New: Get current date and set report title
-                const currentDate = new Date().toLocaleDateString();
-                const reportTitle = "Risk Assessment Report";ate and set report title
-                // Build a stunning HTML report with modern designentDate = new Date().toLocaleDateString();
-                const htmlContent = `rtTitle = "Risk Assessment Report";
-                    <html>ort with modern design
-                const htmlContent = `
-                    <html>harset="UTF-8">
-                    <head>reportTitle}</title>
-                      <style>
-                        @page {tle>${reportTitle}</title>
-                      <style>: A4 landscape;
-                        @page {
-                          size: A4 landscape;
-                          margin: 2px;
-                          padding: 2px;
-                          margin: 2px;
-                          font-family: 'Segoe UI', sans-serif; padding: 2px;
-                          background-color: #f4f4f4;
-                          font-family: 'Segoe UI', sans-serif;
-                          background-color: #f4f4f4;er {
-                          max-width: 1400px;
-                          margin: auto;r {
-                          max-width: 1400px;
-                          padding: 10px; margin: auto;
-                          box-shadow: 0 4px 12px rgba(0,0,0,0.1);ff;
-                        }
-                          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                        }
-                          border-bottom: 2px solid #34495e;report-header {
-                          margin-bottom: 10px;r;
-                          border-bottom: 2px solid #34495e;
-                          margin-bottom: 10px;{
-                          margin: 0;
-                          font-size: 20px;report-header h1 {
-                          margin: 0;
-                        }x;
-                        .report-header p {
-                        }
-                        .report-header p { font-size: 12px;
-                          color: #7f8c8d;
-                        }x;
-                          color: #7f8c8d;
-                        }
-                          flex-wrap: wrap;
-                          justify-content: space-around; display: flex;
-                          flex-wrap: wrap;-bottom: 6px;
-                          justify-content: space-around;
-                        .chart {: 6px;
-                          flex: 1 1 45%;
-                        .chart { margin: 10px;
-                          text-align: left; 45%;
-                        }
-                          text-align: left;
-                        }
-                          color: #2c3e50;chart h2 {
-                          margin-bottom: 10px; 12px;
-                          color: #2c3e50;
-                          margin-bottom: 10px;
-                          max-width: 70%;
-                          border: 1px solid #ccc;chart img {
-                          box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                        } #ccc;
-                          box-shadow: 0 2px 4px rgba(0,0,0,0.1);2 {
-                          text-align: left;
-                          color: #2c3e50;report-content h2 {
-                          text-align: left;
-                        }50;
-                        .report-table, .custom-report-table {
-                        } width: 120%;
-                        .report-table, .custom-report-table {
-                        }
-                        .report-table th, .report-table td, .custom-report-table th, .custom-report-table td {se;
-                          padding: 6px;
-                        .report-table th, .report-table td, .custom-report-table th, .custom-report-table td { border: 1px solid #ddd;
-                          font-size: 12px;
-                        }dd;
-                          font-size: 12px;report-table th, .custom-report-table th {
-                          background: #ecf0f1;
-                        }custom-report-table th {
-                          background: #ecf0f1;
-                        };
-                        .report-footer {;
-                          font-size: 12px;
-                          color: #95a5a6;
-                          border-top: 1px solid #ddd; font-size: 12px;
-                          padding-top: 8px;r: #95a5a6;
-                          border-top: 1px solid #ddd;
-                          padding-top: 8px;yle>
-                        }
-                    <body>
-                      <div class="report-container">
-                    <body>
-                          <h1>${reportTitle}</h1>
-                          <p>Date: ${currentDate}</p>lass="report-header">
-                          <h1>${reportTitle}</h1>ssment Dashboard</p>
-                          <p>Date: ${currentDate}</p>
-                        <div class="charts-section">ashboard</p>
-                          <div class="chart">
-                        <div class="charts-section">Risk Level Distribution</h2>
-                            ${riskLevelImg}
-                          </div>
-                            ${riskLevelImg}>
-                            <h2>Risk Status Distribution</h2>
-                            ${riskStatusImg} class="chart">
-                            <h2>Risk Status Distribution</h2>
-                            ${riskStatusImg}
-                          </div>ort-content">
-                          <h2>Risk Report</h2>
-                          ${reportHtml}ontent">
-                          <h2 style="margin-top:30px;">Custom Risk Summary</h2>Risk Report</h2>
-                          ${customTableHtml}
-                          <h2 style="margin-top:30px;">Custom Risk Summary</h2>
-                          ${customTableHtml}lass="report-footer">
-                          <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p>v>
-                        </div>v class="report-footer">
-                          <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p>>
-                        </div>  </body>
-                    </html>
+            }
+
+            // Update content based on columnName
+            if (columnName === 'Description') {
+                infoContent = `
+                    <table style='width: 100%; max-width: 100%; border-collapse: collapse; border: 1px solid #ddd; background-color: #f9f9f9;'>
+                        <thead style='background-color: #ecf0f1;'>
+                            <tr>
+                                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Category</th>
+                                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Description</th>
+                                <th style='border: 1px solid #ddd; padding: 8px; text-align: left;'>Example</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Strategic</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Market Shifts</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Sudden changes in demand, economic downturns, new market entrants.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Innovation & R&D</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Failed product launches, poorly planned technology roadmaps.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Mergers & Acquisitions</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Cultural integration issues, overestimated synergies, team conflicts.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Geopolitical Risk</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Political instability, international sanctions, regulatory hurdles abroad.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Operational</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Equipment/Service Outages</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Critical machine failures, production downtime, IT server crashes.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Process Errors</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Workflow bottlenecks, unclear SOPs, or inadequate procedural controls.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Human Resources</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Skills shortages, absenteeism, high turnover, labor disputes.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Physical Security</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Unauthorized access to facilities, theft, or vandalism.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Financial</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Liquidity</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Insufficient cash flow to meet short‐term obligations.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Credit</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Risk of customers or partners defaulting on payments.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Market</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Exchange‐rate fluctuations, interest‐rate volatility, commodity‐price swings.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Internal Fraud</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Embezzlement, falsification of financial statements or records.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Compliance & Regulatory</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Industry‐Specific Regulations</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Failure to meet standards (e.g., GDPR, occupational safety).</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Tax Compliance</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Underpayment or misreporting of tax liabilities.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Legal Risks</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Commercial litigation, IP infringement claims, class actions.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Anti‐Corruption Laws</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Noncompliance with FCPA, UK Bribery Act, or equivalent statutes.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Reputational & Brand</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Negative Publicity</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Adverse media coverage, scandals, social media backlash.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Poor Customer Service</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Negative online reviews, mishandled complaints or delays.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Activist Actions</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Boycotts, protests, or community opposition.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Controversial Associations</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Partnerships with disreputable firms, backlash from ill‐perceived alliances.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Environmental, Health & Safety</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Environmental Impact</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Pollution, excessive CO₂ emissions, noncompliance with environmental guidelines.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Workplace Safety</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Accidents or injuries, hazardous material exposure, lack of protective measures.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Natural Disasters</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Floods, earthquakes, hurricanes disrupting operations or supply.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Waste Management & Recycling</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Inadequate disposal practices, costly remediation efforts.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Cybersecurity & Technology</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Cyber Attacks</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Ransomware, phishing, data breaches, malware infiltration.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>IT Failures</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Server downtime, network outages, software bugs.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Data Security</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Unauthorized access, compromised databases, data loss or corruption.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Technology Misalignment</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Outdated systems, legacy hardware, delayed digitization.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Supply Chain & Logistics</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Supplier Failures</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Single‐source dependency, supplier insolvency, late deliveries.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Geopolitical Disruptions</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Customs delays, embargoes, trade conflicts.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Transportation & Distribution</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Transit accidents, cold‐chain breakdowns, capacity constraints.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Inventory Management</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Overstocking, shortages, high holding costs, demand variability.</td>
+                            </tr>
+                            <tr>
+                                <td rowspan="4" style='border: 1px solid #ddd; padding: 8px;'>Social & Ethical</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Unethical Practices</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Forced or child labor, discrimination, bribes in procurement.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Societal Pressure</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Rising expectations for ESG (environment, social, governance), diversity & inclusion.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Social Acceptance</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Local communities objecting to industrial projects, permit rejections.</td>
+                            </tr>
+                            <tr>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Cultural Values & Norms</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>Negative reception to certain products, campaigns, or marketing in specific regions.</td>
+                            </tr>
+                        </tbody>
+                    </table>
                 `;
-                const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
-                const url = URL.createObjectURL(blob);
-                const downloadLink = document.createElement('a');t], { type: 'application/msword;charset=utf-8' });
-                downloadLink.href = url;
-                const downloadLink = document.createElement('a'); = filename;
-                downloadLink.href = url;
-                downloadLink.click();ilename;
-                document.body.removeChild(downloadLink);   document.body.appendChild(downloadLink);
-                downloadLink.click();                URL.revokeObjectURL(url);
-                document.body.removeChild(downloadLink);
-
-            // New function to show the Residual Risk Settings popup
-
-                let targetCell = btn.closest('td');
-                window.currentResidualCell = targetCell; // store for updatetion showResidualSettings(btn) {
-                let popup = document.getElementById('residualSettingsPopup');
-                rgetCell; // store for update
-                // Determine pop-up option sets based on currentMatrixSize.d('residualSettingsPopup');
-                let likelihoodOpts, impactOpts;
-                // Determine pop-up option sets based on currentMatrixSize.
-                    likelihoodOpts = likelihoodOptions3;
-                    impactOpts = likelihoodOptions3;
-                } else if (currentMatrixSize === '7x7') {ns3;
-                    likelihoodOpts = likelihoodOptions7;oodOptions3;
-                } else if (currentMatrixSize === '7x7') {
-                } else {  // default 5x5ns7;
-                    likelihoodOpts = likelihoodOptions5;   impactOpts = likelihoodOptions7;
-                    impactOpts = likelihoodOptions5;} else {  // default 5x5
-                }= likelihoodOptions5;
-                    impactOpts = likelihoodOptions5;
-                }
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <h4 style="margin:0;">Set Residual Risk</h4>
-                        <span class="dropdown-popup-settings" style="position: relative; display: inline-block;">
-                            <button onclick="event.stopPropagation(); togglePopupMatrixDropdown(event)" style="background:none; border:none; cursor:pointer;">⚙️</button>
-                            <div class="dropdown-content-popup" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; z-index:1100;">
-                                <a href="#" onclick="setPopupMatrixSize('5x5'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">5x5 Matrix</a>
-                                <a href="#" onclick="setPopupMatrixSize('3x3'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">3x3 Matrix</a>lass="dropdown-content-popup" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; z-index:1100;">
-                                <a href="#" onclick="setPopupMatrixSize('7x7'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">7x7 Matrix</a> <a href="#" onclick="setPopupMatrixSize('5x5'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">5x5 Matrix</a>
-                            </div>      <a href="#" onclick="setPopupMatrixSize('3x3'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">3x3 Matrix</a>
-                                <a href="#" onclick="setPopupMatrixSize('7x7'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">7x7 Matrix</a>
-                            </div>
-                        </span>d="residual-likelihood">
-                        ${likelihoodOpts}
-                    </select>ual-likelihood">
-                    <select id="residual-impact" style="margin-top: 10px;">elihoodOpts}
-                        ${impactOpts}
-                    <select id="residual-impact" style="margin-top: 10px;">
-                    <div id="residualPreview">Score: 1</div>
-                    <div style="display:flex; justify-content:space-between;">
-                        <button class="apply-btn" onclick="updateResidualSettings()">Apply</button>d="residualPreview">Score: 1</div>
-                        <button class="cancel-btn" onclick="this.parentElement.parentElement.style.display='none'">Cancel</button>  <div style="display:flex; justify-content:space-between;">
-                    </div>alSettings()">Apply</button>
-                        <button class="cancel-btn" onclick="this.parentElement.parentElement.style.display='none'">Cancel</button>
-                    </div>
-                document.getElementById('residual-likelihood').addEventListener('change', updateResidualPreview);
-                document.getElementById('residual-impact').addEventListener('change', updateResidualPreview);rs and initialize preview
-                updateResidualPreview();   document.getElementById('residual-likelihood').addEventListener('change', updateResidualPreview);
-                popup.style.display = 'block';                document.getElementById('residual-impact').addEventListener('change', updateResidualPreview);
             }
-                popup.style.display = 'block';
-            }he pop-up's matrix dropdown
-            function togglePopupMatrixDropdown(event) {
-                event.stopPropagation();ix dropdown
-                const btn = event.currentTarget;
-                const dropdown = btn.nextElementSibling;   event.stopPropagation();
-                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';                const btn = event.currentTarget;
-            }
-                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
-            }up selects based on matrix selected in pop-up dropdown
-            function setPopupMatrixSize(matrix) {
-                currentMatrixSize = matrix;elects based on matrix selected in pop-up dropdown
-                // Update pop-up residual selects based on new matrix.
-                let likelihoodOpts, impactOpts;
-                if (currentMatrixSize === '3x3') {sed on new matrix.
-                    likelihoodOpts = likelihoodOptions3;
-                if (currentMatrixSize === '3x3') {
-                } else if (currentMatrixSize === '7x7') {ns3;
-                    likelihoodOpts = likelihoodOptions7;ctOpts = likelihoodOptions3;
-                } else if (currentMatrixSize === '7x7') {
-                } else {ns7;
-                    likelihoodOpts = likelihoodOptions5;   impactOpts = likelihoodOptions7;
-                } else {
-                    likelihoodOpts = likelihoodOptions5;
-                document.getElementById('residual-likelihood').innerHTML = likelihoodOpts;
-                document.getElementById('residual-impact').innerHTML = impactOpts;
-                // Also update the header matrix dropdown (if needed) via updateMatrixOptions()'residual-likelihood').innerHTML = likelihoodOpts;
-                updateMatrixOptions();
-                // Also update the header matrix dropdown (if needed) via updateMatrixOptions()
-                const dropdown = document.querySelector('.dropdown-content-popup');   updateMatrixOptions();
-                dropdown.style.display = 'none';                // Close pop-up dropdown
-                const dropdown = document.querySelector('.dropdown-content-popup');
-';
-            // New helper: Update the preview area inside the pop up
 
-                let likelihood = parseFloat(document.getElementById('residual-likelihood').value);ea inside the pop up
-                let impact = parseFloat(document.getElementById('residual-impact').value);dualPreview() {
-                let score = likelihood * impact; parseFloat(document.getElementById('residual-likelihood').value);
-                let color = '';t(document.getElementById('residual-impact').value);
-                let score = likelihood * impact;
-                    color = '#28a745';
-                } else if(score <= 10) { <= 4) {
-                    color = '#28a745';
-                } else { else if(score <= 10) {
-                    color = '#dc3545';
-                } else {
-                const preview = document.getElementById('residualPreview');
-                preview.textContent = `Score: ${score}`;   }
-                const preview = document.getElementById('residualPreview');                preview.style.backgroundColor = color;
-                preview.textContent = `Score: ${score}`;
- color;
-            // Updated function: Apply settings from the popup to the residual risk cell
+            // Set new content and display the pop up
+            popup.innerHTML = `${infoContent}`;
+            const tableHead = event.currentTarget.closest('thead');
+            const headRect = tableHead.getBoundingClientRect();
+            const headerRect = event.currentTarget.getBoundingClientRect();
+            popup.style.top = (headRect.bottom + window.scrollY - 80) + 'px';
+            popup.style.left = (headerRect.left + window.scrollX + 80) + 'px';
+            popup.style.display = 'block';
+        }
 
-                const likelihood = parseFloat(document.getElementById('residual-likelihood').value);om the popup to the residual risk cell
-                const impact = parseFloat(document.getElementById('residual-impact').value);
-                const score = likelihood * impact;
-                const level = score <= 4 ? 'Low' : score <= 10 ? 'Medium' : 'High';nt.getElementById('residual-impact').value);
-                const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : '#dc3545';
-                if(window.currentResidualCell) {
-                const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : '#dc3545';ResidualCell.style.backgroundColor = color;
-                    let origSpan = window.currentResidualCell.querySelector('.residual-value');
-                    if(origSpan) {ackgroundColor = color;
-                        origSpan.textContent = `${level}`;et origSpan = window.currentResidualCell.querySelector('.residual-value');
-                        origSpan.style.color = '#fff';   if(origSpan) {
-                        origSpan.textContent = `${level}`;
-                        origSpan.style.color = '#fff';   }
-                document.getElementById('residualSettingsPopup').style.display = 'none';                    }
-            }
-ttingsPopup').style.display = 'none';
-            // NEW: Function to show header residual settings popup
-ttingsHeader() {
-                let popup = document.getElementById('residualSettingsPopup');popup
-                popup.innerHTML = `
-                let popup = document.getElementById('residualSettingsPopup');
-                    <p>Configure header-specific settings here.</p>
-                    <div style="display:flex; justify-content:space-between;">
-                        <button class="apply-btn" onclick="popup.style.display='none'">Apply</button>figure header-specific settings here.</p>
-                        <button class="cancel-btn" onclick="popup.style.display='none'">Cancel</button>  <div style="display:flex; justify-content:space-between;">
-                    </div>tn" onclick="popup.style.display='none'">Apply</button>
-                        <button class="cancel-btn" onclick="popup.style.display='none'">Cancel</button>   `;
-                popup.style.display = 'block';                    </div>
-            }
-                popup.style.display = 'block';
-            }e via the dropdown selection
-            function setMatrixSize(matrix) {
-                currentMatrixSize = matrix;rixSize via the dropdown selection
-            function setMatrixSize(matrix) {
-                currentMatrixSize = matrix;
-                const dropdown = document.querySelector('.dropdown-content-header');   updateMatrixOptions();
-                dropdown.style.display = 'none';                // Close the dropdown
-                const dropdown = document.querySelector('.dropdown-content-header');
+        // Close the popup if clicked within it (optional)
+        document.getElementById('colInfoPopup').addEventListener('click', function(event) {
+            event.stopPropagation();
+            this.style.display = 'none';
+        });
 
-            // Optional: Hide dropdown when clicking outside
+        // Global listener to close popup on any other click
+        document.addEventListener('click', function() {
+            closeColumnPopup();
+        });
 
-                const dropdown = document.querySelector('.dropdown-content-header'); outside
-                if (dropdown && dropdown.style.display === 'block') {ent.addEventListener('click', function(e) {
-                    dropdown.style.display = 'none'; const dropdown = document.querySelector('.dropdown-content-header');
-                }                if (dropdown && dropdown.style.display === 'block') {
-                    dropdown.style.display = 'none';
-                }
-            }); {
+        // New function to close the column info pop up
+        function closeColumnPopup() {
+            const popup = document.getElementById('colInfoPopup');
+            popup.style.display = 'none';
+            lastClickedHeader = null;
+        }
 
-                const btn = event.currentTarget;
-                const dropdown = btn.nextElementSibling;   event.stopPropagation();
-                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';                const btn = event.currentTarget;
-            }
-                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
-            }ally
-            function updateRiskReport() {
-                // Initialize counts for each risk level and status
-            function updateRiskReport() {
-                    Low:    { NotStarted: 0, InProgress: 0, Completed: 0 },
-                    High:   { NotStarted: 0, InProgress: 0, Completed: 0 },nst reportCounts = {
-                    Medium: { NotStarted: 0, InProgress: 0, Completed: 0 }    Low:    { NotStarted: 0, InProgress: 0, Completed: 0 },
-                };Progress: 0, Completed: 0 },
-                    Medium: { NotStarted: 0, InProgress: 0, Completed: 0 }
-                // Iterate over risk table rows
-                document.querySelectorAll('#riskTable tbody tr').forEach(row => {
-                    const levelText = row.cells[7].textContent.trim();le rows
-                    // Get status text from the select element (if exists)
-                    let statusText = '';cells[7].textContent.trim();
-                    const statusCellSelect = row.cells[9].querySelector('select');
-                    if(statusCellSelect) {usText = '';
-                        statusText = statusCellSelect.selectedOptions[0].textContent.trim();or('select');
-                    } else {f(statusCellSelect) {
-                        statusText = row.cells[9].textContent.trim();
-                    } else {
-                    // Normalize status text to match our keys: "Not Started", "In Progress", "Completed"textContent.trim();
-                    if (statusText === "Not Started" || statusText === "NotStarted") {
-                        statusText = "NotStarted";tch our keys: "Not Started", "In Progress", "Completed"
-                    } else if (statusText === "In Progress") {usText === "NotStarted") {
-                        statusText = "InProgress";;
-                    } else if (statusText === "Completed") { else if (statusText === "In Progress") {
-                        statusText = "Completed";
-                    } else if (statusText === "Completed") {
-                        statusText = "Completed";
-                    if(reportCounts[levelText] && reportCounts[levelText][statusText] !== undefined) {
-                        reportCounts[levelText][statusText]++; // Only update if level is one of our keys
-                    }    if(reportCounts[levelText] && reportCounts[levelText][statusText] !== undefined) {
-                        reportCounts[levelText][statusText]++;
+        // New function: Download risks from localStorage as a JSON risk file.
+        function downloadRiskFile() {
+            const riskRows = document.querySelectorAll("#riskTable tbody tr");
+            let risks = [];
+            riskRows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                let rowData = [];
+                cells.forEach((cell, index) => {
+                    // For the residual risk column, assumed at index 13, store the text from the <span class="residual-value">
+                    if(index === 13) {
+                        const valSpan = cell.querySelector('.residual-value');
+                        rowData.push(valSpan ? valSpan.innerText.trim() : "");
+                    } else if (index !== 14) { // Skip the settings icon column
+                        rowData.push(cell.innerText.trim());
                     }
                 });
-                document.getElementById("low-NotStarted").textContent = reportCounts.Low.NotStarted;
-                document.getElementById("low-InProgress").textContent = reportCounts.Low.InProgress;
-                document.getElementById("low-Completed").textContent = reportCounts.Low.Completed;
-                document.getElementById("high-NotStarted").textContent = reportCounts.High.NotStarted;
-                document.getElementById("high-InProgress").textContent = reportCounts.High.InProgress;
-                document.getElementById("high-Completed").textContent = reportCounts.High.Completed;
-                document.getElementById("medium-NotStarted").textContent = reportCounts.Medium.NotStarted;
-                document.getElementById("medium-InProgress").textContent = reportCounts.Medium.InProgress;   document.getElementById("high-Completed").textContent = reportCounts.High.Completed;
-                document.getElementById("medium-Completed").textContent = reportCounts.Medium.Completed;                document.getElementById("medium-NotStarted").textContent = reportCounts.Medium.NotStarted;
-            }ocument.getElementById("medium-InProgress").textContent = reportCounts.Medium.InProgress;w function: Create grouped bar chart from risk summary table data
-                document.getElementById("medium-Completed").textContent = reportCounts.Medium.Completed;            function createRiskBarChart() {
-            }ReportTable');
-
-        </script>o popup -->= table.querySelectorAll('tbody tr');
-        <div id="colInfoPopup" style="
-            display: none; popup -->ls = row.querySelectorAll('td');
-        <div id="colInfoPopup" style="lls[0].innerText.trim();
-            background: #fff;otStarted = parseInt(cells[1].innerText.trim()) || 0;
-            border: 1px solid #ccc;gress = parseInt(cells[2].innerText.trim()) || 0;
-            background: #fff;
-            border-radius: 6px;
-            margin-top: 5px; /* adjust top margin as needed */; ow = [notStarted, inProgress, completed];
-            margin-bottom: 5px; /* adjust bottom margin as needed */
-            z-index: 999;  margin-top: 5px; /* adjust top margin as needed */              high = [notStarted, inProgress, completed];
-            text-align: left; /* Ensures text is always left-aligned */rgin-bottom: 5px; /* adjust bottom margin as needed */      } else if(category === "Medium") {
-        ">            z-index: 999;                        medium = [notStarted, inProgress, completed];
-            text-align: left; /* Ensures text is always left-aligned */
-
-        <!-- Re-added hidden file input for uploading risk file -->        </div>                const ctx = document.getElementById('riskBarChart').getContext('2d');
-        <input type="file" id="import-risk-file" accept=".json" style="display: none;" onchange="handleRiskFileImport(event)">
-oading risk file --> {
-        <input type="file" id="import-risk-file" accept=".json" style="display: none;" onchange="handleRiskFileImport(event)">Settings Popup -->.riskBarChartInstance.destroy();
-        <div id="residualSettingsPopup" style="
-            display: none;new Chart(ctx, {
-            position: fixed; /* Changed from absolute to fixed */
-            top: 50%; /* Center vertically */
-            position: fixed; /* Changed from absolute to fixed */ter horizontally */s: ['Not Started', 'In Progress', 'Completed'],
-            transform: translate(-50%, -50%); /* Center the popup */tically */
-            background: #fff;Center horizontally */  { label: 'Low', data: low, backgroundColor: '#27ae60' },
-            border: 1px solid #ccc;e(-50%, -50%); /* Center the popup */abel: 'Medium', data: medium, backgroundColor: '#f39c12' },
-            padding: 10px;ff;  { label: 'High', data: high, backgroundColor: '#e74c3c' }
-            border: 1px solid #ccc;er-radius: 6px;        ]
-            z-index: 1000; padding: 10px;         },
-        "></div>border-radius: 6px;        options: {
-            z-index: 1000;
-        "></div>              x: { stacked: false },
-        <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p>ain>                     y: { beginAtZero: true }
-    </footer>oter>                 }
-        <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p></body>                    }
-
-
-
-
-
-</html></body>    </footer>
-</html>                });
-            }
-
-            // Update window load event to update the report and create the chart
-            window.addEventListener("load", function() {
-                updateRiskReport();
-                createRiskBarChart();
+                risks.push(rowData);
             });
-        </script>
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(risks));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "risks.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
 
-        <!-- New column info popup -->
-        <div id="colInfoPopup" style="
-            display: none; 
-            position: absolute;
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 10px; 
-            border-radius: 6px;
-            margin-top: 5px; /* adjust top margin as needed */
-            margin-bottom: 5px; /* adjust bottom margin as needed */
-            z-index: 999;
-            text-align: left; /* Ensures text is always left-aligned */
-        ">
+        // Updated function: Save risk table progress to localStorage and update Risk Report Table
+        function saveRiskTableProgress(){
+            // Example: Collect and save risk table rows' text to localStorage
+            const riskRows = document.querySelectorAll("#riskTable tbody tr");
+            let risks = [];
+            riskRows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                let rowData = [];
+                cells.forEach(cell => rowData.push(cell.innerText.trim()));
+                risks.push(rowData);
+            });
+            localStorage.setItem("risks", JSON.stringify(risks));
+            alert("Risk table progress saved!");
+            updateRiskReport(); // <-- synchronize report table with saved content
+        }
+
+        // New: Ensure the report table is synced on page load
+        window.addEventListener("load", function() {
+            updateRiskReport();
+        });
+
+        // New helper function to update the residual risk cell from file data
+        function updateResidualRiskFromFile(row) {
+            const originalSpan = row.querySelector('.residual-value');
+            let textContent = originalSpan.textContent.trim();
+            let score = parseFloat(textContent);
+            let level;
+            if (isNaN(score)) {
+                if (["Low", "Medium", "High"].includes(textContent)) {
+                    level = textContent;
+                }
+            } else {
+                level = score <= 4 ? 'Low' : score <= 10 ? 'Medium' : 'High';
+            }
+            if (level) {
+                const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : '#dc3545';
+                const cell = originalSpan.closest('td');
+                cell.style.backgroundColor = color;
+                originalSpan.style.color = '#fff';
+                originalSpan.textContent = level;
+            }
+        }
+
+        // New helper function to create a risk row with all properties
+        function createRiskRow(data) {
+            const row = document.createElement('tr');
+            // Column 1: Checkbox
+            row.innerHTML += '<td><input type="checkbox"></td>';
+            // Column 2: ID (non-editable)
+            row.innerHTML += `<td contenteditable="false">${data[1] || ""}</td>`; // ID column
+            // Column 3: Name (editable)
+            row.innerHTML += `<td contenteditable="true">${data[2] || ""}</td>`;
+            // Column 4: Description dropdown
+            row.innerHTML += `<td>
+                <select class="description-select">
+                    <option value="" disabled>Select Description</option>
+                    <option value="Physical Injury">Physical Injury</option>
+                    <option value="Chemical Exposure">Chemical Exposure</option>
+                    <option value="Ergonomic Hazard">Ergonomic Hazard</option>
+                    <option value="Electrical Hazard">Electrical Hazard</option>
+                    <option value="Fire/Explosion">Fire/Explosion</option>
+                    <option value="Environmental Impact">Environmental Impact</option>
+                    <option value="Health Hazard">Health Hazard</option>
+                </select>
+            </td>`;
+            row.querySelector('.description-select').value = data[3] || "";
+            // Column 5: Likelihood dropdown
+            row.innerHTML += `<td>
+                <select class="likelihood-select">
+                    <option value="">Select</option>
+                    <option value="1">Very Unlikely</option>
+                    <option value="3">Unliible</option>
+                    <option value="2">Likelkely</option>
+                    <option value="4">Possy</option>
+                    <option value="5">Very Likely</option>
+                </select>
+            </td>`;
+            row.querySelector('.likelihood-select').value = data[4] || "";
+            // Column 6: Impact dropdown
+            row.innerHTML += `<td>
+                <select class="impact-select">
+                    <option value="">Select</option>
+                    <option value="1">Negligible</option>
+                    <option value="2">Minor</option>
+                    <option value="3">Moderate</option>
+                    <option value="4">Major</option>
+                    <option value="5">Catastrophic</option>
+                </select>
+            </td>`;
+            row.querySelector('.impact-select').value = data[5] || "";
+            // Column 7: Score (computed)
+            row.innerHTML += `<td class="score-cell score-column">${data[6] || ""}</td>`;
+            // Column 8: Level (computed)
+            row.innerHTML += `<td class="level-cell">${data[7] || ""}</td>`;
+            // Column 9: Strategy dropdown
+            row.innerHTML += `<td>
+                <select class="strategy-select">
+                    <option value="" disabled>Select Strategy</option>
+                    <option value="Mitigate">Mitigate</option>
+                    <option value="Transfer">Transfer</option>
+                    <option value="Avoid">Avoid</option>
+                    <option value="Accept">Accept</option>
+                </select>
+            </td>`;
+            row.querySelector('.strategy-select').value = data[8] || "";
+            // Column 10: Status dropdown
+            row.innerHTML += `<td>
+                <select>
+                    <option value="">Select</option>
+                    <option value="1">Not Started</option>
+                    <option value="2">In Progress</option>
+                    <option value="3">Completed</option>
+                </select>
+            </td>`;
+            row.querySelector('td:nth-of-type(10) select').value = data[9] || "";
+            // Column 11: Control (editable)
+            row.innerHTML += `<td contenteditable="true">${data[10] || ""}</td>`;
+            // Column 12: Responsible (editable)
+            row.innerHTML += `<td contenteditable="true">${data[11] || ""}</td>`;
+            // Column 13: Closing Date input
+            row.innerHTML += `<td><input type="date" class="date-input" value="${data[12] || ""}"></td>`;
+            // Residual Risk Level cell: removed contenteditable attribute
+            row.innerHTML += `<td>
+                <span class="residual-value">${data[13] || ""}</span>
+                <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
+            </td>`;
+            row.innerHTML += `<td>
+                <button class="edit-btn" onclick="editRow(this)"><i class="fa fa-edit"></i></button>
+                <button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>
+                <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>
+            </td>`;
+            return row;
+        }
+
+        // Updated risk file import function to add uploaded rows without erasing current content
+        function handleRiskFileImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsedData = JSON.parse(e.target.result);
+
+                    // Ensure parsedData is an array
+                    const risks = Array.isArray(parsedData) ? parsedData : [];
+                    const tbody = document.querySelector('#riskTable tbody');
+                    risks.forEach(item => {
+                        let rowData = [];
+                        if (typeof item === 'object' && !Array.isArray(item)) {
+                            rowData[1] = item.id || "";
+                            rowData[2] = item.name || "";
+                            rowData[3] = item.description || "";
+                            rowData[4] = item.likelihood || "";
+                            rowData[5] = item.impact || "";
+                            rowData[6] = item.score || "";
+                            rowData[7] = item.level || "";
+                            rowData[8] = item.strategy || "";
+                            rowData[9] = item.status || "";
+                            rowData[10] = item.control || "";
+                            rowData[11] = item.responsible || "";
+                            rowData[12] = item.closingDate || "";
+                            rowData[13] = item.residualRisk || "";  // Use property name as desired
+                        } else if (Array.isArray(item)) {
+                            rowData = item;
+                        }
+                        while (rowData.length < 14) { rowData.push(""); }
+                        const row = createRiskRow(rowData);
+                        tbody.appendChild(row);
+                        // Attach listeners to recalc score when dropdowns change
+                        row.querySelector('.likelihood-select').addEventListener('change', () => computeScoreAndRisk(row));
+                        row.querySelector('.impact-select').addEventListener('change', () => computeScoreAndRisk(row));
+                        // Set likelihood and impact based on score and level
+                        setLikelihoodAndImpact(row);
+                        // Apply color code on the level cell
+                        applyColorCode(row);
+                        // Update residual risk cell using file content
+                        updateResidualRiskFromFile(row);
+                    });
+                    alert("Risk file imported successfully!");
+                } catch (error) {
+                    console.error("Error importing risk file:", error);
+                    alert("Failed to import risk file. Ensure it is valid JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // New function to set likelihood and impact based on score and level
+        function setLikelihoodAndImpact(row) {
+            const score = parseFloat(row.querySelector('.score-cell').textContent) || 0;
+            const level = row.querySelector('.level-cell').textContent.trim();
+            const likelihoodSelect = row.querySelector('.likelihood-select');
+            const impactSelect = row.querySelector('.impact-select');
+
+            if (level === 'High') {
+                likelihoodSelect.value = score >= 16 ? '5' : '4';
+                impactSelect.value = score >= 16 ? '4' : '3';
+            } else if (level === 'Medium') {
+                likelihoodSelect.value = score >= 8 ? '3' : '2';
+                impactSelect.value = score >= 8 ? '3' : '2';
+            } else if (level === 'Low') {
+                likelihoodSelect.value = score <= 4 ? '1' : '2';
+                impactSelect.value = score <= 4 ? '1' : '2';
+            }
+        }
+
+        // New function to apply color code based on score
+        function applyColorCode(row) {
+            const score = parseFloat(row.querySelector('.score-cell').textContent) || 0;
+            const levelCell = row.querySelector('.level-cell');
+            let color = '';
+            if (score <= 4) {
+                color = '#28a745'; // green
+            } else if (score <= 10) {
+                color = '#ffc107'; // yellow
+            } else {
+                color = '#dc3545'; // red
+            }
+            levelCell.style.backgroundColor = color;
+            levelCell.style.color = '#fff';
+        }
+
+        // Function to export table to Word
+        function exportTableToWord(tableID, filename = '') {
+            const table = document.getElementById(tableID);
+            const html = table.outerHTML.replace(/ /g, '%20');
+            const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            const downloadLink = document.createElement('a');
+            document.body.appendChild(downloadLink);
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // Function to export table to Excel
+        function exportTableToExcel(tableID, filename = '') {
+            const table = document.getElementById(tableID);
+            const html = table.outerHTML.replace(/ /g, '%20');
+            const url = 'data:application/vnd.ms-excel;charset=utf-8,' + encodeURIComponent(html);
+            const downloadLink = document.createElement('a');
+            document.body.appendChild(downloadLink);
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        // NEW: Export table + chart(s) to Word - always in A4 landscape and ensure risk table fits in one page, even during editing
+        function exportTableAndChartsToWord(tableID, filename = 'RiskAssessmentReport.doc') {
+            // Get chart canvases for Level (pie chart) and Status (bar chart)
+            const riskStatusCanvas = document.getElementById('riskStatusChart');
+            const riskLevelCanvas  = document.getElementById('riskLevelChart');
+            let riskStatusImg = '', riskLevelImg = '';
+            if (riskStatusCanvas && riskStatusCanvas.toDataURL) {
+                riskStatusImg = `<img src="${riskStatusCanvas.toDataURL()}" alt="Risk Status Bar Chart" />`;
+            }
+            if (riskLevelCanvas && riskLevelCanvas.toDataURL) {
+                riskLevelImg = `<img src="${riskLevelCanvas.toDataURL()}" alt="Risk Level Pie Chart" />`;
+            }
+            // Get the Risk Report Table HTML only
+            const riskReportTable = document.getElementById('riskReportTable');
+            const reportHtml = riskReportTable ? riskReportTable.outerHTML : '';
+            // New: Query risk rows and build custom table with 8 columns (added Residual Risk column)
+            let riskRows = document.querySelectorAll("#riskTable tbody tr");
+            let customTableHtml = '<table class="custom-report-table" style="width:100%; border-collapse: collapse; margin-top:20px;">';
+            customTableHtml += '<thead><tr><th style="border:1px solid #ddd; padding:8px;">Risk ID</th><th style="border:1px solid #ddd; padding:8px;">Risk Name</th><th style="border:1px solid #ddd; padding:8px;">Risk Level</th><th style="border:1px solid #ddd; padding:8px;">Strategy</th><th style="border:1px solid #ddd; padding:8px;">Control</th><th style="border:1px solid #ddd; padding:8px;">Deadline</th><th style="border:1px solid #ddd; padding:8px;">Owner</th><th style="border:1px solid #ddd; padding:8px;">Residual Risk</th></tr></thead><tbody>';
+            riskRows.forEach(row => {
+                const cells = row.querySelectorAll("td");
+                let riskID = cells[1].innerText.trim();
+                let riskName = cells[2].innerText.trim();
+                let riskLevel = cells[7].innerText.trim();
+                let strategy = cells[8].innerText.trim();
+                let control = cells[10].innerText.trim();
+                let deadline = (cells[12].querySelector('input[type="date"]')) ? cells[12].querySelector('input[type="date"]').value : '';
+                let owner = cells[11].innerText.trim();
+                let residual = cells[13].innerText.trim();
+                if(riskID || riskName) {
+                    customTableHtml += `<tr>
+                        <td style="border:1px solid #ddd; padding:8px;">${riskID}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${riskName}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${riskLevel}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${strategy}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${control}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${deadline}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${owner}</td>
+                        <td style="border:1px solid #ddd; padding:8px;">${residual}</td>
+                    </tr>`;
+                }
+            });
+            customTableHtml += '</tbody></table>';
+            // New: Get current date and set report title
+            const currentDate = new Date().toLocaleDateString();
+            const reportTitle = "Risk Assessment Report";
+            // Build a stunning HTML report with modern design
+            const htmlContent = `
+                <html>
+                <head>
+                  <meta charset="UTF-8">
+                  <title>${reportTitle}</title>
+                  <style>
+                    @page {
+                      size: A4 landscape;
+                    }
+                    body {
+                      margin: 2px;
+                      padding: 2px;
+                      text-align: left;
+                      font-family: 'Segoe UI', sans-serif;
+                      background-color: #f4f4f4;
+                    }
+                    .report-container {
+                      max-width: 1400px;
+                      margin: auto;
+                      background: #fff;
+                      padding: 10px;
+                      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    }
+                    .report-header {
+                      text-align: center;
+                      border-bottom: 2px solid #34495e;
+                      margin-bottom: 10px;
+                    }
+                    .report-header h1 {
+                      margin: 0;
+                      font-size: 20px;
+                      color: #2c3e50;
+                    }
+                    .report-header p {
+                      margin: 5px 0;
+                      font-size: 12px;
+                      color: #7f8c8d;
+                    }
+                    .charts-section {
+                      display: flex;
+                      flex-wrap: wrap;
+                      justify-content: space-around;
+                      margin-bottom: 6px;
+                    }
+                    .chart {
+                      flex: 1 1 45%;
+                      margin: 10px;
+                      text-align: left;
+                    }
+                    .chart h2 {
+                      font-size: 12px;
+                      color: #2c3e50;
+                      margin-bottom: 10px;
+                    }
+                    .chart img {
+                      max-width: 70%;
+                      border: 1px solid #ccc;
+                      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    }
+                    .report-content h2 {
+                      text-align: left;
+                      color: #2c3e50;
+                      margin-bottom: 6px;
+                    }
+                    .report-table, .custom-report-table {
+                      width: 120%;
+                      border-collapse: collapse;
+                    }
+                    .report-table th, .report-table td, .custom-report-table th, .custom-report-table td {
+                      padding: 6px;
+                      border: 1px solid #ddd;
+                      font-size: 12px;
+                    }
+                    .report-table th, .custom-report-table th {
+                      background: #ecf0f1;
+                    }
+                    .report-footer {
+                      text-align: left;
+                      margin-top: 8px;
+                      font-size: 12px;
+                      color: #95a5a6;
+                      border-top: 1px solid #ddd;
+                      padding-top: 8px;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="report-container">
+                    <div class="report-header">
+                      <h1>${reportTitle}</h1>
+                      <p>Date: ${currentDate}</p>
+                      <p>Exported from Risk Assessment Dashboard</p>
+                    </div>
+                    <div class="charts-section">
+                      <div class="chart">
+                        <h2>Risk Level Distribution</h2>
+                        ${riskLevelImg}
+                      </div>
+                      <div class="chart">
+                        <h2>Risk Status Distribution</h2>
+                        ${riskStatusImg}
+                      </div>
+                    </div>
+                    <div class="report-content">
+                      <h2>Risk Report</h2>
+                      ${reportHtml}
+                      <h2 style="margin-top:30px;">Custom Risk Summary</h2>
+                      ${customTableHtml}
+                    </div>
+                    <div class="report-footer">
+                      <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p>
+                    </div>
+                  </div>
+                </body>
+                </html>
+            `;
+            const blob = new Blob([htmlContent], { type: 'application/msword;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+        }
+
+        // New function to show the Residual Risk Settings popup
+        function showResidualSettings(btn) {
+            let targetCell = btn.closest('td');
+            window.currentResidualCell = targetCell; // store for update
+            let popup = document.getElementById('residualSettingsPopup');
+            
+            // Determine pop-up option sets based on currentMatrixSize.
+            let likelihoodOpts, impactOpts;
+            if (currentMatrixSize === '3x3') {
+                likelihoodOpts = likelihoodOptions3;
+                impactOpts = likelihoodOptions3;
+            } else if (currentMatrixSize === '7x7') {
+                likelihoodOpts = likelihoodOptions7;
+                impactOpts = likelihoodOptions7;
+            } else {  // default 5x5
+                likelihoodOpts = likelihoodOptions5;
+                impactOpts = likelihoodOptions5;
+            }
+            
+            popup.innerHTML = `
+                    <span class="dropdown-popup-settings" style="position: relative; display: inline-block;">
+                        <button onclick="event.stopPropagation(); togglePopupMatrixDropdown(event)" style="background:none; border:none; cursor:pointer;">⚙️</button>
+                        <div class="dropdown-content-popup" style="display:none; position:absolute; right:0; background:#fff; border:1px solid #ccc; z-index:1100;">
+                            <a href="#" onclick="setPopupMatrixSize('5x5'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">5x5 Matrix</a>
+                            <a href="#" onclick="setPopupMatrixSize('3x3'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">3x3 Matrix</a>
+                            <a href="#" onclick="setPopupMatrixSize('7x7'); return false;" style="display:block; padding:5px 10px; text-decoration:none; color:#333;">7x7 Matrix</a>
+                        </div>
+                    </span>
+                </div>
+                <select id="residual-likelihood">
+                    ${likelihoodOpts}
+                </select>
+                <select id="residual-impact" style="margin-top: 10px;">
+                    ${impactOpts}
+                </select>
+                <div id="residualPreview">Score: 1</div>
+                <div style="display:flex; justify-content:space-between;">
+                    <button class="apply-btn" onclick="updateResidualSettings()">Apply</button>
+                    <button class="cancel-btn" onclick="this.parentElement.parentElement.style.display='none'">Cancel</button>
+                </div>
+            `;
+            // Attach live preview listeners and initialize preview
+            document.getElementById('residual-likelihood').addEventListener('change', updateResidualPreview);
+            document.getElementById('residual-impact').addEventListener('change', updateResidualPreview);
+            updateResidualPreview();
+            popup.style.display = 'block';
+        }
+
+        // NEW: Function to toggle the pop-up's matrix dropdown
+        function togglePopupMatrixDropdown(event) {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            const dropdown = btn.nextElementSibling;
+            dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // NEW: Function to update pop-up selects based on matrix selected in pop-up dropdown
+        function setPopupMatrixSize(matrix) {
+            currentMatrixSize = matrix;
+            // Update pop-up residual selects based on new matrix.
+            let likelihoodOpts, impactOpts;
+            if (currentMatrixSize === '3x3') {
+                likelihoodOpts = likelihoodOptions3;
+                impactOpts = likelihoodOptions3;
+            } else if (currentMatrixSize === '7x7') {
+                likelihoodOpts = likelihoodOptions7;
+                impactOpts = likelihoodOptions7;
+            } else {
+                likelihoodOpts = likelihoodOptions5;
+                impactOpts = likelihoodOptions5;
+            }
+            document.getElementById('residual-likelihood').innerHTML = likelihoodOpts;
+            document.getElementById('residual-impact').innerHTML = impactOpts;
+            // Also update the header matrix dropdown (if needed) via updateMatrixOptions()
+            updateMatrixOptions();
+            // Close pop-up dropdown
+            const dropdown = document.querySelector('.dropdown-content-popup');
+            dropdown.style.display = 'none';
+        }
+
+        // New helper: Update the preview area inside the pop up
+        function updateResidualPreview() {
+            let likelihood = parseFloat(document.getElementById('residual-likelihood').value);
+            let impact = parseFloat(document.getElementById('residual-impact').value);
+            let score = likelihood * impact;
+            let color = '';
+            if(score <= 4) {
+                color = '#28a745';
+            } else if(score <= 10) {
+                color = '#ffc107';
+            } else {
+                color = '#dc3545';
+            }
+            const preview = document.getElementById('residualPreview');
+            preview.textContent = `Score: ${score}`;
+            preview.style.backgroundColor = color;
+        }
+
+        // Updated function: Apply settings from the popup to the residual risk cell
+        function updateResidualSettings() {
+            const likelihood = parseFloat(document.getElementById('residual-likelihood').value);
+            const impact = parseFloat(document.getElementById('residual-impact').value);
+            const score = likelihood * impact;
+            const level = score <= 4 ? 'Low' : score <= 10 ? 'Medium' : 'High';
+            const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : '#dc3545';
+            if(window.currentResidualCell) {
+                window.currentResidualCell.style.backgroundColor = color;
+                let origSpan = window.currentResidualCell.querySelector('.residual-value');
+                if(origSpan) {
+                    origSpan.textContent = `${level}`;
+                    origSpan.style.color = '#fff';
+                }
+            }
+            document.getElementById('residualSettingsPopup').style.display = 'none';
+        }
+
+        // NEW: Function to show header residual settings popup
+        function showResidualSettingsHeader() {
+            let popup = document.getElementById('residualSettingsPopup');
+            popup.innerHTML = `
+                <h4>Set Residual Risk Header Settings</h4>
+                <p>Configure header-specific settings here.</p>
+                <div style="display:flex; justify-content:space-between;">
+                    <button class="apply-btn" onclick="popup.style.display='none'">Apply</button>
+                    <button class="cancel-btn" onclick="popup.style.display='none'">Cancel</button>
+                </div>
+            `;
+            popup.style.display = 'block';
+        }
+
+        // NEW: Update currentMatrixSize via the dropdown selection
+        function setMatrixSize(matrix) {
+            currentMatrixSize = matrix;
+            updateMatrixOptions();
+            // Close the dropdown
+            const dropdown = document.querySelector('.dropdown-content-header');
+            dropdown.style.display = 'none';
+        }
+
+        // Optional: Hide dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.querySelector('.dropdown-content-header');
+            if (dropdown && dropdown.style.display === 'block') {
+                dropdown.style.display = 'none';
+            }
+        });
+
+        function toggleMatrixDropdown(event) {
+            event.stopPropagation();
+            const btn = event.currentTarget;
+            const dropdown = btn.nextElementSibling;
+            dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+        }
+
+        // New function to update the Risk Report Table dynamically
+        function updateRiskReport() {
+            // Initialize counts for each risk level and status
+            const reportCounts = {
+                Low:    { NotStarted: 0, InProgress: 0, Completed: 0 },
+                High:   { NotStarted: 0, InProgress: 0, Completed: 0 },
+                Medium: { NotStarted: 0, InProgress: 0, Completed: 0 }
+            };
+            
+            // Iterate over risk table rows
+            document.querySelectorAll('#riskTable tbody tr').forEach(row => {
+                const levelText = row.cells[7].textContent.trim();
+                // Get status text from the select element (if exists)
+                let statusText = '';
+                const statusCellSelect = row.cells[9].querySelector('select');
+                if(statusCellSelect) {
+                    statusText = statusCellSelect.selectedOptions[0].textContent.trim();
+                } else {
+                    statusText = row.cells[9].textContent.trim();
+                }
+                // Normalize status text to match our keys: "Not Started", "In Progress", "Completed"
+                if (statusText === "Not Started" || statusText === "NotStarted") {
+                    statusText = "NotStarted";
+                } else if (statusText === "In Progress") {
+                    statusText = "InProgress";
+                } else if (statusText === "Completed") {
+                    statusText = "Completed";
+                }
+                // Only update if level is one of our keys
+                if(reportCounts[levelText] && reportCounts[levelText][statusText] !== undefined) {
+                    reportCounts[levelText][statusText]++;
+                }
+            });
+            
+            // Update the report table cells
+            document.getElementById("low-NotStarted").textContent = reportCounts.Low.NotStarted;
+            document.getElementById("low-InProgress").textContent = reportCounts.Low.InProgress;
+            document.getElementById("low-Completed").textContent = reportCounts.Low.Completed;
+            document.getElementById("high-NotStarted").textContent = reportCounts.High.NotStarted;
+            document.getElementById("high-InProgress").textContent = reportCounts.High.InProgress;
+            document.getElementById("high-Completed").textContent = reportCounts.High.Completed;
+            document.getElementById("medium-NotStarted").textContent = reportCounts.Medium.NotStarted;
+            document.getElementById("medium-InProgress").textContent = reportCounts.Medium.InProgress;
+            document.getElementById("medium-Completed").textContent = reportCounts.Medium.Completed;
+        }
+
+    </script>
+
+    <!-- New column info popup -->
+    <div id="colInfoPopup" style="
+        display: none; 
+        position: absolute;
+        background: #fff;
+        border: 1px solid #ccc;
+        padding: 10px; 
+        border-radius: 6px;
+        margin-top: 5px; /* adjust top margin as needed */
+        margin-bottom: 5px; /* adjust bottom margin as needed */
+        z-index: 999;
+        text-align: left; /* Ensures text is always left-aligned */
+    ">
+    </div>
+
+    <!-- Re-added hidden file input for uploading risk file -->
+    <input type="file" id="import-risk-file" accept=".json" style="display: none;" onchange="handleRiskFileImport(event)">
+
+    <!-- New Residual Settings Popup -->
+    <div id="residualSettingsPopup" style="
+        display: none;
+        position: fixed; /* Changed from absolute to fixed */
+        top: 50%; /* Center vertically */
+        left: 50%; /* Center horizontally */
+        transform: translate(-50%, -50%); /* Center the popup */
+        background: #fff;
+        border: 1px solid #ccc;
+        padding: 10px;
+        border-radius: 6px;
+        z-index: 1000;
+    "></div>
+
+    <div id="reportContainer" style="margin: 10px 10px 20px 10px; display: flex; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px; overflow-x:auto;">
+            <!-- Risk Summary Report Table -->
+            <table id="riskReportTable" style="width:100%; height: 200px; margin: 0; border-collapse:collapse; background:#fff; box-shadow:0 4px 8px rgba(0,0,0,0.1); overflow:hidden; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size:10px; border-radius:0;">
+                <thead style="background: linear-gradient(90deg, #2980b9, #2c3e50); color: #fff;">
+                    <tr>
+                        <th style="padding: 12px; text-align: left;">Risk Level</th>
+                        <th style="padding: 12px; text-align: center;">Not Started</th>
+                        <th style="padding: 12px; text-align: center;">In Progress</th>
+                        <th style="padding: 12px; text-align: center;">Completed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #f2f2f2;">
+                        <td style="padding: 12px; font-weight: bold; color: #27ae60;">Low</td>
+                        <td id="low-NotStarted" style="padding: 12px; text-align: center;">0</td>
+                        <td id="low-InProgress" style="padding: 12px; text-align: center;">0</td>
+                        <td id="low-Completed" style="padding: 12px; text-align: center;">0</td>
+                    </tr>
+                    <tr style="background: #f9f9f9; border-bottom: 1px solid #f2f2f2;">
+                        <td style="padding: 12px; font-weight: bold; color: #e74c3c;">High</td>
+                        <td id="high-NotStarted" style="padding: 12px; text-align: center;">0</td>
+                        <td id="high-InProgress" style="padding: 12px; text-align: center;">0</td>
+                        <td id="high-Completed" style="padding: 12px; text-align: center;">0</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; font-weight: bold; color: #f39c12;">Medium</td>
+                        <td id="medium-NotStarted" style="padding: 12px; text-align: center;">0</td>
+                        <td id="medium-InProgress" style="padding: 12px; text-align: center;">0</td>
+                        <td id="medium-Completed" style="padding: 12px; text-align: center;">0</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
+        <div style="flex: 1; min-width: 300px; padding-left: 20px;">
+            <!-- New Canvas for Risk Status Chart -->
+            <canvas id="riskStatusChart" width="200" height="200"></canvas>
+        </div>
+    </div>
+    <!-- Load Chart.js Library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      // Example rendering code for horizontal bar chart of risk statuses
+      function renderRiskStatusChart() {
+        const ctx = document.getElementById('riskStatusChart').getContext('2d');
+        // Sample data: adjust this to dynamically compute counts from your risk table if desired.
+        const labels = ['Not Started', 'In Progress', 'Completed'];
+        const dataValues = [5, 3, 2];
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: labels,
+            datasets: [{
+              label: 'Risk Status Count',
+              data: dataValues,
+              backgroundColor: 'rgba(54, 162, 235, 0.7)',
+              borderWidth: 1
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            scales: {
+              x: { beginAtZero: true }
+            },
+            maintainAspectRatio: false // Ensure the chart fits the container
+          }
+        });
+      }
+      
+      window.addEventListener('load', function() {
+        renderRiskStatusChart();
+      });
+    </script>
 
-        <!-- Re-added hidden file input for uploading risk file -->
-        <input type="file" id="import-risk-file" accept=".json" style="display: none;" onchange="handleRiskFileImport(event)">
-
-        <!-- New Residual Settings Popup -->
-        <div id="residualSettingsPopup" style="
-            display: none;
-            position: fixed; /* Changed from absolute to fixed */
-            top: 50%; /* Center vertically */
-            left: 50%; /* Center horizontally */
-            transform: translate(-50%, -50%); /* Center the popup */
-            background: #fff;
-            border: 1px solid #ccc;
-            padding: 10px;
-            border-radius: 6px;
-            z-index: 1000;
-        "></div>
-    </main>
-    <footer>
-        <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p>
-    </footer>
 </body>
 </html>
