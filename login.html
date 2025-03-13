@@ -191,6 +191,36 @@
             color: white;
             transition: all 0.3s ease;
         }
+
+        /* Add styling for enhanced error messages with HTML */
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: left;
+            display: none;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .error-message ol {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding-left: 20px;
+        }
+        
+        .error-message a {
+            color: #3498db;
+            text-decoration: underline;
+        }
+        
+        .error-message small {
+            color: #7f8c8d;
+            font-style: italic;
+            display: block;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -321,21 +351,23 @@
             const loginError = document.getElementById("login-error");
             loginError.style.display = "none";
             
+            // Check the current domain against Firebase's authorized domains
+            const currentDomain = window.location.hostname;
+            
+            // Log domain information for debugging
+            console.log("Current domain:", currentDomain);
+            console.log("Current origin:", window.location.origin);
+            
             try {
                 // Configure Google provider with improved settings
                 googleProvider.setCustomParameters({
                     prompt: 'select_account', // Force account selection every time
-                    login_hint: document.getElementById('login-email').value || '', // Pre-fill with email if entered
-                    // Enable cross-platform sign-in
-                    ux_mode: 'popup'
+                    login_hint: document.getElementById('login-email').value || ''
                 });
                 
-                // Always request these scopes
+                // Request scopes
                 googleProvider.addScope('profile');
                 googleProvider.addScope('email');
-                
-                // Display detailed diagnostic info in the console
-                console.log("Starting Google authentication flow...");
                 
                 signInWithPopup(auth, googleProvider)
                     .then((result) => {
@@ -386,16 +418,24 @@
                                 errorMessage = "Google sign-in is not enabled. Please contact the administrator.";
                                 break;
                             case "auth/unauthorized-domain":
-                                errorMessage = "This domain is not authorized for OAuth operations. Please contact the administrator.";
-                                console.error("Unauthorized domain. Check Firebase console OAuth settings!");
+                                errorMessage = `This domain "${currentDomain}" is not authorized for OAuth operations. To fix this:
+                                    <ol>
+                                        <li>Go to the <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></li>
+                                        <li>Select your project</li>
+                                        <li>Go to Authentication > Sign-in method</li>
+                                        <li>Scroll down to "Authorized domains"</li>
+                                        <li>Add "${currentDomain}" to the list</li>
+                                    </ol>
+                                    <small>If you're testing locally, try using "localhost" instead of "127.0.0.1" or vice versa, or add both to authorized domains.</small>`;
+                                console.error(`Unauthorized domain: ${currentDomain}. Check Firebase console OAuth settings!`);
                                 break;
                             case "auth/internal-error":
                                 errorMessage = "Authentication server error. Please try again later.";
                                 break;
                         }
                         
-                        // Show the error to the user
-                        loginError.textContent = errorMessage;
+                        // Show the error to the user - allow HTML for the unauthorized domain error
+                        loginError.innerHTML = errorMessage;
                         loginError.style.display = "block";
                         
                         // Reset button
