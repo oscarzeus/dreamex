@@ -387,7 +387,19 @@
         .menu-bar ul li {
             margin: 0 10px;
         }
-        /* ...existing CSS... */
+        
+        /* New rule to shift all right menu items 40px to the left */
+        .menu-right {
+            transform: translateX(-40px);
+        }
+        
+        /* Ensure all menu bar items are aligned vertically on the same horizontal axis */
+        .menu-bar ul li {
+            display: flex;
+            align-items: center;
+            /* Remove unnecessary margins if needed */
+            margin: 0 10px;
+        }
         
         /* New CSS rules for Delete Risk Button */
         #delete-selected-btn {
@@ -724,54 +736,1035 @@
         footer {
             display: none;
         }
+        
+        /* User Avatar Styles */
+        .user-avatar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 10px;
+            min-width: 150px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .user-avatar-container:hover .user-dropdown {
+            display: block;
+        }
+        
+        .user-dropdown .user-email {
+            padding: 5px 0;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .user-dropdown a {
+            display: block;
+            padding: 5px 0;
+            color: #34495e;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+        
+        .user-dropdown a:hover {
+            color: #e74c3c;
+        }
     </style>
+    <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove, update, push, get } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+        authDomain: "users-8be65.firebaseapp.com",
+        databaseURL: "https://users-8be65-default-rtdb.firebaseio.com", // Added databaseURL
+        projectId: "users-8be65",
+        storageBucket: "users-8be65.firebasestorage.app",
+        messagingSenderId: "829083030831",
+        appId: "1:829083030831:web:36a370e62691e560bc3dda"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Make these functions available globally
+    window.db = db;
+    window.addRiskToDatabase = addRiskToDatabase;
+    window.updateRiskInDatabase = updateRiskInDatabase;
+    window.deleteRiskFromDatabase = deleteRiskFromDatabase;
+    window.loadRisksFromDatabase = loadRisksFromDatabase;
+
+    // Function to add or update a risk in the database - with duplicate prevention
+    function addRiskToDatabase(risk) {
+        // First check if risk with this ID already exists
+        const riskRef = ref(db, 'risks/' + risk.id);
+        
+        return get(riskRef).then((snapshot) => {
+            if (snapshot.exists()) {
+                console.log(`Risk with ID ${risk.id} already exists. Updating instead of creating.`);
+                return update(ref(db, 'risks/' + risk.id), risk);
+            } else {
+                // Save the risk to Firebase with its unique ID
+                return set(ref(db, 'risks/' + risk.id), risk);
+            }
+        });
+    }
+
+    // Function to update a risk in the database
+    function updateRiskInDatabase(risk) {
+        // Update the risk in Firebase using its ID
+        return update(ref(db, 'risks/' + risk.id), risk);
+    }
+
+    // Function to delete a risk from the database
+    function deleteRiskFromDatabase(riskId) {
+        const riskRef = ref(db, 'risks/' + riskId);
+        return remove(riskRef);
+    }
+
+    // Function to load risks from the database
+    function loadRisksFromDatabase() {
+        const risksRef = ref(db, 'risks');
+        let displayedRiskIds = new Set(); // Track displayed risk IDs
+        
+        onValue(risksRef, (snapshot) => {
+            const tbody = document.querySelector('#riskTable tbody');
+            tbody.innerHTML = ''; // Clear existing rows
+            displayedRiskIds.clear(); // Reset tracking set
+            
+            const data = snapshot.val();
+            if (data) {
+                // Sort the risks by creation time (assuming ID contains timestamp)
+                const sortedRisks = Object.values(data).sort((a, b) => {
+                    // Extract timestamp from ID if possible, otherwise compare IDs
+                    const getTimestamp = id => {
+                        const match = id.match(/RISK(\d+)/);
+                        return match ? parseInt(match[1]) : 0;
+                    };
+                    return getTimestamp(b.id) - getTimestamp(a.id);
+                });
+                
+                sortedRisks.forEach(risk => {
+                    // Skip if we've already displayed this risk
+                    if (displayedRiskIds.has(risk.id)) {
+                        console.warn(`Duplicate risk ID detected and skipped: ${risk.id}`);
+                        return;
+                    }
+                    
+                    // Create and add the row
+                    const row = createRiskRowFromData(risk);
+                    attachRowEventListeners(row);
+                    tbody.appendChild(row);
+                    
+                    // Track this risk ID
+                    displayedRiskIds.add(risk.id);
+                });
+            }
+            
+            // Update risk reports and charts after loading data
+            updateRiskReport();
+            renderRiskDescriptionChart();
+            renderFixedDescriptionChart();
+            
+            // Dispatch custom event for other scripts to know risks were loaded
+            window.dispatchEvent(new CustomEvent('risksLoaded'));
+        });
+    }
+
+    // Helper function to create a row from risk data - ensure data-risk-id is always set
+    function createRiskRowFromData(risk) {
+        const row = document.createElement('tr');
+        
+        // Ensure we have a valid ID and set the data attribute
+        if (!risk.id) {
+            console.warn('Risk is missing ID, generating one');
+            risk.id = "RISK" + Date.now() + "-" + Math.floor(Math.random() * 1000);
+        }
+        
+        row.setAttribute('data-risk-id', risk.id);
+        
+        // Add checkbox cell
+        row.innerHTML = `<td><input type="checkbox"></td>`;
+        
+        // Add ID cell (non-editable)
+        row.innerHTML += `<td contenteditable="false">${risk.id || ""}</td>`;
+        
+        // Add name cell (editable)
+        row.innerHTML += `<td contenteditable="true">${risk.name || ""}</td>`;
+        
+        // Add description dropdown
+        row.innerHTML += `<td>
+            <select class="description-select">
+                <option value="" disabled selected>Select Description</option>
+                <option value="Strategic">Strategic</option>
+                <option value="Operational">Operational</option>
+                <option value="Financial">Financial</option>
+                <option value="Compliance & Regulatory">Compliance & Regulatory</option>
+                <option value="Reputational & Brand">Reputational & Brand</option>
+                <option value="Environmental, Health & Safety">Environmental, Health & Safety</option>
+                <option value="Cybersecurity & Technology">Cybersecurity & Technology</option>
+                <option value="Supply Chain & Logistics">Supply Chain & Logistics</option>
+                <option value="Social & Ethical">Social & Ethical</option>
+            </select>
+        </td>`;
+        
+        // Add likelihood dropdown
+        row.innerHTML += `<td>
+            <select class="likelihood-select">
+                ${getLikelihoodOptions()}
+            </select>
+        </td>`;
+        
+        // Add impact dropdown
+        row.innerHTML += `<td>
+            <select class="impact-select">
+                ${getImpactOptions()}
+            </select>
+        </td>`;
+        
+        // Add score cell
+        row.innerHTML += `<td class="score-cell score-column">${risk.score || ""}</td>`;
+        
+        // Add level cell
+        row.innerHTML += `<td class="level-cell">${risk.level || ""}</td>`;
+        
+        // Add strategy dropdown
+        row.innerHTML += `<td>
+            <select class="strategy-select">
+                <option value="" disabled selected>Select Strategy</option>
+                <option value="Mitigate">Mitigate</option>
+                <option value="Transfer">Transfer</option>
+                <option value="Avoid">Avoid</option>
+                <option value="Accept">Accept</option>
+            </select>
+        </td>`;
+        
+        // Add status dropdown
+        row.innerHTML += `<td>
+            <select>
+                <option value="">Select</option>
+                <option value="1">Not Started</option>
+                <option value="2">In Progress</option>
+                <option value="3">Completed</option>
+            </select>
+        </td>`;
+        
+        // Add control cell
+        row.innerHTML += `<td contenteditable="true">${risk.control || ""}</td>`;
+        
+        // Add responsible cell
+        row.innerHTML += `<td contenteditable="true">${risk.responsible || ""}</td>`;
+        
+        // Add closing date cell
+        row.innerHTML += `<td><input type="date" class="date-input" value="${risk.closingDate || ""}"></td>`;
+        
+        // Add residual risk cell
+        row.innerHTML += `<td>
+            <span class="residual-value">${risk.residualRisk || ""}</span>
+            <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
+        </td>`;
+        
+        // Add action buttons
+        row.innerHTML += `<td>
+            <button class="edit-btn" onclick="editRow(this)"><i class="fa fa-edit"></i></button>
+            <button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>
+            <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>
+        </td>`;
+        
+        // Set values for dropdowns
+        if (risk.description) row.querySelector('.description-select').value = risk.description;
+        if (risk.likelihood) row.querySelector('.likelihood-select').value = risk.likelihood;
+        if (risk.impact) row.querySelector('.impact-select').value = risk.impact;
+        if (risk.strategy) row.querySelector('.strategy-select').value = risk.strategy;
+        if (risk.status) row.querySelector('td:nth-of-type(10) select').value = risk.status;
+        
+        // Apply color coding to level cell
+        if (risk.level) {
+            const levelCell = row.querySelector('.level-cell');
+            let color = '';
+            if (risk.level === 'Low') {
+                color = '#28a745'; // green
+            } else if (risk.level === 'Medium') {
+                color = '#ffc107'; // yellow
+            } else if (risk.level === 'High') {
+                color = '#dc3545'; // red
+            }
+            levelCell.style.backgroundColor = color;
+            levelCell.style.color = '#fff';
+        }
+        
+        // Apply color coding to residual risk if it exists
+        if (risk.residualRisk) {
+            const residualSpan = row.querySelector('.residual-value');
+            let color = '';
+            if (risk.residualRisk === 'Low') {
+                color = '#28a745'; // green
+            } else if (risk.residualRisk === 'Medium') {
+                color = '#ffc107'; // yellow;
+            } else if (risk.residualRisk === 'High') {
+                color = '#dc3545'; // red
+            }
+            residualSpan.closest('td').style.backgroundColor = color;
+            residualSpan.style.color = '#fff';
+        }
+        
+        return row;
+    }
+
+    // Helper function to attach event listeners to a row - needs enhancement
+    function attachRowEventListeners(row) {
+        // Existing listeners
+        row.querySelector('.likelihood-select').addEventListener('change', function() {
+            computeScoreAndRisk(row);
+        });
+        row.querySelector('.impact-select').addEventListener('change', function() {
+            computeScoreAndRisk(row);
+        });
+        row.querySelector('.description-select').addEventListener('change', function() {
+            renderRiskDescriptionChart();
+            updateRiskInFirebase(row); // Add Firebase update
+        });
+        
+        // NEW: Add listeners to other select elements
+        row.querySelector('.strategy-select').addEventListener('change', function() {
+            updateRiskInFirebase(row);
+        });
+        
+        row.querySelector('td:nth-of-type(10) select').addEventListener('change', function() {
+            updateRiskInFirebase(row);
+        });
+        
+        // NEW: Add listener to date input
+        row.querySelector('input[type="date"]').addEventListener('change', function() {
+            updateRiskInFirebase(row);
+        });
+        
+        // NEW: Add listeners to contenteditable cells for blur events
+        row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+            cell.addEventListener('blur', function() {
+                updateRiskInFirebase(row);
+            });
+        });
+    }
+
+    // NEW: Helper function to update a risk in Firebase from row data
+    function updateRiskInFirebase(row) {
+        const riskId = row.getAttribute('data-risk-id') || row.cells[1].innerText.trim();
+        if (riskId) {
+            const risk = window.getRiskFromRow(row);
+            window.updateRiskInDatabase(risk)
+                .then(() => {
+                    console.log(`Risk ${risk.id} updated in Firebase`);
+                })
+                .catch(error => {
+                    console.error('Error updating risk in Firebase:', error);
+                });
+        }
+    }
+
+    // Helper function to get likelihood options based on current matrix size
+    function getLikelihoodOptions() {
+        if (currentMatrixSize === '3x3') {
+            return likelihoodOptions3;
+        } else if (currentMatrixSize === '7x7') {
+            return likelihoodOptions7;
+        } else {
+            return likelihoodOptions5;
+        }
+    }
+    
+    // Helper function to get impact options based on current matrix size
+    function getImpactOptions() {
+        if (currentMatrixSize === '3x3') {
+            return impactOptions3;
+        } else if (currentMatrixSize === '7x7') {
+            return impactOptions7;
+        } else {
+            return impactOptions5;
+        }
+    }
+
+    // Function to extract risk data from a row
+    function getRiskFromRow(row) {
+        return {
+            id: row.getAttribute('data-risk-id') || row.cells[1].innerText.trim(),
+            name: row.cells[2].innerText.trim(),
+            description: row.querySelector('.description-select')?.value || "",
+            likelihood: row.querySelector('.likelihood-select')?.value || "",
+            impact: row.querySelector('.impact-select')?.value || "",
+            score: row.querySelector('.score-cell')?.innerText.trim() || "",
+            level: row.querySelector('.level-cell')?.innerText.trim() || "",
+            strategy: row.querySelector('.strategy-select')?.value || "",
+            status: row.querySelector('td:nth-of-type(10) select')?.value || "",
+            control: row.cells[10].innerText.trim(),
+            responsible: row.cells[11].innerText.trim(),
+            closingDate: row.querySelector('input[type="date"]')?.value || "",
+            residualRisk: row.querySelector('.residual-value')?.innerText.trim() || ""
+        };
+    }
+
+    // Load risks from Firebase when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        // Enable all menu items
+        document.querySelectorAll(".menu-left li")
+            .forEach(li => li.classList.remove("disabled"));
+        
+        // Show the user avatar and dropdown menu for guest user
+        const userPhotoURL = "https://ui-avatars.com/api/?name=Guest&background=random";
+        const userInfoHTML = `
+            <li class="user-avatar-container">
+                <img src="${userPhotoURL}" alt="Guest" class="user-avatar">
+                <div class="user-dropdown">
+                    <div class="user-email">guest@example.com</div>
+                    <a href="logout.html">Logout</a>
+                </div>
+            </li>
+        `;
+        
+        // Insert user info at the end of menu-right
+        const menuRight = document.querySelector('.menu-right');
+        const userInfoContainer = document.createElement('div');
+        userInfoContainer.className = 'user-info-container';
+        userInfoContainer.innerHTML = userInfoHTML;
+        
+        // Remove any existing user info
+        const existingUserInfo = menuRight.querySelector('.user-info-container');
+        if (existingUserInfo) menuRight.removeChild(existingUserInfo);
+        
+        // Add the new user info
+        menuRight.appendChild(userInfoContainer);
+        
+        // Show all toolbar buttons
+        document.querySelector('.export-btn').style.display = 'inline-flex';
+        document.querySelector('.risk-actions').style.display = 'flex';
+        document.querySelector('#save-progress-btn').style.display = 'inline-flex';
+        document.querySelector('.settings-icon-btn').style.display = 'inline-block';
+        document.querySelector('#import-risk-btn').style.display = 'inline-flex';
+        document.querySelector('.download-icon-btn').style.display = 'inline-flex';
+
+        // Load risks from Firebase
+        loadRisksFromDatabase();
+    });
+
+    // Make these functions available globally
+    window.createRiskRowFromData = createRiskRowFromData;
+    window.attachRowEventListeners = attachRowEventListeners;
+    window.getRiskFromRow = getRiskFromRow;
+
+    // Add risk button event listener with debounce protection
+    document.addEventListener('DOMContentLoaded', function() {
+        // First remove any existing click listeners by cloning the button
+        const addRiskBtn = document.querySelector('.risk-actions .add-risk-btn');
+        const newAddRiskBtn = addRiskBtn.cloneNode(true);
+        addRiskBtn.parentNode.replaceChild(newAddRiskBtn, addRiskBtn);
+        
+        // Add debounce protection
+        let isProcessing = false;
+        
+        newAddRiskBtn.addEventListener('click', function() {
+            // Prevent double-creation by checking if we're already processing
+            if (isProcessing) {
+                return;
+            }
+            
+            isProcessing = true;
+            
+            // Create a more unique ID with timestamp and random component
+            const timestamp = Date.now();
+            const randomNum = Math.floor(Math.random() * 1000);
+            const newRiskId = `RISK${timestamp}-${randomNum}`;
+            
+            const newRisk = {
+                id: newRiskId,
+                name: "",
+                description: "",
+                likelihood: "",
+                impact: "",
+                score: "",
+                level: "",
+                strategy: "",
+                status: "",
+                control: "",
+                responsible: "",
+                closingDate: "",
+                residualRisk: ""
+            };
+            
+            // Add the risk to Firebase and let the onValue listener update the UI
+            addRiskToDatabase(newRisk)
+                .then(() => {
+                    console.log('New empty risk created in Firebase:', newRisk);
+                    
+                    // Reset processing flag after a delay
+                    setTimeout(() => {
+                        isProcessing = false;
+                    }, 500);
+                })
+                .catch(error => {
+                    console.error('Error creating new risk in Firebase:', error);
+                    isProcessing = false; // Reset flag on error too
+                });
+        });
+    });
+</script>
+<script>
+    // Override the existing functions to work with Firebase
+    
+    // Modified saveRow function to save to Firebase
+    function saveRow(btn) {
+        const row = btn.closest('tr');
+        
+        // Ensure the ID cell has a risk ID
+        const idCell = row.cells[1];
+        if (!idCell.innerText.trim()) {
+            idCell.innerText = "RISK" + riskIdCounter++;
+        }
+        
+        // Get risk data from row
+        const risk = window.getRiskFromRow(row);
+        
+        // Save risk to Firebase
+        window.addRiskToDatabase(risk)
+            .then(() => {
+                console.log('Risk saved successfully to Firebase:', risk);
+                
+                // Freeze the row as in the original code
+                row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                    cell.contentEditable = "false";
+                    cell.style.backgroundColor = "#eee";
+                });
+                
+                row.querySelectorAll('select').forEach(select => {
+                    select.disabled = true;
+                });
+                
+                row.querySelectorAll('input[type="date"]').forEach(input => {
+                    input.disabled = true;
+                });
+                
+                btn.disabled = true;
+                
+                // Update the risk summary
+                updateRiskReport();
+                renderRiskDescriptionChart();
+                renderFixedDescriptionChart();
+            })
+            .catch(error => {
+                console.error('Error saving risk to Firebase:', error);
+                alert('Failed to save risk. Please try again.');
+            });
+    }
+
+    // Modified editRow function
+    function editRow(btn) {
+        const row = btn.closest('tr');
+        
+        row.querySelectorAll('[contenteditable]').forEach(cell => {
+            cell.contentEditable = "true";
+            cell.style.backgroundColor = ""; // remove freeze styling
+        });
+        
+        row.querySelectorAll('select').forEach(select => {
+            select.disabled = false;
+        });
+        
+        row.querySelectorAll('input[type="date"]').forEach(input => {
+            input.disabled = false;
+        });
+        
+        // Re-enable the Save button
+        row.querySelector('.save-btn').disabled = false;
+        console.log('Row is now editable:', row);
+    }
+    
+    // This is the only deleteRow function that should exist - it integrates with Firebase
+    function deleteRow(btn) {
+        const row = btn.closest('tr');
+        const riskId = row.getAttribute('data-risk-id') || row.cells[1].innerText.trim();
+        
+        if (riskId) {
+            if (confirm('Are you sure you want to delete this risk?')) {
+                window.deleteRiskFromDatabase(riskId)
+                    .then(() => {
+                        console.log('Risk deleted successfully from Firebase:', riskId);
+                        row.remove();
+                        updateRiskReport();
+                        renderRiskDescriptionChart();
+                        renderFixedDescriptionChart();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting risk from Firebase:', error);
+                    });
+            }
+        } else {
+            // If no ID (maybe a new unsaved row), just remove from DOM
+            row.remove();
+            updateRiskReport();
+            renderRiskDescriptionChart();
+            renderFixedDescriptionChart();
+        }
+    }
+
+    // Modified saveRiskTableProgress function
+    function saveRiskTableProgress() {
+        const riskRows = document.querySelectorAll("#riskTable tbody tr");
+        let savePromises = [];
+        
+        riskRows.forEach(row => {
+            const risk = window.getRiskFromRow(row);
+            savePromises.push(window.updateRiskInDatabase(risk));
+        });
+        
+        Promise.all(savePromises)
+            .then(() => {
+                alert("Risk table progress saved to Firebase!");
+                updateRiskReport();
+            })
+            .catch(error => {
+                console.error('Error saving risk table progress:', error);
+                alert('Failed to save risk table progress. Please try again.');
+            });
+    }
+
+    // Modified delete selected function with confirmation to also delete from Firebase
+    document.getElementById('delete-selected-btn').addEventListener('click', function() {
+        const tbody = document.querySelector('#riskTable tbody');
+        const checkboxes = tbody.querySelectorAll('input[type="checkbox"]:checked');
+        if (checkboxes.length > 0) {
+            const confirmDelete = confirm('Are you sure you want to delete the selected risk rows?');
+            if (confirmDelete) {
+                let deletePromises = [];
+                let deletedCount = 0;
+                
+                checkboxes.forEach(cb => {
+                    const row = cb.closest('tr');
+                    const riskId = row.getAttribute('data-risk-id') || row.cells[1].innerText.trim();
+                    
+                    if (riskId) {
+                        // Delete from Firebase
+                        deletePromises.push(
+                            window.deleteRiskFromDatabase(riskId)
+                                .then(() => {
+                                    console.log('Risk deleted successfully from Firebase:', riskId);
+                                    row.remove();
+                                    deletedCount++;
+                                })
+                                .catch(error => {
+                                    console.error('Error deleting risk from Firebase:', error);
+                                })
+                        );
+                    } else {
+                        // If no ID (maybe a new unsaved row), just remove from DOM
+                        row.remove();
+                        deletedCount++;
+                    }
+                });
+                
+                // Show processing indicator
+                const deleteBtn = document.getElementById('delete-selected-btn');
+                const originalText = deleteBtn.innerHTML;
+                deleteBtn.innerHTML = '⏳';
+                deleteBtn.disabled = true;
+                
+                Promise.all(deletePromises)
+                    .then(() => {
+                        console.log('All selected risks deleted.');
+                        updateRiskReport();
+                        renderRiskDescriptionChart();
+                        renderFixedDescriptionChart();
+                        
+                        // Reset button and show success message
+                        deleteBtn.innerHTML = originalText;
+                        deleteBtn.disabled = false;
+                        
+                        if (deletedCount > 0) {
+                            const message = `Successfully deleted ${deletedCount} risk${deletedCount !== 1 ? 's' : ''}.`;
+                            console.log(message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error deleting some risks:', error);
+                        
+                        // Reset button even on error
+                        deleteBtn.innerHTML = originalText;
+                        deleteBtn.disabled = false;
+                    });
+            }
+        } else {
+            alert('No risk rows selected for deletion.');
+        }
+    });
+
+    // Ensure that computeScoreAndRisk updates Firebase as well
+    function computeScoreAndRisk(row) {
+        const likelihoodSelect = row.querySelector('.likelihood-select');
+        const impactSelect = row.querySelector('.impact-select');
+        const scoreCell = row.querySelector('.score-cell');
+        const levelCell = row.querySelector('.level-cell');
+        const likelihood = parseFloat(likelihoodSelect.value) || 0;
+        const impact = parseFloat(impactSelect.value) || 0;
+        
+        if (likelihood && impact) {
+            const score = likelihood * impact;
+            scoreCell.textContent = score;
+            let level = '';
+            let color = '';
+            
+            if(score <= 4) {
+                level = 'Low';
+                color = '#28a745'; // green
+            } else if(score <= 10) {
+                level = 'Medium';
+                color = '#ffc107'; // yellow
+            } else {
+                level = 'High';
+                color = '#dc3545'; // red
+            }
+            
+            levelCell.textContent = level;
+            levelCell.style.backgroundColor = color;
+            levelCell.style.color = '#fff';
+            
+            // Update Firebase with the new score and level
+            const riskId = row.getAttribute('data-risk-id') || row.cells[1].innerText.trim();
+            if (riskId) {
+                const risk = window.getRiskFromRow(row);
+                window.updateRiskInDatabase(risk)
+                    .catch(error => {
+                        console.error('Error updating risk in Firebase:', error);
+                    });
+            }
+        } else {
+            scoreCell.textContent = '';
+            levelCell.textContent = '';
+            levelCell.style.backgroundColor = '';
+        }
+        
+        updateRiskReport();
+    }
+
+    // Modify function to update residual risk to sync with Firebase
+    function updateResidualSettings() {
+        const likelihood = parseFloat(document.getElementById('residual-likelihood').value);
+        const impact = parseFloat(document.getElementById('residual-impact').value);
+        const score = likelihood * impact;
+        const level = score <= 4 ? 'Low' : score <= 10 ? 'Medium' : 'High';
+        const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : '#dc3545';
+        
+        if(window.currentResidualCell) {
+            window.currentResidualCell.style.backgroundColor = color;
+            let origSpan = window.currentResidualCell.querySelector('.residual-value');
+            if(origSpan) {
+                origSpan.textContent = `${level}`;
+                origSpan.style.color = '#fff';
+                
+                // Update Firebase with the new residual risk
+                const row = window.currentResidualCell.closest('tr');
+                if (row) {
+                    updateRiskInFirebase(row);
+                }
+            }
+        }
+        document.getElementById('residualSettingsPopup').style.display = 'none';
+    }
+
+    // Function to check for duplicate risk IDs in the table
+    function checkForDuplicateRiskIds() {
+        const rows = document.querySelectorAll('#riskTable tbody tr');
+        const idMap = new Map();
+        let duplicatesFound = false;
+        
+        rows.forEach(row => {
+            const riskId = row.getAttribute('data-risk-id') || row.cells[1].innerText.trim();
+            if (riskId) {
+                if (idMap.has(riskId)) {
+                    duplicatesFound = true;
+                    console.warn(`Duplicate risk ID found in table: ${riskId}`);
+                    // Remove the duplicate row
+                    row.remove();
+                } else {
+                    idMap.set(riskId, row);
+                }
+            }
+        });
+        
+        if (duplicatesFound) {
+            // Update reports if we removed any duplicates
+            updateRiskReport();
+            renderRiskDescriptionChart();
+            renderFixedDescriptionChart();
+        }
+        
+        return duplicatesFound;
+    }
+    
+    // Run duplicate check when the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check once at startup
+        setTimeout(checkForDuplicateRiskIds, 1000);
+        
+        // And periodically check for duplicates that might appear from various operations
+        setInterval(checkForDuplicateRiskIds, 3000);
+    });
+
+    // Updated function to properly handle risk file imports
+    function handleRiskFileImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                const parsedData = JSON.parse(e.target.result);
+                
+                // Determine the format of the imported data
+                const risks = Array.isArray(parsedData) ? parsedData : [];
+                let importedCount = 0;
+                let importPromises = [];
+                
+                risks.forEach((riskData, index) => {
+                    // Handle array format (from downloadRiskFile function)
+                    let risk = {};
+                    
+                    if (Array.isArray(riskData)) {
+                        // Format from downloadRiskFile function: arrays of row values
+                        // Generate a unique ID if one doesn't exist
+                        const timestamp = Date.now() + index;
+                        const randomNum = Math.floor(Math.random() * 1000);
+                        
+                        risk = {
+                            id: riskData[1] || `RISK${timestamp}-${randomNum}`,
+                            name: riskData[2] || "",
+                            description: riskData[3] || "",
+                            likelihood: riskData[4] || "",
+                            impact: riskData[5] || "",
+                            score: riskData[6] || "",
+                            level: riskData[7] || "",
+                            strategy: riskData[8] || "",
+                            status: riskData[9] || "",
+                            control: riskData[10] || "",
+                            responsible: riskData[11] || "",
+                            closingDate: riskData[12] || "",
+                            residualRisk: riskData[13] || ""
+                        };
+                    } else if (typeof riskData === 'object' && riskData !== null) {
+                        // Object format with properties
+                        const timestamp = Date.now() + index;
+                        const randomNum = Math.floor(Math.random() * 1000);
+                        
+                        risk = {
+                            id: riskData.id || `RISK${timestamp}-${randomNum}`,
+                            name: riskData.name || "",
+                            description: riskData.description || "",
+                            likelihood: riskData.likelihood || "",
+                            impact: riskData.impact || "",
+                            score: riskData.score || "",
+                            level: riskData.level || "",
+                            strategy: riskData.strategy || "",
+                            status: riskData.status || "",
+                            control: riskData.control || "",
+                            responsible: riskData.responsible || "",
+                            closingDate: riskData.closingDate || "",
+                            residualRisk: riskData.residualRisk || ""
+                        };
+                    }
+                    
+                    // Add the risk to Firebase
+                    importPromises.push(
+                        window.addRiskToDatabase(risk)
+                            .then(() => {
+                                console.log("Risk imported successfully:", risk);
+                                importedCount++;
+                            })
+                            .catch(err => {
+                                console.error("Error importing risk:", risk, err);
+                            })
+                    );
+                });
+                
+                if (importPromises.length === 0) {
+                    console.warn("No valid risks found in the imported file");
+                    alert("No valid risks found in the imported file. Please check the format.");
+                    return;
+                }
+                
+                Promise.all(importPromises)
+                    .then(() => {
+                        alert(`Successfully imported ${importedCount} risks.`);
+                        // Load updated data from Firebase into the UI
+                        window.loadRisksFromDatabase();
+                    })
+                    .catch(error => {
+                        console.error("Error during import:", error);
+                        // Still try to load data even if there was an error
+                        window.loadRisksFromDatabase();
+                    });
+                    
+            } catch (error) {
+                console.error("Error parsing risk file:", error);
+                // Don't show alert to user as requested
+                console.log("Failed to parse the risk file. Please ensure it's a valid JSON file.");
+            }
+        };
+        
+        reader.onerror = function() {
+            console.error("Error reading file");
+            // Log error but don't show alert
+            console.log("Error reading file. Please try again.");
+        };
+        
+        reader.readAsText(file);
+    }
+
+    // New improved function: Download risks as a JSON file with complete column content
+    function downloadRiskFile() {
+        const riskRows = document.querySelectorAll("#riskTable tbody tr");
+        let risks = [];
+        riskRows.forEach(row => {
+            // Use the getRiskFromRow function to ensure consistent data extraction
+            const risk = window.getRiskFromRow(row);
+            
+            // Add the full risk object to the risks array
+            risks.push(risk);
+        });
+        
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(risks));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", "risks.json");
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+    }
+</script>
 </head>
 <body>
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        // TODO: Add SDKs for Firebase products that you want to use
-        // https://firebase.google.com/docs/web/setup#available-libraries
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
-            authDomain: "users-8be65.firebaseapp.com",
-            projectId: "users-8be65",
-            storageBucket: "users-8be65.firebasestorage.app",
-            messagingSenderId: "829083030831",
-            appId: "1:829083030831:web:36a370e62691e560bc3dda"
-        };
-        const app = initializeApp(firebaseConfig);
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                document.querySelectorAll(".menu-left li")
-                    .forEach(li => li.classList.remove("disabled"));
-                document.querySelector('.menu-right').innerHTML = `
-                    <li style="margin-right: 15px;">Logged in as: ${user.email}</li>
-                    <li style="margin-right: 30px;">
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+        authDomain: "users-8be65.firebaseapp.com",
+        databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+        projectId: "users-8be65",
+        storageBucket: "users-8be65.firebasestorage.app",
+        messagingSenderId: "829083030831",
+        appId: "1:829083030831:web:36a370e62691e560bc3dda"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    
+    // Variable to track if user is authenticated
+    window.userAuthenticated = false;
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // Set flag that user is authenticated
+            window.userAuthenticated = true;
+            
+            // Enable all menu items when user is logged in
+            document.querySelectorAll(".menu-left li")
+                .forEach(li => li.classList.remove("disabled"));
+            
+            // Show the user avatar and dropdown menu
+            const userPhotoURL = user.photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.email || "User") + "&background=random";
+            const userInfoHTML = `
+                <li class="user-avatar-container">
+                    <img src="${userPhotoURL}" alt="User" class="user-avatar">
+                    <div class="user-dropdown">
+                        <div class="user-email">${user.email}</div>
                         <a href="logout.html">Logout</a>
-                    </li>
-                `;
-            } else {
-                window.location.href = "login.html";
-            }
-        });
-    </script>
+                    </div>
+                </li>
+            `;
+            
+            // Insert user info at the end of menu-right
+            const menuRight = document.querySelector('.menu-right');
+            const userInfoContainer = document.createElement('div');
+            userInfoContainer.className = 'user-info-container';
+            userInfoContainer.innerHTML = userInfoHTML;
+            
+            // Remove any existing user info
+            const existingUserInfo = menuRight.querySelector('.user-info-container');
+            if (existingUserInfo) menuRight.removeChild(existingUserInfo);
+            
+            // Add the new user info
+            menuRight.appendChild(userInfoContainer);
+            
+            // Show all toolbar buttons
+            document.querySelector('.export-btn').style.display = 'inline-flex';
+            document.querySelector('.risk-actions').style.display = 'flex';
+            document.querySelector('#save-progress-btn').style.display = 'inline-flex';
+            document.querySelector('.settings-icon-btn').style.display = 'inline-block';
+            document.querySelector('#import-risk-btn').style.display = 'inline-flex';
+            document.querySelector('.download-icon-btn').style.display = 'inline-flex';
+            
+            // Log the user info for debugging
+            console.log('User authenticated:', user.email);
+            console.log('Profile image:', userPhotoURL);
+        } else {
+            // Hide all toolbar buttons when not logged in
+            document.querySelector('.export-btn').style.display = 'none';
+            document.querySelector('.risk-actions').style.display = 'none';
+            document.querySelector('#save-progress-btn').style.display = 'none';
+            document.querySelector('.settings-icon-btn').style.display = 'none';
+            document.querySelector('#import-risk-btn').style.display = 'none';
+            document.querySelector('.download-icon-btn').style.display = 'none';
+            
+            // Redirect to login page
+            window.location.href = "login.html";
+        }
+    });
+</script>
     <header>
         <nav class="menu-bar">
             <ul class="menu-left">
                 <li class=""><a href="index.html">Home</a></li>
-                <li class="hidden"><a href="dashboard.html">Dashboard</a></li>
-                <li class="hidden"><a href="about.html">About</a></li>
-                <li class="hidden"><a href="services.html">Services</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="services.html">Services</a></li>
                 <li class="dropdown current">
                     <a href="#" onclick="return false;">Risk Assessment</a>
                     <div class="dropdown-content">
                         <a href="risktable.html">Risk Table</a>
                     </div>
                 </li>
-                <li class="hidden"><a href="data-analysis.html">Data Analysis</a></li>
+                <li><a href="data-analysis.html">Data Analysis</a></li>
             </ul>
             <ul class="menu-right">
                 <!-- Adjusted export button margin -->
@@ -818,7 +1811,7 @@
                     <!-- Update download button SVG to match the '+' sign size -->
                     <button class="download-icon-btn" onclick="downloadRiskFile()" aria-label="Download Risk File">
                         <svg width="30" height="90" style="font-size: 24px;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a 2 2 0 0 1-2-2v-4"/>
                             <polyline points="7 10 12 15 17 10"/>
                             <line x1="12" y1="15" x2="12" y2="3"/>
                         </svg>
@@ -826,13 +1819,6 @@
                 </li>
                 <!-- New Upload Icon -->
                 <!-- Remove the risk upload trigger button from the toolbar -->
-                <li style="display: flex; align-items: center; margin-right: 30px;">
-                    <a href="login.html" class="circle-login">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                    </a>
-                </li>
             </ul>
         </nav>
     </header>
@@ -1006,12 +1992,6 @@
         // Add a global counter for Risk IDs
         let riskIdCounter = 1;
 
-        // Function to delete a risk row (optional)
-        function deleteRow(btn) {
-            btn.closest('tr').remove();
-            updateRiskReport();
-        }
-
         // Modified saveRow: generate risk ID if missing and freeze row
         function saveRow(btn) {
             const row = btn.closest('tr');
@@ -1035,7 +2015,10 @@
             });
             btn.disabled = true;
             console.log('Risk saved and row frozen:', row);
-            // ...additional save logic...
+            // Update the risk description chart
+            updateRiskReport();
+            renderRiskDescriptionChart();
+            renderFixedDescriptionChart();
         }
 
         // New function: enable editing on a frozen row
@@ -1095,9 +2078,9 @@
         const likelihoodOptions5 = `
             <option value="">Select</option>
             <option value="1">Very Unlikely</option>
-            <option value="3">Unliible</option>
-            <option value="2">Likelkely</option>
-            <option value="4">Possy</option>
+            <option value="2">Unlikely</option>
+            <option value="3">Possible</option>
+            <option value="4">Likely</option>
             <option value="5">Very Likely</option>
         `;
         const impactOptions5 = `
@@ -1160,112 +2143,79 @@
             updateMatrixOptions();
         });
 
-        // In add-risk-btn click event, ensure ID cell is not editable
-        document.querySelector('.risk-actions .add-risk-btn').addEventListener('click', function() {
-            var tbody = document.querySelector('#riskTable tbody');
-            var row = document.createElement('tr');
-            // Use dynamic options based on currentMatrixSize
-            const likOptions = currentMatrixSize === '3x3' ? likelihoodOptions3 : currentMatrixSize === '7x7' ? likelihoodOptions7 : likelihoodOptions5;
-            const impOptions = currentMatrixSize === '3x3' ? impactOptions3 : currentMatrixSize === '7x7' ? impactOptions7 : impactOptions5;
-            // 15 columns per header: checkbox, ID, Name, Description, Likelihood, Impact, Score, Level, Strategy, Status, Control, Responsible, Closing Date, Residual Risk Level, Action
-            row.innerHTML = `
-                <td><input type="checkbox"></td>
-                <td contenteditable="false"></td> <!-- ID column not editable -->
-                <td contenteditable="true"></td>
-                <!-- Replace Description cell with dropdown -->
-                <td>
-                    <select class="description-select">
-                        <option value="" disabled selected>Select Description</option>
-                        <option value="Strategic">Strategic</option>
-                        <option value="Operational">Operational</option>
-                        <option value="Financial">Financial</option>
-                        <option value="Compliance & Regulatory">Compliance & Regulatory</option>
-                        <option value="Reputational & Brand">Reputational & Brand</option>
-                        <option value="Environmental, Health & Safety">Environmental, Health & Safety</option>
-                        <option value="Cybersecurity & Technology">Cybersecurity & Technology</option>
-                        <option value="Supply Chain & Logistics">Supply Chain & Logistics</option>
-                        <option value="Social & Ethical">Social & Ethical</option>
-                    </select>
-                </td>
-                <!-- Likelihood dropdown -->
-                <td>
-                    <select class="likelihood-select">
-                        ${likOptions}
-                    </select>
-                </td>
-                <!-- Impact dropdown -->
-                <td>
-                    <select class="impact-select">
-                        ${impOptions}
-                    </select>
-                </td>
-                <!-- Score (computed) -->
-                <td class="score-cell score-column"></td>
-                <!-- Level (computed with color code) -->
-                <td class="level-cell"></td>
-                <!-- Strategy dropdown -->
-                <td>
-                    <select class="strategy-select">
-                        <option value="" disabled selected>Select Strategy</option>
-                        <option value="Mitigate">Mitigate</option>
-                        <option value="Transfer">Transfer</option>
-                        <option value="Avoid">Avoid</option>
-                        <option value="Accept">Accept</option>
-                    </select>
-                </td>
-                <!-- Status dropdown -->
-                <td>
-                    <select>
-                        <option value="">Select</option>
-                        <option value="1">Not Started</option>
-                        <option value="2">In Progress</option>
-                        <option value="3">Completed</option>
-                    </select>
-                </td>
-                <td contenteditable="true"></td>
-                <td contenteditable="true"></td>
-                <!-- Closing Date as a selectable date field -->
-                <td><input type="date" class="date-input"></td>
-                <!-- Residual Risk Level cell: removed contenteditable attribute -->
-                <td>
-                    <span class="residual-value"></span>
-                    <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
-                </td>
-                <!-- Action: Edit, Save and Cancel (Trash icon) icon buttons -->
-                <td>
-                    <button class="edit-btn" onclick="editRow(this)"><i class="fa fa-edit"></i></button>
-                    <button class="save-btn" onclick="saveRow(this)"><i class="fa fa-check"></i></button>
-                    <button class="cancel-btn" onclick="deleteRow(this)"><i class="fa fa-trash"></i></button>
-                </td>
-            `;
-            tbody.appendChild(row);
-
-            // Attach event listeners to recalculate score when dropdowns change
-            row.querySelector('.likelihood-select').addEventListener('change', function() {
-                computeScoreAndRisk(row);
-            });
-            row.querySelector('.impact-select').addEventListener('change', function() {
-                computeScoreAndRisk(row);
-            });
-            updateRiskReport();
-        });
-
-        // New delete selected function with confirmation
-        document.getElementById('delete-selected-btn').addEventListener('click', function() {
-            const tbody = document.querySelector('#riskTable tbody');
-            const checkboxes = tbody.querySelectorAll('input[type="checkbox"]:checked');
-            if (checkboxes.length > 0) {
-                const confirmDelete = confirm('Are you sure you want to delete the selected risk rows?');
-                if (confirmDelete) {
-                    checkboxes.forEach(cb => {
-                        cb.closest('tr').remove();
-                    });
-                    console.log('Selected risk rows deleted.');
+        // Make sure this is the only event listener for the delete selected button
+        document.addEventListener('DOMContentLoaded', function() {
+            // First remove any existing event listeners from the delete button
+            const deleteBtn = document.getElementById('delete-selected-btn');
+            const newDeleteBtn = deleteBtn.cloneNode(true);
+            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+            
+            // Now add the Firebase-integrated delete event listener
+            newDeleteBtn.addEventListener('click', function() {
+                const tbody = document.querySelector('#riskTable tbody');
+                const checkboxes = tbody.querySelectorAll('input[type="checkbox"]:checked');
+                if (checkboxes.length > 0) {
+                    const confirmDelete = confirm('Are you sure you want to delete the selected risk rows?');
+                    if (confirmDelete) {
+                        let deletePromises = [];
+                        let deletedCount = 0;
+                        
+                        checkboxes.forEach(cb => {
+                            const row = cb.closest('tr');
+                            const riskId = row.getAttribute('data-risk-id') || row.cells[1].innerText.trim();
+                            
+                            if (riskId) {
+                                // Delete from Firebase
+                                deletePromises.push(
+                                    window.deleteRiskFromDatabase(riskId)
+                                        .then(() => {
+                                            console.log('Risk deleted successfully from Firebase:', riskId);
+                                            row.remove();
+                                            deletedCount++;
+                                        })
+                                        .catch(error => {
+                                            console.error('Error deleting risk from Firebase:', error);
+                                        })
+                                );
+                            } else {
+                                // If no ID (maybe a new unsaved row), just remove from DOM
+                                row.remove();
+                                deletedCount++;
+                            }
+                        });
+                        
+                        // Show processing indicator
+                        const originalText = this.innerHTML;
+                        this.innerHTML = '⏳';
+                        this.disabled = true;
+                        
+                        Promise.all(deletePromises)
+                            .then(() => {
+                                console.log('All selected risks deleted.');
+                                updateRiskReport();
+                                renderRiskDescriptionChart();
+                                renderFixedDescriptionChart();
+                                
+                                // Reset button and show success message
+                                this.innerHTML = originalText;
+                                this.disabled = false;
+                                
+                                if (deletedCount > 0) {
+                                    console.log(`Successfully deleted ${deletedCount} risk${deletedCount !== 1 ? 's' : ''}.`);
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error deleting some risks:', error);
+                                
+                                // Reset button even on error
+                                this.innerHTML = originalText;
+                                this.disabled = false;
+                            });
+                    }
+                } else {
+                    alert('No risk rows selected for deletion.');
                 }
-            } else {
-                alert('No risk rows selected for deletion.');
-            }
-            updateRiskReport();
+            });
         });
 
         // New functionality: select/deselect all risk rows when header checkbox is toggled
@@ -1476,6 +2426,7 @@
                             </tr>
                             <tr>
                                 <td style='border: 1px solid #ddd; padding: 8px;'>IT Failures</td>
+                                <td style='border: 1px solid #ddd; padding: 8px;'>IT Failures</td>
                                 <td style='border: 1px solid #ddd; padding: 8px;'>Server downtime, network outages, software bugs.</td>
                             </tr>
                             <tr>
@@ -1558,19 +2509,13 @@
             const riskRows = document.querySelectorAll("#riskTable tbody tr");
             let risks = [];
             riskRows.forEach(row => {
-                const cells = row.querySelectorAll("td");
-                let rowData = [];
-                cells.forEach((cell, index) => {
-                    // For the residual risk column, assumed at index 13, store the text from the <span class="residual-value">
-                    if(index === 13) {
-                        const valSpan = cell.querySelector('.residual-value');
-                        rowData.push(valSpan ? valSpan.innerText.trim() : "");
-                    } else if (index !== 14) { // Skip the settings icon column
-                        rowData.push(cell.innerText.trim());
-                    }
-                });
-                risks.push(rowData);
+                // Use the getRiskFromRow function to ensure consistent data extraction
+                const risk = window.getRiskFromRow(row);
+                
+                // Add the full risk object to the risks array
+                risks.push(risk);
             });
+            
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(risks));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
@@ -1615,7 +2560,7 @@
                 level = score <= 4 ? 'Low' : score <= 10 ? 'Medium' : 'High';
             }
             if (level) {
-                const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : '#dc3545';
+                const color = level === 'Low' ? '#28a745' : level === 'Medium' ? '#ffc107' : level === 'High' ? '#dc3545' : '';
                 const cell = originalSpan.closest('td');
                 cell.style.backgroundColor = color;
                 originalSpan.style.color = '#fff';
@@ -1651,9 +2596,9 @@
                 <select class="likelihood-select">
                     <option value="">Select</option>
                     <option value="1">Very Unlikely</option>
-                    <option value="3">Unliible</option>
-                    <option value="2">Likelkely</option>
-                    <option value="4">Possy</option>
+                    <option value="2">Unlikely</option>
+                    <option value="3">Possible</option>
+                    <option value="4">Likely</option>
                     <option value="5">Very Likely</option>
                 </select>
             </td>`;
@@ -1714,58 +2659,83 @@
             return row;
         }
 
-        // Updated risk file import function to add uploaded rows without erasing current content
+        // Function to handle risk file import and update Firebase
         function handleRiskFileImport(event) {
             const file = event.target.files[0];
-            if (!file) return;
+            if (!file) {
+                alert("No file selected. Please choose a valid JSON file.");
+                return;
+            }
+        
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function (e) {
+                let parsedData;
                 try {
-                    const parsedData = JSON.parse(e.target.result);
-
-                    // Ensure parsedData is an array
-                    const risks = Array.isArray(parsedData) ? parsedData : [];
-                    const tbody = document.querySelector('#riskTable tbody');
-                    risks.forEach(item => {
-                        let rowData = [];
-                        if (typeof item === 'object' && !Array.isArray(item)) {
-                            rowData[1] = item.id || "";
-                            rowData[2] = item.name || "";
-                            rowData[3] = item.description || "";
-                            rowData[4] = item.likelihood || "";
-                            rowData[5] = item.impact || "";
-                            rowData[6] = item.score || "";
-                            rowData[7] = item.level || "";
-                            rowData[8] = item.strategy || "";
-                            rowData[9] = item.status || "";
-                            rowData[10] = item.control || "";
-                            rowData[11] = item.responsible || "";
-                            rowData[12] = item.closingDate || "";
-                            rowData[13] = item.residualRisk || "";  // Use property name as desired
-                        } else if (Array.isArray(item)) {
-                            rowData = item;
-                        }
-                        while (rowData.length < 14) { rowData.push(""); }
-                        const row = createRiskRow(rowData);
-                        tbody.appendChild(row);
-                        // Attach listeners to recalc score when dropdowns change
-                        row.querySelector('.likelihood-select').addEventListener('change', () => computeScoreAndRisk(row));
-                        row.querySelector('.impact-select').addEventListener('change', () => computeScoreAndRisk(row));
-                        // Set likelihood and impact based on score and level
-                        setLikelihoodAndImpact(row);
-                        // Apply color code on the level cell
-                        applyColorCode(row);
-                        // Update residual risk cell using file content
-                        updateResidualRiskFromFile(row);
-                    });
-                    alert("Risk file imported successfully!");
+                    parsedData = JSON.parse(e.target.result);
                 } catch (error) {
-                    console.error("Error importing risk file:", error);
-                    alert("Failed to import risk file. Ensure it is valid JSON.");
+                    alert("Error parsing file. Ensure the file is valid JSON format.");
+                    console.error("JSON Parsing error:", error);
+                    return;
                 }
+        
+                if (!Array.isArray(parsedData) || parsedData.length === 0) {
+                    alert("The file must contain an array of risks.");
+                    return;
+                }
+        
+                let importPromises = [];
+                let importedCount = 0;
+                parsedData.forEach((riskData, index) => {
+                    if (typeof riskData !== 'object') {
+                        console.warn(`Invalid risk format at index ${index}:`, riskData);
+                        return;
+                    }
+        
+                    let risk = {
+                        id: riskData.id || `RISK${Date.now()}-${index}`,
+                        name: riskData.name || "",
+                        description: riskData.description || "",
+                        likelihood: riskData.likelihood || "",
+                        impact: riskData.impact || "",
+                        score: riskData.score || "",
+                        level: riskData.level || "",
+                        strategy: riskData.strategy || "",
+                        status: riskData.status || "",
+                        control: riskData.control || "",
+                        responsible: riskData.responsible || "",
+                        closingDate: riskData.closingDate || "",
+                        residualRisk: riskData.residualRisk || ""
+                    };
+        
+                    importPromises.push(
+                        addRiskToDatabase(risk).then(() => {
+                            console.log("Successfully imported risk:", risk);
+                            importedCount++;
+                        }).catch(error => {
+                            console.error("Firebase error importing risk:", risk, error);
+                        })
+                    );
+                });
+        
+                Promise.all(importPromises).then(() => {
+                    alert(`Successfully imported ${importedCount} risk(s).`);
+                    loadRisksFromDatabase();
+                }).catch(err => {
+                    alert("Some risks couldn't be imported. Check console logs.");
+                    console.error("Errors occurred during risk import:", err);
+                });
             };
+        
+            reader.onerror = function () {
+                alert("Error reading file. Please try again.");
+                console.error("File reading error.");
+            };
+        
             reader.readAsText(file);
         }
+        
+        // Ensure input element triggers the function properly
+        document.getElementById('import-risk-file').addEventListener('change', handleRiskFileImport);
 
         // New function to set likelihood and impact based on score and level
         function setLikelihoodAndImpact(row) {
@@ -1852,11 +2822,19 @@
                 let riskID = cells[1].innerText.trim();
                 let riskName = cells[2].innerText.trim();
                 let riskLevel = cells[7].innerText.trim();
-                let strategy = cells[8].innerText.trim();
+                
+                // Fix: Properly extract strategy value from the dropdown
+                let strategySelect = cells[8].querySelector('.strategy-select');
+                let strategy = strategySelect ? strategySelect.value : cells[8].innerText.trim();
+                
                 let control = cells[10].innerText.trim();
                 let deadline = (cells[12].querySelector('input[type="date"]')) ? cells[12].querySelector('input[type="date"]').value : '';
                 let owner = cells[11].innerText.trim();
-                let residual = cells[13].innerText.trim();
+                
+                // Also fix residual risk extraction to get the span text only
+                let residualSpan = cells[13].querySelector('.residual-value');
+                let residual = residualSpan ? residualSpan.innerText.trim() : '';
+                
                 if(riskID || riskName) {
                     customTableHtml += `<tr>
                         <td style="border:1px solid #ddd; padding:8px;">${riskID}</td>
@@ -2113,6 +3091,12 @@
                 if(origSpan) {
                     origSpan.textContent = `${level}`;
                     origSpan.style.color = '#fff';
+                    
+                    // Update Firebase with the new residual risk
+                    const row = window.currentResidualCell.closest('tr');
+                    if (row) {
+                        updateRiskInFirebase(row);
+                    }
                 }
             }
             document.getElementById('residualSettingsPopup').style.display = 'none';
@@ -2194,14 +3178,161 @@
             document.getElementById("low-NotStarted").textContent = reportCounts.Low.NotStarted;
             document.getElementById("low-InProgress").textContent = reportCounts.Low.InProgress;
             document.getElementById("low-Completed").textContent = reportCounts.Low.Completed;
-            document.getElementById("high-NotStarted").textContent = reportCounts.High.NotStarted;
-            document.getElementById("high-InProgress").textContent = reportCounts.High.InProgress;
-            document.getElementById("high-Completed").textContent = reportCounts.High.Completed;
             document.getElementById("medium-NotStarted").textContent = reportCounts.Medium.NotStarted;
             document.getElementById("medium-InProgress").textContent = reportCounts.Medium.InProgress;
             document.getElementById("medium-Completed").textContent = reportCounts.Medium.Completed;
+            document.getElementById("high-NotStarted").textContent = reportCounts.High.NotStarted;
+            document.getElementById("high-InProgress").textContent = reportCounts.High.InProgress;
+            document.getElementById("high-Completed").textContent = reportCounts.High.Completed;
         }
 
+        // Updated function: Render chart showing count of risks by Description type.
+        function renderRiskDescriptionChart() {
+            const ctx = document.getElementById('riskStatusChart').getContext('2d');
+            // Compute risk counts by level from the risk summary table
+            const riskCounts = {
+                Low: (parseInt(document.getElementById('low-NotStarted').textContent) || 0) +
+                     (parseInt(document.getElementById('low-InProgress').textContent) || 0) +
+                     (parseInt(document.getElementById('low-Completed').textContent) || 0),
+                Medium: (parseInt(document.getElementById('medium-NotStarted').textContent) || 0) +
+                        (parseInt(document.getElementById('medium-InProgress').textContent) || 0) +
+                        (parseInt(document.getElementById('medium-Completed').textContent) || 0),
+                High: (parseInt(document.getElementById('high-NotStarted').textContent) || 0) +
+                      (parseInt(document.getElementById('high-InProgress').textContent) || 0) +
+                      (parseInt(document.getElementById('high-Completed').textContent) || 0)
+            };
+
+            const labels = ['Low', 'Medium', 'High'];
+            const dataValues = [riskCounts.Low, riskCounts.Medium, riskCounts.High];
+
+            if (window.riskDescriptionChart) {
+                window.riskDescriptionChart.data.labels = labels;
+                window.riskDescriptionChart.data.datasets[0].data = dataValues;
+                window.riskDescriptionChart.update();
+            } else {
+                window.riskDescriptionChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Risk Count by Level',
+                            data: dataValues,
+                            backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                            borderColor: ['#28a745', '#ffc107', '#dc3545'],
+                            borderWidth: 1,
+                            hoverBackgroundColor: ['#218838', '#e0a800', '#c82333'],
+                            hoverBorderColor: ['#218838', '#e0a800', '#c82333']
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    },
+                                    color: '#34495e'
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    },
+                                    color: '#34495e'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                titleFont: {
+                                    size: 16,
+                                    weight: 'bold'
+                                },
+                                bodyFont: {
+                                    size: 14
+                                },
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` ${context.dataset.label}: ${context.raw}`;
+                                    }
+                                }
+                            }
+                        },
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        animation: {
+                            duration: 1000,
+                            easing: 'easeInOutBounce'
+                        },
+                        barThickness: 'flex' // Adjust bar thickness dynamically
+                    }
+                });
+            }
+        }
+
+        // Updated function: Render vertical bar chart with dynamic descriptions
+        function renderFixedDescriptionChart() {
+            const ctx = document.getElementById('fixedDescriptionChart').getContext('2d');
+            // Compute counts by description type
+            const descriptionCounts = {};
+            document.querySelectorAll("#riskTable tbody tr").forEach(row => {
+                const descSelect = row.querySelector('.description-select');
+                const desc = descSelect ? descSelect.value : "";
+                if (desc) {
+                    descriptionCounts[desc] = (descriptionCounts[desc] || 0) + 1;
+                }
+            });
+
+            const labels = Object.keys(descriptionCounts);
+            const dataValues = Object.values(descriptionCounts);
+
+            if (window.fixedDescriptionChart) {
+                window.fixedDescriptionChart.data.labels = labels;
+                window.fixedDescriptionChart.data.datasets[0].data = dataValues;
+                window.fixedDescriptionChart.update();
+            } else {
+                window.fixedDescriptionChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Risk Count by Description',
+                            data: dataValues,
+                            backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: { beginAtZero: true }
+                        },
+                        maintainAspectRatio: false,
+                        barThickness: 'flex' // Adjust bar thickness dynamically
+                    }
+                });
+            }
+        }
+
+        window.addEventListener('load', function() {
+            renderRiskDescriptionChart();
+            renderFixedDescriptionChart();
+        });
     </script>
 
     <!-- New column info popup -->
@@ -2256,16 +3387,16 @@
                         <td id="low-Completed" style="padding: 12px; text-align: center;">0</td>
                     </tr>
                     <tr style="background: #f9f9f9; border-bottom: 1px solid #f2f2f2;">
-                        <td style="padding: 12px; font-weight: bold; color: #e74c3c;">High</td>
-                        <td id="high-NotStarted" style="padding: 12px; text-align: center;">0</td>
-                        <td id="high-InProgress" style="padding: 12px; text-align: center;">0</td>
-                        <td id="high-Completed" style="padding: 12px; text-align: center;">0</td>
-                    </tr>
-                    <tr>
                         <td style="padding: 12px; font-weight: bold; color: #f39c12;">Medium</td>
                         <td id="medium-NotStarted" style="padding: 12px; text-align: center;">0</td>
                         <td id="medium-InProgress" style="padding: 12px; text-align: center;">0</td>
                         <td id="medium-Completed" style="padding: 12px; text-align: center;">0</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; font-weight: bold; color: #e74c3c;">High</td>
+                        <td id="high-NotStarted" style="padding: 12px; text-align: center;">0</td>
+                        <td id="high-InProgress" style="padding: 12px; text-align: center;">0</td>
+                        <td id="high-Completed" style="padding: 12px; text-align: center;">0</td>
                     </tr>
                 </tbody>
             </table>
@@ -2274,41 +3405,154 @@
             <!-- New Canvas for Risk Status Chart -->
             <canvas id="riskStatusChart" width="200" height="200"></canvas>
         </div>
+        <div style="flex: 1; min-width: 300px; padding-left: 20px;">
+            <!-- New Canvas for Fixed Description Chart -->
+            <canvas id="fixedDescriptionChart" width="200" height="200"></canvas>
+        </div>
     </div>
     <!-- Load Chart.js Library -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-      // Example rendering code for horizontal bar chart of risk statuses
-      function renderRiskStatusChart() {
-        const ctx = document.getElementById('riskStatusChart').getContext('2d');
-        // Sample data: adjust this to dynamically compute counts from your risk table if desired.
-        const labels = ['Not Started', 'In Progress', 'Completed'];
-        const dataValues = [5, 3, 2];
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: labels,
-            datasets: [{
-              label: 'Risk Status Count',
-              data: dataValues,
-              backgroundColor: 'rgba(54, 162, 235, 0.7)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            indexAxis: 'y',
-            scales: {
-              x: { beginAtZero: true }
+  // Updated function: Render chart showing count of risks by Description type.
+  function renderRiskDescriptionChart() {
+    const ctx = document.getElementById('riskStatusChart').getContext('2d');
+    // Compute risk counts by level from the risk summary table
+    const riskCounts = {
+        Low: (parseInt(document.getElementById('low-NotStarted').textContent) || 0) +
+             (parseInt(document.getElementById('low-InProgress').textContent) || 0) +
+             (parseInt(document.getElementById('low-Completed').textContent) || 0),
+        Medium: (parseInt(document.getElementById('medium-NotStarted').textContent) || 0) +
+                (parseInt(document.getElementById('medium-InProgress').textContent) || 0) +
+                (parseInt(document.getElementById('medium-Completed').textContent) || 0),
+        High: (parseInt(document.getElementById('high-NotStarted').textContent) || 0) +
+              (parseInt(document.getElementById('high-InProgress').textContent) || 0) +
+              (parseInt(document.getElementById('high-Completed').textContent) || 0)
+    };
+
+    const labels = ['Low', 'Medium', 'High'];
+    const dataValues = [riskCounts.Low, riskCounts.Medium, riskCounts.High];
+
+    if (window.riskDescriptionChart) {
+        window.riskDescriptionChart.data.labels = labels;
+        window.riskDescriptionChart.data.datasets[0].data = dataValues;
+        window.riskDescriptionChart.update();
+    } else {
+        window.riskDescriptionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Risk Count by Level',
+                    data: dataValues,
+                    backgroundColor: ['#28a745', '#ffc107', '#dc3545'],
+                    borderColor: ['#28a745', '#ffc107', '#dc3545'],
+                    borderWidth: 1,
+                    hoverBackgroundColor: ['#218838', '#e0a800', '#c82333'],
+                    hoverBorderColor: ['#218838', '#e0a800', '#c82333']
+                }]
             },
-            maintainAspectRatio: false // Ensure the chart fits the container
-          }
+            options: {
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#34495e'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)'
+                        },
+                        ticks: {
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            },
+                            color: '#34495e'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        titleFont: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        bodyFont: {
+                            size: 14
+                        },
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.raw}`;
+                            }
+                        }
+                    }
+                },
+                maintainAspectRatio: false,
+                responsive: true,
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutBounce'
+                },
+                barThickness: 'flex' // Adjust bar thickness dynamically
+            }
         });
-      }
-      
-      window.addEventListener('load', function() {
-        renderRiskStatusChart();
-      });
-    </script>
+    }
+  }
+
+  // Updated function: Render vertical bar chart with dynamic descriptions
+  function renderFixedDescriptionChart() {
+    const ctx = document.getElementById('fixedDescriptionChart').getContext('2d');
+    // Compute counts by description type
+    const descriptionCounts = {};
+    document.querySelectorAll("#riskTable tbody tr").forEach(row => {
+        const descSelect = row.querySelector('.description-select');
+        const desc = descSelect ? descSelect.value : "";
+        if (desc) {
+            descriptionCounts[desc] = (descriptionCounts[desc] || 0) + 1;
+        }
+    });
+    } else {
+        window.fixedDescriptionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Risk Count by Description',
+                    data: dataValues,
+                    backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                },
+                maintainAspectRatio: false,
+                barThickness: 'flex' // Adjust bar thickness dynamically
+            }
+        });
+    }
+}
+
+window.addEventListener('load', function() {
+    renderRiskDescriptionChart();
+    renderFixedDescriptionChart();
+});
+</script>
 
 </body>
 </html>

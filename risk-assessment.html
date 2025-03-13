@@ -7,31 +7,722 @@
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* Dropdown styles for Risk Assessment menu */
-        .dropdown {
-            position: relative;
-            display: inline-block;
+        /* Enhanced Table Styles */
+        table#riskTable {
+            display: table; /* Use default table display */
+            width: 100%;
+            max-width: 100%;
+            border-collapse: collapse;
+            margin: 20px auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            border-radius: 0;
+            overflow: visible;
+            /* Removed: max-height: 300px; overflow-y: auto; */
         }
+
+        /* New wrapper for the risk table */
+        .table-wrapper {
+            max-height: calc(100vh - 400px); /* Adjust height dynamically */
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Ensure sticky header works within the wrapper */
+        table#riskTable thead {
+            width: 100%; /* Ensure header width matches table/container */
+            background-color: #34495e;
+            position: sticky; /* Changed from relative to sticky */
+            top: 0; /* Stick to the top */
+            z-index: 1; /* Ensure it stays above other content */
+        }
+
+        table#riskTable th, table#riskTable td {
+            padding: 12px 20px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: normal;
+            font-size: 12px; /* Standardized font size */
+        }
+
+        table#riskTable th {
+            color: #ffffff;
+            font-size: 12px;
+            position: relative;
+        }
+
+        table#riskTable tbody tr {
+            transition: background-color 0.3s ease;
+            height: 50px; /* Set a fixed height for table rows */
+        }
+
+        table#riskTable tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table#riskTable tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        table#riskTable tbody td input[type="text"],
+        table#riskTable tbody td input[type="number"],
+        table#riskTable tbody td input[type="date"],
+        table#riskTable tbody td select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 12px; /* Standardized font size */
+        }
+
+        table#riskTable tbody td input[type="text"],
+        table#riskTable tbody td input[type="number"],
+        table#riskTable tbody td input[type="date"] {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        table#riskTable tbody td select {
+            width: 100%;
+            padding: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        table#riskTable tbody td input::placeholder {
+            color: #aaa;
+            font-style: italic;
+        }
+
+        table#riskTable tbody td input[type="text"]::placeholder,
+        table#riskTable tbody td input[type="number"]::placeholder,
+        table#riskTable tbody td input[type="date"]::placeholder {
+            content: "";
+        }
+
+        table#riskTable tbody td button {
+            padding: 6px 12px;
+            margin-right: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            table#riskTable, table#riskTable thead, table#riskTable tbody, table#riskTable th, table#riskTable td, table#riskTable tr {
+                display: block;
+            }
+
+            table#riskTable thead tr {
+                position: absolute;
+                top: -9999px;
+                left: -9999px;
+            }
+
+            table#riskTable tr {
+                margin: 0 0 1rem 0;
+            }
+
+            table#riskTable td {
+                border: none;
+                position: relative;
+                padding-left: 50%;
+                text-align: right;
+                font-size: 12px; /* Standardized font size */
+            }
+
+            table#riskTable td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                font-weight: bold;
+                color: #34495e;
+                text-align: left;
+            }
+
+            table#riskTable tbody td button {
+                width: 100%;
+                margin: 5px 0;
+            }
+
+            /* Position the Add Risk Button under the table on the left */
+            .add-risk-container {
+                text-align: left;
+                margin: 10px 20px;
+            }
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            background-color: #2c3e50;
+            border: none;
+            cursor: pointer;
+            color: #ffffff;
+            font-size: 12px; /* Added to reduce font size */
+            width: 40px;
+            height: 20px;
+            border-radius: 50% 50% 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .action-btn:hover {
+            background-color: #34495e;
+            color: #bdc3c7;
+        }
+
+        /* Specific Button Styles */
+        .edit-btn {
+            background-color: #2980b9;
+        }
+
+        .edit-btn:hover {
+            background-color: #1c5980;
+        }
+
+        .delete-btn {
+            background-color: #c0392b;
+            border: 0.5px solid #2c3e50; /* Reduced border width */
+            width: 18px; /* adjust width accordingly */
+            height: 18px; /* adjust height accordingly */
+        }
+
+        .delete-btn:hover {
+            background-color: #a93226;
+        }
+
+        .save-btn {
+            background-color: #27ae60;
+        }
+
+        .save-btn:hover {
+            background-color: #1e8449;
+        }
+
+        .cancel-btn {
+            background-color: #95a5a6;
+        }
+
+        .cancel-btn:hover {
+            background-color: #7f8c8d;
+        }
+
+        /* Add Risk Button */
+        .add-risk-btn {
+            background-color: #f5faf7;
+            color: #34495e;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            border-radius: 50%;
+            width: 20px; /* reduced from 30px */
+            height: 20px; /* reduced from 30px */
+            font-size: 15px; /* reduced from 24px */
+            /* Remove line-height to allow flex centering */
+        }
+
+        .add-risk-btn:hover {
+            background-color: #219150;
+        }
+
+        /* Container for Add Risk Button */
+        .add-risk-container {
+            text-align: left;
+            margin: 10px 20px;
+        }
+
+        /* Dropdown styles for Risk Assessment menu */
+        .dropdown { position: relative; display: inline-block; }
         .dropdown-content {
             display: none;
             position: absolute;
-            background-color: #f9f9f9;
+            background-color: white !important;
+            color: black !important;
             min-width: 160px;
             box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
             z-index: 1;
+            top: calc(100%); /* positions the dropdown 5px below the button */
+            font-size: 6px !important;
+            font-weight: normal;
+            text-align: left;
         }
         .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
-            text-decoration: none;
+            color: rgb(44, 43, 43) !important;
+            padding: 6px 10px !important;
+            text-decoration: none;  
             display: block;
+            font-size: 11px !important;
         }
         .dropdown-content a:hover {
-            background-color: #f1f1f1;
+            background-color: #e8e8e8;
+            transform: none; 
         }
         .dropdown:hover .dropdown-content,
         .dropdown:focus-within .dropdown-content {
             display: block;
+        }
+
+        .delete-btn {
+            background-color: #c0392b;
+            border: 0.5px solid #2c3e50; /* Reduced border width */
+            width: 10px; /* Reduced width */
+            height: 10px; /* Reduced height */
+        }
+
+        .delete-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Enhanced popup styling */
+        #colInfoPopup {
+            display: none;
+            position: absolute; /* Changed from fixed to absolute */
+            top: 100%; /* Position below the table head row */
+            left: 100%; /* Position to the right of the clicked title */
+            transform: translate(var(--popup-x, -60px), var(--popup-y, 90px)); /* Use CSS variables for X and Y */
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 6px;
+            width: auto; /* width now adapts dynamically */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            font-size: 9px;
+            background-color: #f9f9f9; /* Ensure background for visibility */
+            z-index: 1000; /* Ensure it appears above other elements */
+            text-align: left; /* Ensures text is always left-aligned */
+        }
+
+        /* Enhance Delete Icon Button */
+        .delete-icon-btn {
+            background-color: #2c3e50; /* Red background color */
+            color: white; /* White icon color */
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-size: 14px; /* Adjust icon size as needed */
+        }
+
+        .delete-icon-btn:hover {
+            background-color: #f0583d; /* Darker red on hover */
+        }
+        
+        /* Additional style option for toolbar risk buttons */
+        .toolbar-risk-btn {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 2px solid #fff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .toolbar-risk-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+        /* Additional rule for positioning risk action buttons left and right */
+        .risk-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 60px; /* Adjust width as needed */
+        }
+        /* Remove the inline margin from delete button if necessary:
+        .risk-actions button:last-child {
+            margin-left: 0;
+        } */
+        /* New additional size options for risk actions */
+        .risk-actions-small .add-risk-btn {
+            width: 10px;
+            height: 10px;
+            font-size: 16px;
+        }
+        .risk-actions-large .add-risk-btn {
+            padding: 0;
+            width: 10px;
+            height: 10px;
+            font-size: 32px;
+        }
+        /* New login button circle style */
+        .circle-login {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #2c3e50;
+        }
+        .circle-login svg {
+            width: 12px;
+            height: 12px;
+            fill: #fff;
+        }
+        /* New rules for horizontal alignment of menu toolbar */
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .menu-bar ul {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .menu-bar ul li {
+            margin: 0 10px;
+        }
+        /* ...existing CSS... */
+        
+        /* New CSS rules for Delete Risk Button */
+        #delete-selected-btn {
+            background-color: #dc3545; /* red */
+            color: #ffffff;
+        }
+        #delete-selected-btn:hover {
+            background-color: #a93226;
+        }
+
+        /* Updated .download-icon-btn to reduce size */
+        .download-icon-btn {
+            background: linear-gradient(45deg, #34ace0, #227093);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            padding: 8px;            /* reduced padding from 12px */
+            font-size: 20px;         /* reduced font-size from 20px */
+            width: 20px;             /* reduced width from 50px */
+            height: 20px;            /* reduced height from 50px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(34, 112, 147, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .download-icon-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(34, 112, 147, 0.6);
+        }
+
+        /* New CSS styles for the download SVG icon */
+        .download-icon-btn svg {
+            width: 30px;
+            height: 90px;
+            font-size: 90px;
+            /* Optional: customize stroke, fill, or add additional effects */
+            stroke: white;
+            transition: transform 0.3s ease;
+        }
+
+        /* New best design for the download button */
+        .download-icon-btn {
+            background: linear-gradient(135deg, #f4f6f7, #f8f9fa);
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            width: 20px;      /* reduced from 35px */
+            height: 20px;     /* reduced from 35px */
+            padding: 0px;     /* reduced from 6px */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+        }
+
+        .download-icon-btn:hover {
+            transform: scale(1.15);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+
+        /* Style the SVG icon inside the download button */
+        .download-icon-btn svg {
+            width: 90%;       /* reduced from 60% */
+            height: 90%;      /* reduced from 60% */
+            stroke: #141414;
+            stroke-width: 2;
+            transition: stroke-width 0.3s ease;
+        }
+
+        .download-icon-btn:hover svg {
+            stroke-width: 3;
+        }
+
+        /* Override save progress button styles to remove the rectangle */
+        #save-progress-btn {
+            background: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            font-size: 20px; /* adjust if needed */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* New styles for adjusting the save progress button size */
+        #save-progress-btn {
+            /* Adjust these values to reduce or increase the button size */
+            font-size: 20px; /* change to desired icon size */
+            width: 20px;     /* button width */
+            height: 20px;    /* button height */
+        }
+
+        /* Optional additional classes for preset sizes */
+        #save-progress-btn.small {
+            font-size: 16px;
+            width: 20px;
+            height: 20px;
+        }
+
+        #save-progress-btn.large {
+            font-size: 28px;
+            width: 30px;
+            height: 30px;
+        }
+
+        /* ...existing CSS... */
+
+        /* Enhance the Import Risk File Button */
+        #import-risk-btn {
+            background: linear-gradient(135deg, #faf9fa, #f3f1f1);
+            border: none;
+            border-radius: 50%;
+            color: rgb(26, 25, 25);
+            width: 20px;
+            height: 20px;
+            font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease, background 0.3s ease;
+        }
+
+        #import-risk-btn:hover {
+            transform: scale(1.1);
+            background: linear-gradient(135deg, #9b59b6, #e74c3c);
+        }
+
+        /* ...existing CSS... */
+
+        /* Ensure all menu bar items are aligned vertically on the same horizontal axis */
+        .menu-bar ul li {
+            display: flex;
+            align-items: center;
+            /* Remove unnecessary margins if needed */
+            margin: 0 10px;
+        }
+
+        /* Optionally, remove inline margins from login button container */
+        .menu-bar ul li.circle-login,
+        .menu-bar ul li:last-child {
+            margin-right: 0;
+        }
+
+        /* New styles for the upload button SVG */
+        .upload-icon-btn svg {
+            width: 24px;    /* existing width */
+            height: 120%;   /* increased height from 90% */
+            stroke-width: 0;  /* Increase stroke thickness */
+            fill: #ffffff;
+            transition: transform 0.3s ease, fill 0.3s ease, stroke-width 0.3s ease;
+        }
+        .upload-icon-btn:hover svg {
+            transform: scale(1.2);
+            fill: #f39c12;
+            stroke-width: 0;
+        }
+
+        /* ...existing CSS... */
+
+        /* New styles for the upload button */
+        .upload-btn {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            padding: 0px 0px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+        .upload-btn:hover {
+            background: linear-gradient(135deg, #28b463, #1e8449);
+            transform: scale(1.05);
+        }
+
+        /* ...existing CSS... */
+
+        .export-btn {
+            background-color: #34495e; /* Green background */
+            border: none;
+            color: white;
+            padding: 6px 12px; /* Reduced padding */
+            text-align: center;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            font-size: 12px; /* Reduced font size */
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .export-btn svg {
+            margin-right: 1px; /* Reduced margin */
+            width: 20px; /* Increased width */
+            height: 20px; /* Increased height */
+        }
+
+        .export-btn:hover {
+            background-color: #34495e;
+            transform: scale(1.05);
+        }
+
+        /* New styles for the Residual Settings Popup */
+        #residualSettingsPopup {
+            display: none;
+            position: fixed; /* Center the popup */
+            top: 50%; /* Center vertically */
+            left: 50%; /* Center horizontally */
+            transform: translate(-50%, -50%); /* Center the popup */
+            background: #ffffff;
+            border: 1px solid #ccc;
+            padding: 15px; /* Reduced padding for better spacing */
+            border-radius: 8px; /* Reduced border radius for rounded corners */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); /* Enhanced shadow for depth */
+            z-index: 10000; /* Ensure it appears above other elements */
+            width: 250px; /* Reduced width for better layout */
+            font-size: 12px; /* Reduced font size */
+        }
+        #residualSettingsPopup h4 {
+            margin: 0 0 10px; /* Reduced bottom margin */
+            font-size: 16px; /* Reduced font size */
+            text-align: center;
+            color: #34495e; /* Darker color for the title */
+        }
+        #residualSettingsPopup label {
+            display: block;
+            margin-bottom: 8px; /* Reduced bottom margin */
+            font-weight: bold; /* Bold labels */
+        }
+        #residualSettingsPopup select {
+            width: 100%;
+            padding: 6px; /* Reduced padding */
+            margin-top: 4px; /* Reduced top margin */
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 12px; /* Reduced font size */
+        }
+        #residualPreview {
+            text-align: center;
+            margin: 10px 0; /* Reduced vertical margin */
+            padding: 8px; /* Reduced padding */
+            border-radius: 6px; /* Reduced border radius */
+            color: #fff;
+            font-weight: bold;
+            background-color: #f1c40f; /* Default background color */
+        }
+        #residualSettingsPopup button {
+            width: 48%;
+            padding: 6px; /* Reduced padding */
+            margin-top: 10px; /* Reduced top margin */
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px; /* Reduced font size */
+        }
+        #residualSettingsPopup .apply-btn {
+            background: #27ae60;
+            color: #fff;
+        }
+        #residualSettingsPopup .cancel-btn {
+            background: #c0392b;
+            color: #fff;
+        }
+        /* New style for the residual settings button */
+        .residual-settings-btn {
+            background: none;
+            border: none;
+            padding: 0;
+            margin-left: 5px;
+            cursor: pointer;
+            font-size: inherit;
+        }
+        table#riskTable th.score-column,
+        table#riskTable td.score-column {
+            display: none; /* Hide the score column */
+        }
+        /* ...existing CSS... */
+        #matrix-size-select {
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 14px;
+            background-color: #f8f9fa;
+            color: #333;
+            cursor: pointer;
+            transition: border-color 0.3s ease, background-color 0.3s ease;
+        }
+        #matrix-size-select:focus {
+            border-color: #227093;
+            outline: none;
+            background-color: #ffffff;
+        }
+        /* ...existing CSS... */
+
+        /* Enhance the new settings dropdown button icon */
+        .settings-icon-btn {
+            background: none; /* Remove background */
+            border: none; /* Remove border */
+            padding: 0; /* Remove padding */
+            cursor: pointer; /* Pointer cursor */
+            font-size: 20px; /* Adjust icon size as needed */
+            color: #2c3e50; /* Icon color */
+            transition: color 0.3s ease; /* Smooth color transition */
+        }
+
+        .settings-icon-btn:hover {
+            color: #34495e; /* Darker color on hover */
+        }
+
+        /* Reduce the width of the risk summary table */
+        #riskReportTable {
+            width: 20%; /* Reduced from 25% */
+            margin-left: 10px; /* Adjusted left margin */
+            border-collapse: collapse;
+            background: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 10px;
+            border-radius: 0;
+        }
+
+        /* Reduce the distance between the risk table and the risk summary report table */
+        #reportContainer {
+            margin: 10px 10px 20px 10px; /* Adjusted margins */
+        }
+
+        /* Hide the footer */
+        footer {
+            display: none;
         }
     </style>
 </head>
@@ -70,29 +761,74 @@
     <header>
         <nav class="menu-bar">
             <ul class="menu-left">
-                <li class="current"><a href="index.html">Home</a></li>
-                <li class="current"><a href="dashboard.html">Dashboard</a></li>
-                <li class="current"><a href="about.html">About</a></li>
-                <li class="current"><a href="services.html">Services</a></li>
-                <li class="dropdown">
-                    <a href="risk-assessment.html">Risk Assessment</a>
+                <li class=""><a href="index.html">Home</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="services.html">Services</a></li>
+                <li class="dropdown current">
+                    <a href="#" onclick="return false;">Risk Assessment</a>
                     <div class="dropdown-content">
                         <a href="risktable.html">Risk Table</a>
-                        <a href="upload-risk-file.html">Upload Risk File</a>
-                    </div>
-                    
-                    <a href="exports.html">Exports</a>
-                    <div class="dropdown-content">
-                        <a href="exporttoword.html">Export to word</a>
-                        <a href="exporttoexcel.html">Export to excel</a>
                     </div>
                 </li>
-                <li class="hidden"><a href="data-analysis.html">Data Analysis</a></li>
+                <li><a href="data-analysis.html">Data Analysis</a></li>
             </ul>
             <ul class="menu-right">
-                <li style="margin-right: 30px;">
-                    <a href="login.html">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24">
+                <!-- Adjusted export button margin -->
+                <li style="margin-right: 1px;">
+                    <button class="export-btn" onclick="exportTableAndChartsToWord('riskTable')" title="Export Report">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M4 22h16a2 2 0 0 0 2-2V8l-6-6H4a2 2 0 0 0-2 2v12a 2 2 0 0 0 2 2z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                    </button>
+                </li>
+                <li class="risk-actions" style="display: flex; align-items: center; height: 100%;">
+                    <button class="add-risk-btn toolbar-risk-btn">+</button>
+                    <button id="delete-selected-btn" class="add-risk-btn toolbar-risk-btn" style="margin-left: 10px;">&minus;</button>
+                </li>
+                <li>
+                    <!-- New Save Progress Button -->
+                    <button id="save-progress-btn" class="toolbar-risk-btn" onclick="saveRiskTableProgress()" aria-label="Save Risk Table Progress">💾</button>
+                </li>
+                <!-- NEW: Matrix Size Selector -->
+                <li style="display: none;">
+                    <select id="matrix-size-select" aria-label="Matrix Size">
+                        <option value="5x5" selected>5x5 Matrix</option>
+                        <option value="3x3">3x3 Matrix</option>
+                    </select>
+                </li>
+                <!-- New Settings Dropdown Icon -->
+                <li class="dropdown">
+                    <button class="settings-icon-btn" onclick="return false;" aria-label="Settings">⚙️</button>
+                    <div class="dropdown-content">
+                        <a href="#" onclick="setMatrixSize('3x3'); return false;">3X3 Matrix</a>
+                        <a href="#" onclick="setMatrixSize('5x5'); return false;">5X5 Matrix</a>
+                    </div>
+                </li>
+                <li>
+                    <!-- Updated Import Risk File Button with filled SVG arrow -->
+                    <button id="import-risk-btn" class="toolbar-risk-btn" onclick="document.getElementById('import-risk-file').click()" aria-label="Import Risk File">
+                        <svg width="20" height="20" viewBox="0 0 24 24">
+                            <path d="M12 2L5 9h4v7h6V9h4z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </li>
+                <li>
+                    <!-- Update download button SVG to match the '+' sign size -->
+                    <button class="download-icon-btn" onclick="downloadRiskFile()" aria-label="Download Risk File">
+                        <svg width="30" height="90" style="font-size: 24px;" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a 2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                    </button>
+                </li>
+                <!-- New Upload Icon -->
+                <!-- Remove the risk upload trigger button from the toolbar -->
+                <li style="display: flex; align-items: center; margin-right: 30px;">
+                    <a href="login.html" class="circle-login">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                         </svg>
                     </a>
