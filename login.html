@@ -3,635 +3,602 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Risk Assessment Tool</title>
+    <title>Login - Dreamex Lab</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f4f6f9;
+            background-color: #f5f7fa;
             margin: 0;
             padding: 0;
+            color: #34495e;
+        }
+
+        /* Header and Menu Bar */
+        .menu-bar {
             display: flex;
-            justify-content: center;
             align-items: center;
-            height: 100vh;
+            justify-content: space-between;
+            background-color: #34495e;
+            padding: 0 20px;
         }
         
+        .menu-bar ul {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .menu-bar ul li {
+            margin: 0 10px;
+        }
+        
+        .menu-bar ul li a {
+            display: block;
+            padding: 15px 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .menu-bar ul li a:hover {
+            color: #f1f3f5;
+        }
+        
+        .menu-bar ul li.current a {
+            color: #fafcfd;
+            font-weight: bold;
+        }
+
+        /* Login Container */
         .login-container {
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            padding: 30px;
-            width: 350px;
-            max-width: 90%;
-        }
-        
-        .login-header {
+            max-width: 450px;
+            margin: 100px auto;
+            padding: 40px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
             text-align: center;
+        }
+
+        .login-logo {
             margin-bottom: 30px;
         }
-        
-        .login-header h1 {
-            color: #34495e;
-            margin-bottom: 10px;
-            font-size: 24px;
+
+        .login-logo img {
+            max-width: 120px;
+            height: auto;
         }
-        
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #34495e;
+            margin-bottom: 30px;
+        }
+
+        /* Form styles */
+        .login-form .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .login-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #34495e;
+        }
+
         .login-form input {
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            box-sizing: border-box;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
             font-size: 14px;
+            transition: border-color 0.2s ease;
         }
-        
+
+        .login-form input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .login-form .has-error input {
+            border-color: #e74c3c;
+        }
+
+        .login-form .has-error .error-message {
+            display: block;
+        }
+
+        /* Buttons */
         .login-btn {
             width: 100%;
-            background-color: #34495e;
+            background-color: #3498db;
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 4px;
-            cursor: pointer;
+            padding: 12px 0;
+            border-radius: 6px;
             font-size: 16px;
-            margin-top: 10px;
-            transition: background-color 0.3s ease;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            margin-bottom: 20px;
         }
-        
+
         .login-btn:hover {
-            background-color: #2c3e50;
+            background-color: #2980b9;
         }
-        
+
+        .login-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+
+        /* Divider */
         .divider {
-            text-align: center;
-            margin: 20px 0;
-            position: relative;
+            display: flex;
+            align-items: center;
+            margin: 25px 0;
+            color: #95a5a6;
         }
-        
-        .divider::before {
+
+        .divider:before,
+        .divider:after {
             content: "";
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background-color: #ddd;
-            z-index: 0;
+            flex: 1;
+            border-bottom: 1px solid #e0e0e0;
         }
-        
-        .divider span {
-            background-color: #fff;
-            padding: 0 10px;
-            position: relative;
-            color: #777;
-            font-size: 14px;
+
+        .divider:before {
+            margin-right: 15px;
         }
-        
+
+        .divider:after {
+            margin-left: 15px;
+        }
+
+        /* Social Login Buttons */
+        .social-login {
+            margin-bottom: 25px;
+        }
+
         .google-btn {
-            width: 100%;
-            background-color: white;
-            color: #757575;
-            border: 1px solid #ddd;
-            padding: 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: background-color 0.3s ease;
-        }
-        
-        .google-btn:hover {
-            background-color: #f5f5f5;
-        }
-        
-        .google-icon {
-            margin-right: 10px;
-            width: 18px;
-            height: 18px;
-        }
-        
-        .signup-link {
-            text-align: center;
-            margin-top: 20px;
-            font-size: 14px;
-            color: #777;
-        }
-        
-        .signup-link a {
+            background-color: #ffffff;
             color: #34495e;
+            border: 1px solid #e0e0e0;
+            padding: 12px 0;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            width: 100%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .google-btn:hover {
+            background-color: #f8f9fa;
+        }
+
+        .google-btn img {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+
+        /* Additional links */
+        .additional-links {
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .additional-links a {
+            color: #3498db;
             text-decoration: none;
         }
-        
-        .signup-link a:hover {
+
+        .additional-links a:hover {
             text-decoration: underline;
         }
-        
-        .error-message {
+
+        /* Alert message */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .alert-error {
+            background-color: #fdf2f2;
             color: #e74c3c;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
+            border: 1px solid #fadbd8;
+        }
+
+        .alert-success {
+            background-color: #edfdf2;
+            color: #27ae60;
+            border: 1px solid #d4f3e6;
+        }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
             display: none;
         }
 
-        /* New toggle functionality styles */
-        .form-container {
-            transition: transform 0.4s ease, opacity 0.3s ease;
-        }
-        
-        .form-container.hidden {
-            transform: translateY(20px);
-            opacity: 0;
-            pointer-events: none;
-            position: absolute;
-        }
-        
-        /* Password strength indicator styles */
-        .password-strength {
-            height: 5px;
-            margin-top: 5px;
-            border-radius: 2px;
-            transition: width 0.3s ease;
-            display: none;
-        }
-        
-        .password-feedback {
-            font-size: 12px;
-            margin-top: 5px;
-            color: #666;
-            display: none;
-        }
-        
-        /* Form animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-
-        /* New styles for Google authentication */
-        .google-avatar {
-            width: 18px;
-            height: 18px;
+        .loading-spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
             border-radius: 50%;
-            margin-right: 10px;
-            object-fit: cover;
-        }
-        
-        .success-message {
-            background-color: #4CAF50;
-            color: white;
-            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
         }
 
-        /* Add styling for enhanced error messages with HTML */
-        .error-message {
-            color: #e74c3c;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: left;
-            display: none;
-            padding: 10px;
-            border-radius: 4px;
-            background-color: rgba(231, 76, 60, 0.1);
-        }
-        
-        .error-message ol {
-            margin-top: 5px;
-            margin-bottom: 5px;
-            padding-left: 20px;
-        }
-        
-        .error-message a {
-            color: #3498db;
-            text-decoration: underline;
-        }
-        
-        .error-message small {
-            color: #7f8c8d;
-            font-style: italic;
-            display: block;
-            margin-top: 5px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
 <body>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     <div class="login-container">
-        <div class="login-header">
-            <h1>Risk Assessment Tool</h1>
-            <p id="form-title">Login to access your dashboard</p>
+        <div class="login-logo">
+            <!-- Replace with your logo -->
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect width="80" height="80" rx="16" fill="#3498db" fill-opacity="0.1"/>
+                <path d="M40 16C26.7452 16 16 26.7452 16 40C16 53.2548 26.7452 64 40 64C53.2548 64 64 53.2548 64 40C64 26.7452 53.2548 16 40 16Z" stroke="#3498db" stroke-width="4"/>
+                <path d="M40 28V52" stroke="#3498db" stroke-width="4" stroke-linecap="round"/>
+                <path d="M28 40H52" stroke="#3498db" stroke-width="4" stroke-linecap="round"/>
+            </svg>
+        </div>
+        <h1 class="login-title">Welcome Back</h1>
+        
+        <div class="alert alert-error" id="errorAlert"></div>
+        <div class="alert alert-success" id="successAlert" style="display: none;"></div>
+        
+        <!-- New already-logged-in message container -->
+        <div id="alreadyLoggedInContainer" style="display: none; text-align: center; margin-bottom: 20px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">You are already logged in.</p>
+            <button type="button" class="login-btn" id="continueToSiteBtn">Continue to Site</button>
+            <button type="button" class="google-btn" id="switchAccountBtn" style="margin-top: 10px;">
+                Switch Account
+            </button>
         </div>
         
-        <!-- Login Form -->
-        <div id="login-form" class="login-form form-container">
-            <input type="email" id="login-email" placeholder="Email address" required>
-            <input type="password" id="login-password" placeholder="Password" required>
-            <button class="login-btn" id="login-btn">Login</button>
-            <p id="login-error" class="error-message"></p>
-            
-            <div class="divider">
-                <span>OR</span>
+        <form class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+                <div class="error-message">Please enter a valid email address</div>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+                <div class="error-message">Password is required</div>
             </div>
             
-            <button class="google-btn" id="google-login-btn">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google logo" class="google-icon">
+            <button type="submit" class="login-btn" id="loginButton">Log In</button>
+        </form>
+        
+        <div class="divider">or</div>
+        
+        <div class="social-login">
+            <button class="google-btn" id="googleSignInBtn">
+                <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google">
                 Sign in with Google
             </button>
         </div>
         
-        <!-- Sign Up Form (initially hidden) -->
-        <div id="signup-form" class="login-form form-container hidden">
-            <input type="email" id="signup-email" placeholder="Email address" required>
-            <input type="password" id="signup-password" placeholder="Create password" required>
-            <input type="password" id="signup-confirm-password" placeholder="Confirm password" required>
-            
-            <!-- Password strength indicator -->
-            <div class="password-strength" id="password-strength"></div>
-            <p class="password-feedback" id="password-feedback"></p>
-            
-            <button class="login-btn" id="signup-btn">Create Account</button>
-            <p id="signup-error" class="error-message"></p>
-        </div>
-        
-        <div class="signup-link">
-            <p id="toggle-text">Don't have an account? <a href="#" id="toggle-form">Sign up</a></p>
+        <div class="additional-links">
+            <p>Don't have an account? <a href="signup.html">Sign Up</a></p>
+            <p><a href="forgot-password.html">Forgot your password?</a></p>
         </div>
     </div>
-    
-    <script type="module">
-        // Import Firebase modules
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
-        
-        // Firebase configuration - using the same config as in risktable.html
+
+    <script>
+        // Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
             authDomain: "users-8be65.firebaseapp.com",
             databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
             projectId: "users-8be65",
-            storageBucket: "users-8be65.firebasestorage.app",
+            storageBucket: "users-8be65.appspot.com",
             messagingSenderId: "829083030831",
             appId: "1:829083030831:web:36a370e62691e560bc3dda"
         };
         
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const googleProvider = new GoogleAuthProvider();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database();
         
-        // Function to display error messages
-        function showError(message) {
-            const errorElement = document.getElementById("error-message");
-            errorElement.textContent = message;
-            errorElement.style.display = "block";
-            
-            // Hide error after 5 seconds
-            setTimeout(() => {
-                errorElement.style.display = "none";
-            }, 5000);
-        }
+        // Get return URL from query parameter or use default
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('returnUrl') || 'index.html';
         
-        // Email/password login
-        document.getElementById("login-btn").addEventListener("click", function() {
-            const email = document.getElementById("login-email").value;
-            const password = document.getElementById("login-password").value;
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            const googleSignInBtn = document.getElementById('googleSignInBtn');
+            const errorAlert = document.getElementById('errorAlert');
+            const successAlert = document.getElementById('successAlert');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const alreadyLoggedInContainer = document.getElementById('alreadyLoggedInContainer');
+            const continueToSiteBtn = document.getElementById('continueToSiteBtn');
+            const switchAccountBtn = document.getElementById('switchAccountBtn');
             
-            if (!email || !password) {
-                showError("Please enter both email and password");
-                return;
-            }
-            
-            // Show loading state
-            const loginBtn = document.getElementById("login-btn");
-            const originalText = loginBtn.textContent;
-            loginBtn.textContent = "Logging in...";
-            loginBtn.disabled = true;
-            
-            signInWithEmailAndPassword(auth, email, password)
-                .then(() => {
-                    // Redirect to risk table page on successful login
-                    window.location.href = "risktable.html";
-                })
-                .catch((error) => {
-                    // Handle errors
-                    console.error("Login error:", error);
-                    let errorMessage = "Failed to login. Please try again.";
-                    
-                    if (error.code === "auth/wrong-password" || error.code === "auth/user-not-found") {
-                        errorMessage = "Invalid email or password";
-                    } else if (error.code === "auth/too-many-requests") {
-                        errorMessage = "Too many attempts. Please try again later";
-                    }
-                    
-                    showError(errorMessage);
-                    
-                    // Reset button
-                    loginBtn.textContent = originalText;
-                    loginBtn.disabled = false;
-                });
-        });
-        
-        // Enhanced Google Sign-in with better error handling
-        document.getElementById("google-login-btn").addEventListener("click", function() {
-            // Show loading state
-            const googleBtn = document.getElementById("google-login-btn");
-            const originalContent = googleBtn.innerHTML;
-            googleBtn.innerHTML = "Connecting to Google...";
-            googleBtn.disabled = true;
-            
-            // Clear any previous errors
-            const loginError = document.getElementById("login-error");
-            loginError.style.display = "none";
-            
-            // Check the current domain against Firebase's authorized domains
-            const currentDomain = window.location.hostname;
-            
-            // Log domain information for debugging
-            console.log("Current domain:", currentDomain);
-            console.log("Current origin:", window.location.origin);
-            
-            try {
-                // Configure Google provider with improved settings
-                googleProvider.setCustomParameters({
-                    prompt: 'select_account', // Force account selection every time
-                    login_hint: document.getElementById('login-email').value || ''
-                });
+            // Email/Password Login
+            loginForm.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                // Request scopes
-                googleProvider.addScope('profile');
-                googleProvider.addScope('email');
+                const email = document.getElementById('email').value.trim();
+                const password = document.getElementById('password').value;
                 
-                signInWithPopup(auth, googleProvider)
+                // Basic validation
+                let isValid = true;
+                
+                if (!email || !email.includes('@')) {
+                    document.getElementById('email').parentNode.classList.add('has-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('email').parentNode.classList.remove('has-error');
+                }
+                
+                if (!password) {
+                    document.getElementById('password').parentNode.classList.add('has-error');
+                    isValid = false;
+                } else {
+                    document.getElementById('password').parentNode.classList.remove('has-error');
+                }
+                
+                if (isValid) {
+                    showLoading();
+                    
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            const user = userCredential.user;
+                            
+                            // Save additional user data if needed
+                            const userRef = database.ref('users/' + user.uid);
+                            userRef.once('value').then((snapshot) => {
+                                if (!snapshot.exists()) {
+                                    // First time login, save basic user data
+                                    userRef.set({
+                                        email: user.email,
+                                        displayName: user.displayName || email.split('@')[0],
+                                        role: 'user',
+                                        lastLogin: firebase.database.ServerValue.TIMESTAMP
+                                    });
+                                } else {
+                                    // Update last login time
+                                    userRef.update({
+                                        lastLogin: firebase.database.ServerValue.TIMESTAMP
+                                    });
+                                }
+                            });
+                            
+                            // Log successful login
+                            logAction('LOGIN', {method: 'email', email: email});
+                            
+                            hideLoading();
+                            showSuccess("Login successful! Redirecting...");
+                            
+                            // Redirect after a short delay to show success message
+                            setTimeout(() => {
+                                window.location.href = returnUrl;
+                            }, 1500);
+                        })
+                        .catch((error) => {
+                            console.error("Login error:", error);
+                            logAction('FAILED_LOGIN', {
+                                method: 'email',
+                                email: email,
+                                error: error.code
+                            });
+                            
+                            hideLoading();
+                            showError(getAuthErrorMessage(error.code));
+                        });
+                }
+            });
+            
+            // Google Sign In
+            googleSignInBtn.addEventListener('click', function() {
+                showLoading();
+                
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.setCustomParameters({ prompt: 'select_account' });
+                
+                auth.signInWithPopup(provider)
                     .then((result) => {
-                        // Google sign-in successful
                         const user = result.user;
-                        console.log("Google login successful!", user);
-                        console.log("User display name:", user.displayName);
-                        console.log("User email:", user.email);
                         
-                        // Show success feedback before redirecting
-                        googleBtn.innerHTML = `<img src="${user.photoURL || ''}" class="google-avatar" alt=""> Signed in!`;
-                        googleBtn.classList.add("success-message");
+                        // Save or update user data
+                        const userRef = database.ref('users/' + user.uid);
+                        userRef.once('value').then((snapshot) => {
+                            if (!snapshot.exists()) {
+                                userRef.set({
+                                    email: user.email,
+                                    displayName: user.displayName,
+                                    photoURL: user.photoURL,
+                                    role: 'user',
+                                    lastLogin: firebase.database.ServerValue.TIMESTAMP
+                                });
+                            } else {
+                                userRef.update({
+                                    lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                                    photoURL: user.photoURL // Update photo in case it changed
+                                });
+                            }
+                        });
                         
-                        // Redirect after brief delay to show success state
+                        // Log successful login
+                        logAction('LOGIN', {method: 'google', email: user.email});
+                        
+                        hideLoading();
+                        showSuccess("Login successful! Redirecting...");
+                        
+                        // Redirect after a short delay to show success message
                         setTimeout(() => {
-                            window.location.href = "risktable.html";
-                        }, 1000);
+                            window.location.href = returnUrl;
+                        }, 1500);
                     })
                     .catch((error) => {
-                        // Enhanced error handling with more specific messages
-                        console.error("Google login error:", error);
-                        console.error("Error code:", error.code);
-                        console.error("Error message:", error.message);
+                        console.error("Google sign-in error:", error);
+                        logAction('FAILED_LOGIN', {
+                            method: 'google',
+                            error: error.code
+                        });
                         
-                        let errorMessage = "Google sign-in failed. Please try again.";
-                        
-                        // Handle specific error codes with clearer messages
-                        switch(error.code) {
-                            case "auth/popup-closed-by-user":
-                                errorMessage = "Sign-in window was closed. Please try again.";
-                                break;
-                            case "auth/popup-blocked":
-                                errorMessage = "Sign-in popup was blocked by your browser. Please enable popups for this site.";
-                                break;
-                            case "auth/cancelled-popup-request":
-                                errorMessage = "Sign-in request was cancelled. Please try again.";
-                                break;
-                            case "auth/network-request-failed":
-                                errorMessage = "Network error. Please check your internet connection.";
-                                break;
-                            case "auth/user-disabled":
-                                errorMessage = "This account has been disabled. Please contact support.";
-                                break;
-                            case "auth/account-exists-with-different-credential":
-                                errorMessage = "An account already exists with the same email but different sign-in credentials.";
-                                break;
-                            case "auth/operation-not-allowed":
-                                errorMessage = "Google sign-in is not enabled. Please contact the administrator.";
-                                break;
-                            case "auth/unauthorized-domain":
-                                errorMessage = `This domain "${currentDomain}" is not authorized for OAuth operations. To fix this:
-                                    <ol>
-                                        <li>Go to the <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a></li>
-                                        <li>Select your project</li>
-                                        <li>Go to Authentication > Sign-in method</li>
-                                        <li>Scroll down to "Authorized domains"</li>
-                                        <li>Add "${currentDomain}" to the list</li>
-                                    </ol>
-                                    <small>If you're testing locally, try using "localhost" instead of "127.0.0.1" or vice versa, or add both to authorized domains.</small>`;
-                                console.error(`Unauthorized domain: ${currentDomain}. Check Firebase console OAuth settings!`);
-                                break;
-                            case "auth/internal-error":
-                                errorMessage = "Authentication server error. Please try again later.";
-                                break;
-                        }
-                        
-                        // Show the error to the user - allow HTML for the unauthorized domain error
-                        loginError.innerHTML = errorMessage;
-                        loginError.style.display = "block";
-                        
-                        // Reset button
-                        googleBtn.innerHTML = originalContent;
-                        googleBtn.disabled = false;
+                        hideLoading();
+                        showError(getAuthErrorMessage(error.code));
                     });
-            } catch (error) {
-                // Handle any unexpected errors
-                console.error("Unexpected error during Google sign-in setup:", error);
-                loginError.textContent = "Unable to initialize Google sign-in. Please try again later.";
-                loginError.style.display = "block";
-                
-                // Reset button
-                googleBtn.innerHTML = originalContent;
-                googleBtn.disabled = false;
-            }
-        });
-        
-        // Enter key for login form
-        document.getElementById("login-password").addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                document.getElementById("login-btn").click();
-            }
-        });
-
-        // Improved toggle between login and signup forms
-        function attachToggleListener() {
-            document.getElementById("toggle-form").addEventListener("click", function(e) {
-                e.preventDefault();
-                toggleForms();
             });
-        }
-        
-        // Function to toggle between login and signup forms
-        function toggleForms() {
-            const loginForm = document.getElementById("login-form");
-            const signupForm = document.getElementById("signup-form");
-            const toggleText = document.getElementById("toggle-text");
-            const formTitle = document.getElementById("form-title");
-            const loginError = document.getElementById("login-error");
-            const signupError = document.getElementById("signup-error");
             
-            // Clear any displayed error messages
-            loginError.style.display = "none";
-            signupError.style.display = "none";
+            // Continue to site button clicked
+            continueToSiteBtn.addEventListener('click', function() {
+                window.location.href = returnUrl;
+            });
             
-            if (loginForm.classList.contains("hidden")) {
-                // Switch to login
-                loginForm.classList.remove("hidden");
-                signupForm.classList.add("hidden");
-                toggleText.innerHTML = "Don't have an account? <a href='#' id='toggle-form'>Sign up</a>";
-                formTitle.textContent = "Login to access your dashboard";
-            } else {
-                // Switch to signup
-                loginForm.classList.add("hidden");
-                signupForm.classList.remove("hidden");
-                signupForm.classList.add("animate-in");
-                toggleText.innerHTML = "Already have an account? <a href='#' id='toggle-form'>Login</a>";
-                formTitle.textContent = "Create a new account";
-            }
-            
-            // Re-attach event listener to the new toggle link
-            setTimeout(attachToggleListener, 0);
-        }
-        
-        // Initial attachment of toggle event listener
-        document.addEventListener("DOMContentLoaded", function() {
-            attachToggleListener();
-        });
-        
-        // New code: Password strength checker
-        document.getElementById("signup-password").addEventListener("input", function() {
-            const password = this.value;
-            const strength = document.getElementById("password-strength");
-            const feedback = document.getElementById("password-feedback");
-            
-            if (password.length === 0) {
-                strength.style.display = "none";
-                feedback.style.display = "none";
-                return;
-            }
-            
-            // Show the strength indicator
-            strength.style.display = "block";
-            feedback.style.display = "block";
-            
-            // Calculate strength
-            let strengthValue = 0;
-            if (password.length > 7) strengthValue += 25;
-            if (/[A-Z]/.test(password)) strengthValue += 25;
-            if (/[0-9]/.test(password)) strengthValue += 25;
-            if (/[^A-Za-z0-9]/.test(password)) strengthValue += 25;
-            
-            // Update the indicator
-            strength.style.width = strengthValue + "%";
-            
-            // Set color based on strength
-            if (strengthValue < 50) {
-                strength.style.backgroundColor = "#e74c3c";
-                feedback.textContent = "Weak password";
-                feedback.style.color = "#e74c3c";
-            } else if (strengthValue < 75) {
-                strength.style.backgroundColor = "#f39c12";
-                feedback.textContent = "Moderate password";
-                feedback.style.color = "#f39c12";
-            } else {
-                strength.style.backgroundColor = "#2ecc71";
-                feedback.textContent = "Strong password";
-                feedback.style.color = "#2ecc71";
-            }
-        });
-        
-        // New code: Sign up with email and password
-        document.getElementById("signup-btn").addEventListener("click", function() {
-            const email = document.getElementById("signup-email").value;
-            const password = document.getElementById("signup-password").value;
-            const confirmPassword = document.getElementById("signup-confirm-password").value;
-            const errorElement = document.getElementById("signup-error");
-            
-            // Basic validation
-            if (!email || !password) {
-                errorElement.textContent = "Please enter both email and password";
-                errorElement.style.display = "block";
-                return;
-            }
-            
-            if (password !== confirmPassword) {
-                errorElement.textContent = "Passwords don't match";
-                errorElement.style.display = "block";
-                return;
-            }
-            
-            if (password.length < 6) {
-                errorElement.textContent = "Password must be at least 6 characters";
-                errorElement.style.display = "block";
-                return;
-            }
-            
-            // Show loading state
-            const signupBtn = document.getElementById("signup-btn");
-            const originalText = signupBtn.textContent;
-            signupBtn.textContent = "Creating account...";
-            signupBtn.disabled = true;
-            
-            createUserWithEmailAndPassword(auth, email, password)
-                .then((userCredential) => {
-                    // Account created successfully
-                    console.log("New user created:", userCredential.user.email);
-                    
-                    // Redirect to risk table page
-                    window.location.href = "risktable.html";
-                })
-                .catch((error) => {
-                    // Handle errors
-                    console.error("Signup error:", error);
-                    let errorMessage = "Failed to create account. Please try again.";
-                    
-                    if (error.code === "auth/email-already-in-use") {
-                        errorMessage = "Email is already in use";
-                    } else if (error.code === "auth/invalid-email") {
-                        errorMessage = "Invalid email format";
-                    } else if (error.code === "auth/weak-password") {
-                        errorMessage = "Password is too weak";
-                    }
-                    
-                    errorElement.textContent = errorMessage;
-                    errorElement.style.display = "block";
-                    
-                    // Reset button
-                    signupBtn.textContent = originalText;
-                    signupBtn.disabled = false;
+            // Switch account button clicked
+            switchAccountBtn.addEventListener('click', function() {
+                showLoading();
+                
+                auth.signOut().then(() => {
+                    hideLoading();
+                    alreadyLoggedInContainer.style.display = 'none';
+                    loginForm.style.display = 'block';
+                    document.querySelector('.divider').style.display = 'flex';
+                    document.querySelector('.social-login').style.display = 'block';
+                }).catch((error) => {
+                    console.error("Error signing out:", error);
+                    hideLoading();
+                    showError("Error signing out. Please try again.");
                 });
-        });
-        
-        // New code: Enter key for signup form
-        document.getElementById("signup-confirm-password").addEventListener("keyup", function(event) {
-            if (event.key === "Enter") {
-                document.getElementById("signup-btn").click();
+            });
+            
+            // Function to show loading overlay
+            function showLoading() {
+                loadingOverlay.style.display = 'flex';
             }
-        });
-    </script>
-
-    <script>
-        // Add this script to check for popup blockers
-        document.addEventListener('DOMContentLoaded', function() {
-            // Test if popups are blocked
-            const testPopup = window.open('about:blank', '_blank', 'height=1,width=1');
-            if (!testPopup || testPopup.closed || typeof testPopup.closed === 'undefined') {
-                console.warn("Popup blockers detected! Google sign-in may fail.");
-                const loginError = document.getElementById("login-error");
-                loginError.textContent = "Warning: Popup blockers may prevent Google sign-in. Please allow popups for this site.";
-                loginError.style.display = "block";
-            } else {
-                // Close the test popup
-                testPopup.close();
+            
+            // Function to hide loading overlay
+            function hideLoading() {
+                loadingOverlay.style.display = 'none';
             }
+            
+            // Function to show error message
+            function showError(message) {
+                errorAlert.textContent = message;
+                errorAlert.style.display = 'block';
+                successAlert.style.display = 'none';
+                
+                // Hide the error after 5 seconds
+                setTimeout(() => {
+                    errorAlert.style.display = 'none';
+                }, 5000);
+            }
+            
+            // Function to show success message
+            function showSuccess(message) {
+                successAlert.textContent = message;
+                successAlert.style.display = 'block';
+                errorAlert.style.display = 'none';
+            }
+            
+            // Function to log actions to Firebase
+            function logAction(action, details = {}) {
+                const logRef = database.ref('auditLogs').push();
+                logRef.set({
+                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                    action: action,
+                    details: details
+                });
+            }
+            
+            // Function to get user-friendly error message
+            function getAuthErrorMessage(errorCode) {
+                switch (errorCode) {
+                    case 'auth/invalid-email':
+                        return 'The email address is not valid.';
+                    case 'auth/user-disabled':
+                        return 'This user account has been disabled.';
+                    case 'auth/user-not-found':
+                        return 'No account found with this email.';
+                    case 'auth/wrong-password':
+                        return 'Incorrect password.';
+                    case 'auth/too-many-requests':
+                        return 'Too many unsuccessful login attempts. Please try again later.';
+                    case 'auth/popup-closed-by-user':
+                        return 'Sign-in popup was closed before completing the sign in.';
+                    case 'auth/cancelled-popup-request':
+                        return 'Sign-in was cancelled.';
+                    case 'auth/popup-blocked':
+                        return 'Sign-in popup was blocked by the browser.';
+                    default:
+                        return 'An error occurred during sign-in. Please try again.';
+                }
+            }
+            
+            // Check for already logged in user - show different UI instead of auto-redirecting
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    console.log("User is already logged in:", user.email);
+                    
+                    // Show "already logged in" UI instead of redirecting
+                    loginForm.style.display = 'none';
+                    document.querySelector('.divider').style.display = 'none';
+                    document.querySelector('.social-login').style.display = 'none';
+                    alreadyLoggedInContainer.style.display = 'block';
+                    
+                    // No automatic redirect - let the user decide
+                } else {
+                    // User is not logged in, show the login form
+                    loginForm.style.display = 'block';
+                    alreadyLoggedInContainer.style.display = 'none';
+                    document.querySelector('.divider').style.display = 'flex';
+                    document.querySelector('.social-login').style.display = 'block';
+                }
+                
+                // Hide loading overlay in either case
+                hideLoading();
+            });
         });
     </script>
 </body>
