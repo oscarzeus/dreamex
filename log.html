@@ -1152,37 +1152,231 @@
             return user.email.charAt(0).toUpperCase();
         }
         
-        // ... existing code for renderLogs, renderPagination, clearFilters, showLoading, hideLoading, etc. ...
+        // Function to render logs in the table
+        function renderLogs(logs) {
+            const tableBody = document.getElementById('auditLogBody');
+            const auditTable = document.getElementById('auditTable');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Clear existing rows
+            tableBody.innerHTML = '';
+            
+            if (logs.length === 0) {
+                auditTable.style.display = 'none';
+                emptyState.innerHTML = '<p>No audit logs found matching your filters.</p>';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            // Show table and hide empty state
+            auditTable.style.display = 'table';
+            emptyState.style.display = 'none';
+            
+            // Add each log to the table
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                
+                // Format timestamp
+                const date = new Date(log.timestamp);
+                const formattedDate = isNaN(date) ? 'Unknown' : date.toLocaleString();
+                
+                // Create cells
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${escapeHtml(log.userEmail || 'System')}</td>
+                    <td>${escapeHtml(log.action || 'Unknown')}</td>
+                    <td>${formatDetails(log.details)}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Helper function to format details
+        function formatDetails(details) {
+            if (!details) return 'No details provided';
+            
+            if (typeof details === 'object') {
+                try {
+                    return escapeHtml(JSON.stringify(details));
+                } catch (e) {
+                    return 'Error formatting details';
+                }
+            }
+            
+            return escapeHtml(details.toString());
+        }
+        
+        // Function to render pagination controls
+        function renderPagination(currentPage, totalPages) {
+            const paginationEl = document.getElementById('pagination');
+            paginationEl.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                return;
+            }
+            
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '« Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.classList.toggle('disabled', currentPage === 1);
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    loadAuditLogs(currentPage - 1);
+                }
+            });
+            paginationEl.appendChild(prevButton);
+            
+            // Page buttons
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.toggle('active', i === currentPage);
+                pageButton.addEventListener('click', () => {
+                    loadAuditLogs(i);
+                });
+                paginationEl.appendChild(pageButton);
+            }
+            
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next »';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.classList.toggle('disabled', currentPage === totalPages);
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    loadAuditLogs(currentPage + 1);
+                }
+            });
+            paginationEl.appendChild(nextButton);
+        }
+        
+        // Function to clear filters
+        function clearFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('userFilter').value = '';
+            document.getElementById('actionFilter').value = '';
+            
+            loadAuditLogs(1);
+        }
+        
+        // Function to show loading indicator
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'flex';
+            document.getElementById('auditTable').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+        
+        // Function to hide loading indicator
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+        
+        // Function to update UI for authenticated user
+        function updateUIForAuthenticatedUser(user) {
+            // Update user email in dropdown
+            document.getElementById('userEmail').textContent = user.email || "Not logged in";
+            
+            // Show logout button and hide login button
+            document.getElementById('profileLink').style.display = 'block';
+            document.getElementById('accountLink').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'none';
+            
+            // Update user avatar/initial
+            const userInitial = document.getElementById('userInitial');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            // Get user data from Firebase
+            database.ref(`users/${user.uid}`).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val() || {};
+                    
+                    if (userData.profileImage) {
+                        // Show profile image
+                        userAvatar.src = userData.profileImage;
+                        userAvatar.style.display = 'block';
+                        userInitial.style.display = 'none';
+                    } else {
+                        // Show initial
+                        userInitial.textContent = getUserInitial(user);
+                        userInitial.style.display = 'flex';
+                        userAvatar.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching user data:", error);
+                });
+        }
+        
+        // Helper function to HTML-escape content
+        function escapeHtml(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        // Export to CSV function
+        function exportToCSV() {
+            if (!currentLogs || currentLogs.length === 0) {
+                alert('No data to export.');
+                return;
+            }
+            
+            // Create CSV content
+            let csv = 'Timestamp,User,Action,Details\n';
+            
+            currentLogs.forEach(log => {
+                const timestamp = new Date(log.timestamp).toLocaleString();
+                const user = log.userEmail || 'System';
+                const action = log.action || 'Unknown';
+                let details = '';
+                
+                if (log.details) {
+                    details = typeof log.details === 'object' ? 
+                        JSON.stringify(log.details).replace(/"/g, '""') : 
+                        String(log.details).replace(/"/g, '""');
+                }
+                
+                csv += `"${timestamp}","${user}","${action}","${details}"\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `audit_log_${new Date().toISOString().slice(0,10)}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     </script>
 
-    <!-- Add this right before the closing </body> tag -->
+    <!-- Remove or replace the duplicate diagnostic script with this simpler version -->
     <script>
-        // Diagnose issues on page load
+        // Simplified diagnostic check
         window.addEventListener('load', function() {
-            console.log("Window loaded, checking if audit logs were loaded successfully");
-            
-            // Check if the table is empty after 5 seconds
             setTimeout(() => {
                 const tbody = document.getElementById('auditLogBody');
-                if (!tbody || tbody.children.length === 0) {
-                    console.warn("Audit log table appears to be empty, attempting recovery");
-                    
-                    // Try network diagnostics
-                    if (window.NetworkDiagnostics) {
-                        NetworkDiagnostics.runDiagnostics().then(results => {
-                            console.log("Network diagnostics results:", results);
-                            
-                            if (results.isOnline && auth && auth.currentUser) {
-                                console.log("Network is online and user is authenticated, trying to reload logs");
-                                loadAuditLogs(1);
-                            }
-                        });
-                    } else {
-                        // No diagnostics available, just try to reload
-                        if (auth && auth.currentUser) {
-                            loadAuditLogs(1);
-                        }
-                    }
+                if (tbody && tbody.children.length === 0 && auth && auth.currentUser) {
+                    console.log("Audit log may be empty, attempting to reload");
+                    loadAuditLogs(1);
                 }
             }, 5000);
         });
