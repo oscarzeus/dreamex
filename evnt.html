@@ -1321,7 +1321,8 @@
                         .catch(error => {
                             console.error("Error loading users:", error);
                             hideLoading();
-                            alert("Error loading user data. Please try again.");
+                            // Removed error alert, just continue with the form
+                            checkUrlForEditMode();
                         });
                 } else {
                     // Not logged in, redirect to login
@@ -1343,7 +1344,7 @@
                     window.location.href = "login.html";
                 }).catch(error => {
                     console.error("Error during logout:", error);
-                    alert("Logout failed. Please try again.");
+                    // Removed alert here too
                 });
             });
             
@@ -1353,7 +1354,15 @@
         } catch (error) {
             console.error("Critical initialization error:", error);
             hideLoading();
-            alert("An error occurred while loading the page. Please refresh and try again.");
+            // Removed the error alert message
+            // Attempt to continue loading the page anyway
+            if (!authInitialized && auth) {
+                const user = auth.currentUser;
+                if (user) {
+                    updateUIForAuthenticatedUser(user);
+                    loadUsersForDropdown().catch(() => {});
+                }
+            }
         }
     });
     
