@@ -580,6 +580,53 @@
                     showError(error.message);
                 });
         }
+        
+        // Add this after successful login in your login.js or inline script
+        function handleSuccessfulLogin(user) {
+            // Store basic auth data in localStorage
+            localStorage.setItem('userId', user.uid);
+            localStorage.setItem('userEmail', user.email);
+            
+            // Get and store authentication token
+            user.getIdToken().then(token => {
+                localStorage.setItem('authToken', token);
+                
+                // Check if there's a redirect URL in the query parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectUrl = urlParams.get('redirect');
+                
+                if (redirectUrl) {
+                    // Redirect to the original page the user was trying to access
+                    window.location.href = redirectUrl;
+                } else {
+                    // Default redirect to index page
+                    window.location.href = "index.html";
+                }
+            });
+        }
+        
+        // Add this after successful login
+
+        function handleSuccessfulLogin(user) {
+            // Store auth token for cross-page persistence
+            user.getIdToken().then(token => {
+                localStorage.setItem('authToken', token);
+                localStorage.setItem('userId', user.uid);
+                localStorage.setItem('userEmail', user.email);
+                
+                // Check if there's a redirect URL in the query parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const redirectUrl = urlParams.get('redirect');
+                
+                if (redirectUrl) {
+                    // Redirect to the original page the user was trying to access
+                    window.location.href = redirectUrl;
+                } else {
+                    // Default redirect to index page
+                    window.location.href = "index.html";
+                }
+            });
+        }
     </script>
     <!-- Add this near the end of the body, before other scripts -->
     <script src="js/authManager.js"></script>

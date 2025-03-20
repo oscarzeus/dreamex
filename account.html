@@ -682,7 +682,7 @@
         console.log("DOM loaded for account page");
         
         try {
-            showLoading("Initializing...");
+            showLoading("Checking authentication status...");
             
             // Initialize Firebase first
             initializeFirebase()
@@ -693,46 +693,33 @@
                     const authTimeout = setTimeout(() => {
                         console.warn("Auth check timed out");
                         hideLoading();
-                        
-                        // Check if there's a token in localStorage before redirecting
-                        const token = localStorage.getItem('authToken');
-                        if (!token) {
-                            redirectToLogin();
-                        } else {
-                            // Try to recover using the token
-                            recoverSession(token);
-                        }
+                        redirectToLogin();
                     }, 10000);
                     
                     // Check if user is already logged in
-                    checkForExistingAuth()
-                        .then(user => {
-                            clearTimeout(authTimeout);
-                            
-                            if (user) {
-                                console.log("User is already logged in:", user.email);
-                                hideLoading();
-                                setupAccountPage(user);
-                            } else {
-                                // Check localStorage for auth token before redirecting
-                                const token = localStorage.getItem('authToken');
-                                if (token) {
-                                    recoverSession(token);
-                                } else {
-                                    console.log("No authentication found, redirecting to login");
-                                    hideLoading();
-                                    redirectToLogin();
-                                }
-                            }
-                        })
-                        .catch(error => {
-                            clearTimeout(authTimeout);
-                            console.error("Auth check error:", error);
+                    auth.onAuthStateChanged(user => {
+                        // Clear the timeout since we got a response
+                        clearTimeout(authTimeout);
+                        
+                        if (user) {
+                            console.log("User is already logged in:", user.email);
                             hideLoading();
+                            setupAccountPage(user);
                             
-                            // Show error message instead of immediate redirect
-                            showErrorMessage("Authentication error. Please try refreshing the page or log in again.");
-                        });
+                            // Save auth info to localStorage for better persistence
+                            localStorage.setItem('userId', user.uid);
+                            localStorage.setItem('userEmail', user.email);
+                            
+                            // Get fresh token for API calls
+                            user.getIdToken().then(token => {
+                                localStorage.setItem('authToken', token);
+                            });
+                        } else {
+                            console.log("No authentication found, redirecting to login");
+                            hideLoading();
+                            redirectToLogin();
+                        }
+                    });
                 })
                 .catch(error => {
                     console.error("Firebase initialization error:", error);
