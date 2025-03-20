@@ -1030,11 +1030,6 @@
             // Firebase already initialized
             database = firebase.database();
             auth = firebase.auth();
-            // Set persistence to LOCAL to maintain login across browser sessions
-            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                .catch(error => {
-                    console.error("Error setting auth persistence:", error);
-                });
         } else {
             // Initialize Firebase manually
             const firebaseConfig = {
@@ -1050,73 +1045,39 @@
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
             auth = firebase.auth();
-            
-            // Set persistence to LOCAL to maintain login across browser sessions
-            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                .catch(error => {
-                    console.error("Error setting auth persistence:", error);
-                });
         }
         
         const LOGS_PER_PAGE = 20;
         let currentLogs = [];
-        let authInitialized = false;
-        let authCheckTimeout = null;
         
         document.addEventListener("DOMContentLoaded", () => {
-            // Show a loading indicator while we check authentication
-            showLoading();
-            
-            // Set a timeout to ensure we don't wait forever for auth
-            authCheckTimeout = setTimeout(() => {
-                if (!authInitialized) {
-                    console.log("Auth check timed out, continuing without confirmation");
-                    hideLoading();
-                    checkForExistingSession();
-                }
-            }, 3000); // Wait up to 3 seconds for auth to initialize
-            
-            // Check if AuthManager exists and use it
+            // Check if user is authenticated
             if (window.AuthManager) {
-                // Important: Don't redirect immediately
-                if (AuthManager.isLoggedIn()) {
-                    console.log("User authenticated via AuthManager");
-                    clearTimeout(authCheckTimeout);
-                    authInitialized = true;
-                    hideLoading();
-                    updateUserDisplay();
-                    loadUsersForDropdown();
-                    checkUrlForEditMode();
-                } else {
-                    // Check if there's a stored token in localStorage/sessionStorage
-                    checkForExistingSession();
-                }
+                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
+                
+                // Update UI based on auth state
+                updateUserDisplay();
             } else {
-                // Use direct Firebase Auth
+                // Check Firebase auth directly
                 auth.onAuthStateChanged(user => {
-                    // Clear the timeout since auth has responded
-                    clearTimeout(authCheckTimeout);
-                    
-                    // Mark as initialized so we don't do this again
-                    if (authInitialized) return;
-                    authInitialized = true;
-                    
                     if (user) {
                         // User is logged in
                         console.log("User authenticated:", user.email);
-                        hideLoading();
                         updateUIForAuthenticatedUser(user);
-                        loadUsersForDropdown();
-                        checkUrlForEditMode();
+                        loadAuditLogs(1);
                     } else {
-                        // Only redirect if we're sure there's no session
-                        checkForExistingSession();
+                        // User is not logged in
+                        console.log("User not authenticated, redirecting to login");
+                        window.location.href = "login.html";
                     }
                 });
             }
             
-            // Set up event listeners for the form
-            document.getElementById('eventForm').addEventListener('submit', submitEventForm);
+            // Set up event listeners
+            document.getElementById('clearBtn').addEventListener('click', clearFilters);
+            document.getElementById('applyBtn').addEventListener('click', () => {
+                loadAuditLogs(1);
+            });
             
             document.getElementById('logoutButton').addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1124,43 +1085,27 @@
                     AuthManager.logout();
                 } else {
                     auth.signOut().then(() => {
-                        // Also clear any session storage/cookies
-                        sessionStorage.clear();
-                        localStorage.removeItem('authToken');
                         window.location.href = "login.html";
                     });
                 }
             });
-        });
-        
-        // Function to check for existing session in localStorage/sessionStorage
-        function checkForExistingSession() {
-            // Check for a stored token
-            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
             
-            if (token) {
-                console.log("Found existing session token, attempting to restore session");
-                // Try to use the token to authenticate with Firebase
-                hideLoading();
-                updateUserDisplay(); // Show UI for authenticated user
-                loadUsersForDropdown();
-                checkUrlForEditMode();
+            // Set default date range to last 7 days
+            const today = new Date();
+            const lastWeek = new Date();
+            lastWeek.setDate(lastWeek.getDate() - 7);
+            
+            document.getElementById('endDate').valueAsDate = today;
+            document.getElementById('startDate').valueAsDate = lastWeek;
+            
+            // Load logs initially
+            if (!window.AuthManager) {
+                // We're handling auth manually, so loadAuditLogs will be called by the auth state change handler
             } else {
-                console.log("No session found, redirecting to login");
-                window.location.href = "login.html";
+                // Using AuthManager, we can load logs right away
+                loadAuditLogs(1);
             }
-        }
-        
-        // Function to check URL for edit mode parameter
-        function checkUrlForEditMode() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const eventId = urlParams.get('edit');
-            
-            if (eventId) {
-                // We're in edit mode, load event data
-                loadEventForEditing(eventId);
-            }
-        }
+        });
         
         // Function to update user display based on login state
         function updateUserDisplay() {
@@ -1571,73 +1516,33 @@
             });
         });
         
-        // Function to load users for the dropdown - improved to always fetch fresh data
+        // Function to load users for the dropdown - modified to return a promise
         function loadUsersForDropdown() {
             const reportedByDropdown = document.getElementById('reportedByName');
             const lineManagerDropdown = document.getElementById('lineManager');
-            
-            // Show loading indicator for dropdowns
-            reportedByDropdown.disabled = true;
-            lineManagerDropdown.disabled = true;
-            
-            // Add a "Loading..." option to show data is being fetched
-            const loadingOption1 = document.createElement('option');
-            loadingOption1.textContent = "Loading users...";
-            const loadingOption2 = document.createElement('option');
-            loadingOption2.textContent = "Loading users...";
             
             // Clear existing options (except the default one)
             while (reportedByDropdown.options.length > 1) {
                 reportedByDropdown.remove(1);
             }
-            reportedByDropdown.appendChild(loadingOption1);
             
             while (lineManagerDropdown.options.length > 1) {
                 lineManagerDropdown.remove(1);
             }
-            lineManagerDropdown.appendChild(loadingOption2);
             
             // Return a promise so we can use .then() in loadEventForEditing
             return new Promise((resolve, reject) => {
-                // Reference to users in Firebase with cache-busting query
-                const timestamp = Date.now();
-                const usersRef = database.ref(`users`);
-                
-                // Always fetch fresh data from the server
-                usersRef.keepSynced(true);
+                // Reference to users in Firebase
+                const usersRef = database.ref('users');
                 
                 // Fetch all users
-                usersRef.once('value', { context: timestamp })
+                usersRef.once('value')
                     .then((snapshot) => {
-                        console.log("Fresh user data fetched from Firebase");
                         const users = snapshot.val();
-                        
-                        // Remove loading options
-                        reportedByDropdown.remove(reportedByDropdown.options.length - 1);
-                        lineManagerDropdown.remove(lineManagerDropdown.options.length - 1);
-                        
-                        // Reset dropdowns to just the placeholder option
-                        while (reportedByDropdown.options.length > 1) {
-                            reportedByDropdown.remove(1);
-                        }
-                        
-                        while (lineManagerDropdown.options.length > 1) {
-                            lineManagerDropdown.remove(1);
-                        }
-                        
-                        // Check if we got user data
-                        if (!users) {
-                            console.warn("No users found in Firebase");
-                            resolve();
-                            return;
-                        }
                         
                         // Add users to dropdowns
                         for (const userId in users) {
                             const user = users[userId];
-                            // Skip users without proper data
-                            if (!user) continue;
-                            
                             const displayName = user.firstName && user.lastName ? 
                                 `${user.firstName} ${user.lastName}` : 
                                 user.email || 'Unknown User';
@@ -1656,22 +1561,11 @@
                             lineManagerDropdown.appendChild(lineManagerOption);
                         }
                         
-                        // Enable dropdowns again
-                        reportedByDropdown.disabled = false;
-                        lineManagerDropdown.disabled = false;
-                        
                         // Resolve the promise when done
                         resolve();
                     })
                     .catch((error) => {
-                        console.error("Error fetching users from Firebase:", error);
-                        reportedByDropdown.disabled = false;
-                        lineManagerDropdown.disabled = false;
-                        
-                        // Add error notice to dropdowns
-                        reportedByDropdown.innerHTML = '<option value="">Error loading users</option>';
-                        lineManagerDropdown.innerHTML = '<option value="">Error loading users</option>';
-                        
+                        console.error("Error loading users:", error);
                         reject(error);
                     });
             });
@@ -1983,39 +1877,6 @@
             if (!user || !user.email) return '?';
             return user.email.charAt(0).toUpperCase();
         }
-
-        // Update the event form submission to refresh user data if needed
-        document.addEventListener("DOMContentLoaded", () => {
-            // ... existing code ...
-            
-            // Add event listeners to refresh user lists when dropdowns are clicked
-            document.getElementById('reportedByName').addEventListener('focus', function(e) {
-                // Refresh the user list when dropdown is opened if it's been more than 5 minutes
-                const lastUserFetch = sessionStorage.getItem('lastUserFetch');
-                const now = Date.now();
-                
-                if (!lastUserFetch || (now - parseInt(lastUserFetch)) > 300000) { // 5 minutes = 300000 ms
-                    loadUsersForDropdown().then(() => {
-                        // Update the fetch timestamp
-                        sessionStorage.setItem('lastUserFetch', now.toString());
-                    });
-                }
-            });
-            
-            document.getElementById('lineManager').addEventListener('focus', function(e) {
-                // Using the same timestamp as reportedByName to avoid multiple fetches
-                const lastUserFetch = sessionStorage.getItem('lastUserFetch');
-                const now = Date.now();
-                
-                if (!lastUserFetch || (now - parseInt(lastUserFetch)) > 300000) { // 5 minutes
-                    loadUsersForDropdown().then(() => {
-                        sessionStorage.setItem('lastUserFetch', now.toString());
-                    });
-                }
-            });
-            
-            // ... existing code ...
-        });
     </script>
 </body>
 </html>
