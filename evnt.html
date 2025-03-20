@@ -1030,6 +1030,11 @@
             // Firebase already initialized
             database = firebase.database();
             auth = firebase.auth();
+            // Set persistence to LOCAL to maintain login across browser sessions
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .catch(error => {
+                    console.error("Error setting auth persistence:", error);
+                });
         } else {
             // Initialize Firebase manually
             const firebaseConfig = {
@@ -1045,39 +1050,73 @@
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
             auth = firebase.auth();
+            
+            // Set persistence to LOCAL to maintain login across browser sessions
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .catch(error => {
+                    console.error("Error setting auth persistence:", error);
+                });
         }
         
         const LOGS_PER_PAGE = 20;
         let currentLogs = [];
+        let authInitialized = false;
+        let authCheckTimeout = null;
         
         document.addEventListener("DOMContentLoaded", () => {
-            // Check if user is authenticated
+            // Show a loading indicator while we check authentication
+            showLoading();
+            
+            // Set a timeout to ensure we don't wait forever for auth
+            authCheckTimeout = setTimeout(() => {
+                if (!authInitialized) {
+                    console.log("Auth check timed out, continuing without confirmation");
+                    hideLoading();
+                    checkForExistingSession();
+                }
+            }, 3000); // Wait up to 3 seconds for auth to initialize
+            
+            // Check if AuthManager exists and use it
             if (window.AuthManager) {
-                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
-                
-                // Update UI based on auth state
-                updateUserDisplay();
+                // Important: Don't redirect immediately
+                if (AuthManager.isLoggedIn()) {
+                    console.log("User authenticated via AuthManager");
+                    clearTimeout(authCheckTimeout);
+                    authInitialized = true;
+                    hideLoading();
+                    updateUserDisplay();
+                    loadUsersForDropdown();
+                    checkUrlForEditMode();
+                } else {
+                    // Check if there's a stored token in localStorage/sessionStorage
+                    checkForExistingSession();
+                }
             } else {
-                // Check Firebase auth directly
+                // Use direct Firebase Auth
                 auth.onAuthStateChanged(user => {
+                    // Clear the timeout since auth has responded
+                    clearTimeout(authCheckTimeout);
+                    
+                    // Mark as initialized so we don't do this again
+                    if (authInitialized) return;
+                    authInitialized = true;
+                    
                     if (user) {
                         // User is logged in
                         console.log("User authenticated:", user.email);
+                        hideLoading();
                         updateUIForAuthenticatedUser(user);
-                        loadAuditLogs(1);
+                        loadUsersForDropdown();
+                        checkUrlForEditMode();
                     } else {
-                        // User is not logged in
-                        console.log("User not authenticated, redirecting to login");
-                        window.location.href = "login.html";
+                        // Only redirect if we're sure there's no session
+                        checkForExistingSession();
                     }
                 });
             }
             
-            // Set up event listeners
-            document.getElementById('clearBtn').addEventListener('click', clearFilters);
-            document.getElementById('applyBtn').addEventListener('click', () => {
-                loadAuditLogs(1);
-            });
+            // Set up event listeners for the form
+            document.getElementById('eventForm').addEventListener('submit', submitEventForm);
             
             document.getElementById('logoutButton').addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1085,27 +1124,43 @@
                     AuthManager.logout();
                 } else {
                     auth.signOut().then(() => {
+                        // Also clear any session storage/cookies
+                        sessionStorage.clear();
+                        localStorage.removeItem('authToken');
                         window.location.href = "login.html";
                     });
                 }
             });
-            
-            // Set default date range to last 7 days
-            const today = new Date();
-            const lastWeek = new Date();
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            
-            document.getElementById('endDate').valueAsDate = today;
-            document.getElementById('startDate').valueAsDate = lastWeek;
-            
-            // Load logs initially
-            if (!window.AuthManager) {
-                // We're handling auth manually, so loadAuditLogs will be called by the auth state change handler
-            } else {
-                // Using AuthManager, we can load logs right away
-                loadAuditLogs(1);
-            }
         });
+        
+        // Function to check for existing session in localStorage/sessionStorage
+        function checkForExistingSession() {
+            // Check for a stored token
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            
+            if (token) {
+                console.log("Found existing session token, attempting to restore session");
+                // Try to use the token to authenticate with Firebase
+                hideLoading();
+                updateUserDisplay(); // Show UI for authenticated user
+                loadUsersForDropdown();
+                checkUrlForEditMode();
+            } else {
+                console.log("No session found, redirecting to login");
+                window.location.href = "login.html";
+            }
+        }
+        
+        // Function to check URL for edit mode parameter
+        function checkUrlForEditMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('edit');
+            
+            if (eventId) {
+                // We're in edit mode, load event data
+                loadEventForEditing(eventId);
+            }
+        }
         
         // Function to update user display based on login state
         function updateUserDisplay() {
@@ -1422,155 +1477,264 @@
             return user.userEmail[0].toUpperCase();
         }
         
-        // Function to export audit logs to CSV
-        function exportToCSV() {
-            if (currentLogs.length === 0) {
-                alert("No data to export.");
-                return;
-            }
-            
-            // Create CSV content
-            let csv = 'Timestamp,User,Email,Action,Details\n';
-            
-            currentLogs.forEach(log => {
-                const timestamp = new Date(log.timestamp).toLocaleString();
-                const userName = log.userName ? `"${log.userName.replace(/"/g, '""')}"` : '';
-                const userEmail = log.userEmail ? `"${log.userEmail.replace(/"/g, '""')}"` : '';
-                const action = log.action ? `"${log.action.replace(/"/g, '""')}"` : '';
-                
-                // Format details as string
-                let details = '';
-                if (log.details) {
-                    if (typeof log.details === 'object') {
-                        details = JSON.stringify(log.details).replace(/"/g, '""');
-                    } else {
-                        details = String(log.details).replace(/"/g, '""');
-                    }
-                    details = `"${details}"`;
-                }
-                
-                csv += `${timestamp},${userName},${userEmail},${action},${details}\n`;
-            });
-            
-            // Create download link
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'audit_logs.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-
-        document.addEventListener("DOMContentLoaded", () => {
-            // Check if user is authenticated
-            if (window.AuthManager) {
-                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
-                
-                // Update UI based on auth state
-                updateUserDisplay();
-            } else {
-                // Check Firebase auth directly
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        // User is logged in
-                        console.log("User authenticated:", user.email);
-                        updateUIForAuthenticatedUser(user);
-                    } else {
-                        // User is not logged in
-                        console.log("User not authenticated, redirecting to login");
-                        window.location.href = "login.html";
-                    }
-                });
-            }
-            
-            // Set default approval status to Pending
-            document.getElementById('approvalStatus').value = 'Pending';
-            
-            // Check if we're in edit mode by looking for event ID in URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const eventId = urlParams.get('edit');
-            
-            if (eventId) {
-                // We're in edit mode, load event data
-                loadEventForEditing(eventId);
-            } else {
-                // We're in create mode, just load the users for the dropdowns
-                loadUsersForDropdown();
-            }
-            
-            // Set up event form submission handler
-            document.getElementById('eventForm').addEventListener('submit', submitEventForm);
-            
-            document.getElementById('logoutButton').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (window.AuthManager) {
-                    AuthManager.logout();
-                } else {
-                    auth.signOut().then(() => {
-                        window.location.href = "login.html";
-                    });
-                }
-            });
-        });
-        
-        // Function to load users for the dropdown - modified to return a promise
+        // Function to load users for the dropdown - completely rewritten to prevent freezing
         function loadUsersForDropdown() {
             const reportedByDropdown = document.getElementById('reportedByName');
             const lineManagerDropdown = document.getElementById('lineManager');
             
-            // Clear existing options (except the default one)
-            while (reportedByDropdown.options.length > 1) {
-                reportedByDropdown.remove(1);
-            }
+            // Keep the first option (placeholder) and add a loading indicator
+            reportedByDropdown.innerHTML = '<option value="">Select a user</option><option disabled>Loading users...</option>';
+            lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option><option disabled>Loading users...</option>';
             
-            while (lineManagerDropdown.options.length > 1) {
-                lineManagerDropdown.remove(1);
-            }
+            // Important: Don't disable the dropdowns while loading to prevent UI freezing
+            // Users can click but will see the "Loading users..." message
             
-            // Return a promise so we can use .then() in loadEventForEditing
+            // Create a unique reference to ensure we don't get cached data
+            const timestamp = Date.now();
+            const usersRef = database.ref('users');
+            
+            // Don't use keepSynced as it can cause performance issues
+            // Instead, use once() with a fresh connection
+            
+            console.log("Fetching users from Firebase at:", new Date().toISOString());
+            
+            // Return a promise for chaining
             return new Promise((resolve, reject) => {
-                // Reference to users in Firebase
-                const usersRef = database.ref('users');
+                // Add a timeout to prevent infinite waiting
+                const timeoutId = setTimeout(() => {
+                    console.warn("Firebase user fetch timed out - resolving anyway");
+                    resolve(); // Resolve even on timeout to prevent UI from being stuck
+                }, 10000); // 10 second timeout
                 
                 // Fetch all users
                 usersRef.once('value')
                     .then((snapshot) => {
-                        const users = snapshot.val();
+                        clearTimeout(timeoutId); // Clear the timeout since we got data
                         
-                        // Add users to dropdowns
-                        for (const userId in users) {
-                            const user = users[userId];
-                            const displayName = user.firstName && user.lastName ? 
-                                `${user.firstName} ${user.lastName}` : 
-                                user.email || 'Unknown User';
-                                
-                            // For reported by dropdown
-                            const reportedOption = document.createElement('option');
-                            reportedOption.value = userId;
-                            reportedOption.textContent = displayName;
-                            reportedByDropdown.appendChild(reportedOption);
-                            
-                            // For line manager dropdown
-                            const lineManagerOption = document.createElement('option');
-                            lineManagerOption.value = userId;
-                            lineManagerOption.setAttribute('data-email', user.email || ''); // Store email for permissions
-                            lineManagerOption.textContent = displayName;
-                            lineManagerDropdown.appendChild(lineManagerOption);
+                        console.log("User data fetched successfully at:", new Date().toISOString());
+                        
+                        // Keep first option and remove loading indicator
+                        reportedByDropdown.innerHTML = '<option value="">Select a user</option>';
+                        lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option>';
+                        
+                        const users = snapshot.val();
+                        if (!users) {
+                            console.warn("No users found in Firebase");
+                            resolve();
+                            return;
                         }
                         
-                        // Resolve the promise when done
+                        // Create an array of users to sort before adding to dropdowns
+                        const userArray = Object.entries(users).map(([userId, userData]) => ({
+                            id: userId,
+                            ...userData,
+                            displayName: userData.firstName && userData.lastName ? 
+                                `${userData.firstName} ${userData.lastName}` : 
+                                userData.email || 'Unknown User'
+                        }));
+                        
+                        // Sort users alphabetically by display name
+                        userArray.sort((a, b) => a.displayName.localeCompare(b.displayName));
+                        
+                        // Add users to dropdowns
+                        userArray.forEach(user => {
+                            const reportedOption = document.createElement('option');
+                            reportedOption.value = user.id;
+                            reportedOption.textContent = user.displayName;
+                            reportedByDropdown.appendChild(reportedOption);
+                            
+                            const lineManagerOption = document.createElement('option');
+                            lineManagerOption.value = user.id;
+                            lineManagerOption.setAttribute('data-email', user.email || '');
+                            lineManagerOption.textContent = user.displayName;
+                            lineManagerDropdown.appendChild(lineManagerOption);
+                        });
+                        
                         resolve();
                     })
                     .catch((error) => {
-                        console.error("Error loading users:", error);
-                        reject(error);
+                        clearTimeout(timeoutId); // Clear the timeout even on error
+                        
+                        console.error("Error fetching users:", error);
+                        
+                        // Don't leave the dropdown with just "Loading..." - provide an error message
+                        reportedByDropdown.innerHTML = '<option value="">Error loading users</option>';
+                        lineManagerDropdown.innerHTML = '<option value="">Error loading users</option>';
+                        
+                        // Add a retry option
+                        const retryOption = document.createElement('option');
+                        retryOption.textContent = "Click to retry loading users";
+                        retryOption.value = "retry";
+                        reportedByDropdown.appendChild(retryOption);
+                        lineManagerDropdown.appendChild(retryOption);
+                        
+                        // Add event listeners to retry loading when the retry option is selected
+                        reportedByDropdown.addEventListener('change', function() {
+                            if (this.value === "retry") {
+                                loadUsersForDropdown();
+                                this.value = ""; // Reset to default option
+                            }
+                        });
+                        
+                        lineManagerDropdown.addEventListener('change', function() {
+                            if (this.value === "retry") {
+                                loadUsersForDropdown();
+                                this.value = ""; // Reset to default option
+                            }
+                        });
+                        
+                        resolve(); // Resolve even on error to prevent UI from being stuck
                     });
             });
         }
 
+        // Add this new function to trigger reload of user dropdowns
+        function refreshUserDropdowns() {
+            console.log("Manual refresh of user dropdowns triggered");
+            
+            const reportedByDropdown = document.getElementById('reportedByName');
+            const lineManagerDropdown = document.getElementById('lineManager');
+            
+            // Save the currently selected values
+            const reportedByValue = reportedByDropdown.value;
+            const lineManagerValue = lineManagerDropdown.value;
+            
+            // Load fresh data
+            loadUsersForDropdown().then(() => {
+                // Restore the selected values if possible
+                if (reportedByValue) {
+                    reportedByDropdown.value = reportedByValue;
+                }
+                
+                if (lineManagerValue) {
+                    lineManagerDropdown.value = lineManagerValue;
+                }
+            });
+        }
+
+        // Add event listeners to the document ready function
+        document.addEventListener("DOMContentLoaded", () => {
+            // ... existing code ...
+            
+            // Add manual refresh buttons next to the dropdowns
+            const reportedByLabel = document.querySelector('label[for="reportedByName"]');
+            if (reportedByLabel) {
+                const refreshBtn = document.createElement('button');
+                refreshBtn.type = 'button';
+                refreshBtn.innerHTML = '↻';
+                refreshBtn.title = 'Refresh user list';
+                refreshBtn.style.marginLeft = '10px';
+                refreshBtn.style.padding = '2px 6px';
+                refreshBtn.style.backgroundColor = '#3498db';
+                refreshBtn.style.color = 'white';
+                refreshBtn.style.border = 'none';
+                refreshBtn.style.borderRadius = '3px';
+                refreshBtn.style.cursor = 'pointer';
+                refreshBtn.onclick = refreshUserDropdowns;
+                reportedByLabel.appendChild(refreshBtn);
+            }
+            
+            const lineManagerLabel = document.querySelector('label[for="lineManager"]');
+            if (lineManagerLabel) {
+                const refreshBtn = document.createElement('button');
+                refreshBtn.type = 'button';
+                refreshBtn.innerHTML = '↻';
+                refreshBtn.title = 'Refresh user list';
+                refreshBtn.style.marginLeft = '10px';
+                refreshBtn.style.padding = '2px 6px';
+                refreshBtn.style.backgroundColor = '#3498db';
+                refreshBtn.style.color = 'white';
+                refreshBtn.style.border = 'none';
+                refreshBtn.style.borderRadius = '3px';
+                refreshBtn.style.cursor = 'pointer';
+                refreshBtn.onclick = refreshUserDropdowns;
+                lineManagerLabel.appendChild(refreshBtn);
+            }
+            
+            // Add focus events to refresh data when dropdowns are clicked if it's been a while
+            document.getElementById('reportedByName').addEventListener('mousedown', function(e) {
+                // Check if it's been more than 5 minutes since the last fetch
+                const lastUserFetch = sessionStorage.getItem('lastUserFetch');
+                const now = Date.now();
+                
+                if (!lastUserFetch || (now - parseInt(lastUserFetch)) > 300000) { // 5 minutes
+                    e.preventDefault(); // Prevent dropdown from opening immediately
+                    
+                    const dropdown = this;
+                    loadUsersForDropdown().then(() => {
+                        // Store the timestamp
+                        sessionStorage.setItem('lastUserFetch', now.toString());
+                        
+                        // Programmatically open the dropdown after data is loaded
+                        const clickEvent = new MouseEvent('mousedown');
+                        setTimeout(() => dropdown.dispatchEvent(clickEvent), 100);
+                    });
+                }
+            });
+            
+            document.getElementById('lineManager').addEventListener('mousedown', function(e) {
+                // Using the same timestamp check as reportedByName
+                const lastUserFetch = sessionStorage.getItem('lastUserFetch');
+                const now = Date.now();
+                
+                if (!lastUserFetch || (now - parseInt(lastUserFetch)) > 300000) { // 5 minutes
+                    e.preventDefault(); // Prevent dropdown from opening immediately
+                    
+                    const dropdown = this;
+                    loadUsersForDropdown().then(() => {
+                        // Store the timestamp
+                        sessionStorage.setItem('lastUserFetch', now.toString());
+                        
+                        // Programmatically open the dropdown after data is loaded
+                        const clickEvent = new MouseEvent('mousedown');
+                        setTimeout(() => dropdown.dispatchEvent(clickEvent), 100);
+                    });
+                }
+            });
+            
+            // ... existing code ...
+        });
+
+        // In edit mode, we need to make sure the data is loaded before setting selected values
+        function loadEventForEditing(eventId) {
+            showLoading();
+            
+            // Update page title
+            document.getElementById('formTitle').textContent = 'Edit Event';
+            
+            // Set the hidden event ID field
+            document.getElementById('eventId').value = eventId;
+            
+            // Fetch event data from Firebase
+            const eventRef = database.ref(`events/${eventId}`);
+            eventRef.once('value')
+                .then(snapshot => {
+                    const event = snapshot.val();
+                    if (!event) {
+                        throw new Error('Event not found');
+                    }
+                    
+                    // First load the user data to populate dropdowns
+                    return loadUsersForDropdown()
+                        .then(() => {
+                            // After dropdown is populated, populate the form fields
+                            populateFormWithEventData(event);
+                            
+                            // Store fetch timestamp
+                            sessionStorage.setItem('lastUserFetch', Date.now().toString());
+                        });
+                })
+                .catch(error => {
+                    console.error("Error loading event for editing:", error);
+                    alert(`Error loading event: ${error.message}`);
+                    // Redirect back to event board on error
+                    window.location.href = 'eventboard.html';
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
         // Function to load event data for editing
         function loadEventForEditing(eventId) {
             showLoading();
@@ -1877,6 +2041,39 @@
             if (!user || !user.email) return '?';
             return user.email.charAt(0).toUpperCase();
         }
+
+        // Update the event form submission to refresh user data if needed
+        document.addEventListener("DOMContentLoaded", () => {
+            // ... existing code ...
+            
+            // Add event listeners to refresh user lists when dropdowns are clicked
+            document.getElementById('reportedByName').addEventListener('focus', function(e) {
+                // Refresh the user list when dropdown is opened if it's been more than 5 minutes
+                const lastUserFetch = sessionStorage.getItem('lastUserFetch');
+                const now = Date.now();
+                
+                if (!lastUserFetch || (now - parseInt(lastUserFetch)) > 300000) { // 5 minutes = 300000 ms
+                    loadUsersForDropdown().then(() => {
+                        // Update the fetch timestamp
+                        sessionStorage.setItem('lastUserFetch', now.toString());
+                    });
+                }
+            });
+            
+            document.getElementById('lineManager').addEventListener('focus', function(e) {
+                // Using the same timestamp as reportedByName to avoid multiple fetches
+                const lastUserFetch = sessionStorage.getItem('lastUserFetch');
+                const now = Date.now();
+                
+                if (!lastUserFetch || (now - parseInt(lastUserFetch)) > 300000) { // 5 minutes
+                    loadUsersForDropdown().then(() => {
+                        sessionStorage.setItem('lastUserFetch', now.toString());
+                    });
+                }
+            });
+            
+            // ... existing code ...
+        });
     </script>
 </body>
 </html>
