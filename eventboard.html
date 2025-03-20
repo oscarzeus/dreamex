@@ -1304,21 +1304,6 @@
         let sortDirection = 'desc';
         
         document.addEventListener('DOMContentLoaded', () => {
-            // Check if user is authenticated
-            if (window.AuthManager) {
-                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
-                updateUserDisplay();
-                loadEvents();
-            } else {
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        updateUIForAuthenticatedUser(user);
-                        loadEvents();
-                    } else {
-                        window.location.href = "login.html";
-                    }
-                });
-            }
             
             // Set up event listeners
             document.getElementById('logoutButton').addEventListener('click', function(e) {
