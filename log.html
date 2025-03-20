@@ -885,28 +885,27 @@
         let currentLogs = [];
         
         document.addEventListener("DOMContentLoaded", () => {
-            console.log("DOM loaded, initializing audit log view");
-            
-            // Always initialize Firebase first
-            initializeFirebase();
-            
             // Check if user is authenticated
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    // User is logged in
-                    console.log("User authenticated:", user.email);
-                    updateUIForAuthenticatedUser(user);
-                    
-                    // Load logs after authentication is confirmed
-                    setTimeout(() => {
+            if (window.AuthManager) {
+                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
+                
+                // Update UI based on auth state
+                updateUserDisplay();
+            } else {
+                // Check Firebase auth directly
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        // User is logged in
+                        console.log("User authenticated:", user.email);
+                        updateUIForAuthenticatedUser(user);
                         loadAuditLogs(1);
-                    }, 100);
-                } else {
-                    // User is not logged in
-                    console.log("User not authenticated, redirecting to login");
-                    window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
-                }
-            });
+                    } else {
+                        // User is not logged in
+                        console.log("User not authenticated, redirecting to login");
+                        window.location.href = "login.html";
+                    }
+                });
+            }
             
             // Set up event listeners
             document.getElementById('clearBtn').addEventListener('click', clearFilters);
@@ -916,11 +915,13 @@
             
             document.getElementById('logoutButton').addEventListener('click', function(e) {
                 e.preventDefault();
-                auth.signOut().then(() => {
-                    window.location.href = "login.html";
-                }).catch(error => {
-                    console.error("Error during logout:", error);
-                });
+                if (window.AuthManager) {
+                    AuthManager.logout();
+                } else {
+                    auth.signOut().then(() => {
+                        window.location.href = "login.html";
+                    });
+                }
             });
             
             // Set default date range to last 7 days
@@ -930,119 +931,15 @@
             
             document.getElementById('endDate').valueAsDate = today;
             document.getElementById('startDate').valueAsDate = lastWeek;
-        });
-        
-        // Helper function to initialize Firebase
-        function initializeFirebase() {
-            if (firebase.apps.length === 0) {
-                const firebaseConfig = {
-                    apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
-                    authDomain: "users-8be65.firebaseapp.com",
-                    databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
-                    projectId: "users-8be65",
-                    storageBucket: "users-8be65.appspot.com", 
-                    messagingSenderId: "829083030831",
-                    appId: "1:829083030831:web:36a370e62691e560bc3dda"
-                };
-                
-                firebase.initializeApp(firebaseConfig);
-            }
             
-            database = firebase.database();
-            auth = firebase.auth();
-        }
-        
-        // Update loadAuditLogs function to be more robust
-        function loadAuditLogs(page = 1) {
-            showLoading();
-            
-            // Check if we're authenticated
-            if (!auth.currentUser) {
-                console.error("Attempting to load logs without authentication");
-                document.getElementById('emptyState').innerHTML = 
-                    `<p>Authentication error. Please <a href="login.html">log in</a> and try again.</p>`;
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('auditTable').style.display = 'none';
-                hideLoading();
-                return;
-            }
-            
-            // Get filter values
-            const startDate = document.getElementById('startDate').value ? 
-                              new Date(document.getElementById('startDate').value).getTime() : null;
-            const endDate = document.getElementById('endDate').value ? 
-                            new Date(document.getElementById('endDate').value + 'T23:59:59').getTime() : null;
-            const userFilter = document.getElementById('userFilter').value.toLowerCase();
-            const actionFilter = document.getElementById('actionFilter').value;
-            
-            // Create a reference to the audit logs in Firebase
-            let auditLogsRef = database.ref('auditLogs');
-            
-            // Apply date filters if provided
-            if (startDate && endDate) {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp').startAt(startDate).endAt(endDate);
-            } else if (startDate) {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp').startAt(startDate);
-            } else if (endDate) {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp').endAt(endDate);
+            // Load logs initially
+            if (!window.AuthManager) {
+                // We're handling auth manually, so loadAuditLogs will be called by the auth state change handler
             } else {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp');
+                // Using AuthManager, we can load logs right away
+                loadAuditLogs(1);
             }
-            
-            console.log("Fetching audit logs with filters:", { startDate, endDate, userFilter, actionFilter });
-            
-            // Fetch data from Firebase with timeout
-            const fetchPromise = auditLogsRef.once('value');
-            const timeoutPromise = new Promise((_, reject) => {
-                setTimeout(() => reject(new Error('Fetch timed out')), 15000);
-            });
-            
-            Promise.race([fetchPromise, timeoutPromise])
-                .then(snapshot => {
-                    const logs = [];
-                    snapshot.forEach(childSnapshot => {
-                        const log = childSnapshot.val();
-                        log.key = childSnapshot.key;
-                        
-                        // Apply client-side filters
-                        const userMatch = !userFilter || 
-                                         (log.userEmail && log.userEmail.toLowerCase().includes(userFilter)) ||
-                                         (log.userName && log.userName.toLowerCase().includes(userFilter));
-                        
-                        const actionMatch = !actionFilter || log.action === actionFilter;
-                        
-                        if (userMatch && actionMatch) {
-                            logs.push(log);
-                        }
-                    });
-                    
-                    console.log(`Loaded ${logs.length} audit logs that match the filters`);
-                    
-                    // Sort logs by timestamp (most recent first)
-                    logs.sort((a, b) => b.timestamp - a.timestamp);
-                    currentLogs = logs;
-                    
-                    // Calculate pagination
-                    const totalPages = Math.ceil(logs.length / LOGS_PER_PAGE);
-                    const start = (page - 1) * LOGS_PER_PAGE;
-                    const end = start + LOGS_PER_PAGE;
-                    const paginatedLogs = logs.slice(start, end);
-                    
-                    // Update UI
-                    renderLogs(paginatedLogs);
-                    renderPagination(page, totalPages);
-                    hideLoading();
-                })
-                .catch(error => {
-                    console.error("Error fetching audit logs:", error);
-                    document.getElementById('emptyState').innerHTML = 
-                        `<p>Error loading audit logs: ${error.message}. Please try refreshing.</p>`;
-                    document.getElementById('emptyState').style.display = 'block';
-                    document.getElementById('auditTable').style.display = 'none';
-                    document.getElementById('pagination').innerHTML = '';
-                    hideLoading();
-                });
-        }
+        });
         
         // Function to update user display based on login state
         function updateUserDisplay() {
@@ -1143,6 +1040,78 @@
             } catch (error) {
                 console.warn("Error updating UI for non-authenticated user:", error);
             }
+        }
+        
+        // Function to load audit logs with filters
+        function loadAuditLogs(page = 1) {
+            showLoading();
+            
+            // Get filter values
+            const startDate = document.getElementById('startDate').value ? 
+                              new Date(document.getElementById('startDate').value).getTime() : null;
+            const endDate = document.getElementById('endDate').value ? 
+                            new Date(document.getElementById('endDate').value + 'T23:59:59').getTime() : null;
+            const userFilter = document.getElementById('userFilter').value.toLowerCase();
+            const actionFilter = document.getElementById('actionFilter').value;
+            
+            // Create a reference to the audit logs in Firebase
+            let auditLogsRef = database.ref('auditLogs');
+            
+            // Apply date filters if provided
+            if (startDate && endDate) {
+                auditLogsRef = auditLogsRef.orderByChild('timestamp').startAt(startDate).endAt(endDate);
+            } else if (startDate) {
+                auditLogsRef = auditLogsRef.orderByChild('timestamp').startAt(startDate);
+            } else if (endDate) {
+                auditLogsRef = auditLogsRef.orderByChild('timestamp').endAt(endDate);
+            } else {
+                auditLogsRef = auditLogsRef.orderByChild('timestamp');
+            }
+            
+            // Fetch data from Firebase
+            auditLogsRef.once('value')
+                .then(snapshot => {
+                    const logs = [];
+                    snapshot.forEach(childSnapshot => {
+                        const log = childSnapshot.val();
+                        log.key = childSnapshot.key;
+                        
+                        // Apply client-side filters
+                        const userMatch = !userFilter || 
+                                         (log.userEmail && log.userEmail.toLowerCase().includes(userFilter)) ||
+                                         (log.userName && log.userName.toLowerCase().includes(userFilter));
+                        
+                        const actionMatch = !actionFilter || log.action === actionFilter;
+                        
+                        if (userMatch && actionMatch) {
+                            logs.push(log);
+                        }
+                    });
+                    
+                    // Sort logs by timestamp (most recent first)
+                    logs.sort((a, b) => b.timestamp - a.timestamp);
+                    currentLogs = logs;
+                    
+                    // Calculate pagination
+                    const totalPages = Math.ceil(logs.length / LOGS_PER_PAGE);
+                    const start = (page - 1) * LOGS_PER_PAGE;
+                    const end = start + LOGS_PER_PAGE;
+                    const paginatedLogs = logs.slice(start, end);
+                    
+                    // Update UI
+                    renderLogs(paginatedLogs);
+                    renderPagination(page, totalPages);
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error("Error fetching audit logs:", error);
+                    document.getElementById('emptyState').innerHTML = 
+                        `<p>Error loading audit logs: ${error.message}</p>`;
+                    document.getElementById('emptyState').style.display = 'block';
+                    document.getElementById('auditTable').style.display = 'none';
+                    document.getElementById('pagination').innerHTML = '';
+                    hideLoading();
+                });
         }
         
         // Function to render logs to the table

@@ -1304,16 +1304,32 @@
         let sortDirection = 'desc';
         
         document.addEventListener('DOMContentLoaded', () => {
-            
-            // Set up event listeners
-            document.getElementById('logoutButton').addEventListener('click', function(e) {
-                e.preventDefault();
-                if (window.AuthManager) {
-                    AuthManager.logout();
-                } else {
-                    auth.signOut().then(() => {
-                        window.location.href = "login.html";
+            // Check authentication state first
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    console.log("User authenticated:", user.email);
+                    
+                    // Update UI for authenticated user
+                    updateUserDisplay(user);
+                    
+                    // Load events now that we're authenticated
+                    loadEvents();
+                    
+                    // Set up event listeners
+                    document.getElementById('logoutButton').addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (window.AuthManager) {
+                            AuthManager.logout();
+                        } else {
+                            auth.signOut().then(() => {
+                                window.location.href = "login.html";
+                            });
+                        }
                     });
+                } else {
+                    console.log("Not authenticated, redirecting to login page");
+                    window.location.href = "login.html";
+                    return;
                 }
             });
             
