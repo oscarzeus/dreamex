@@ -856,16 +856,11 @@
     </div>
 
     <script>
-        // Check if we should use Firebase from AuthManager or initialize it ourselves
+        // Improved Firebase initialization and authentication
         let database;
         let auth;
         
-        if (window.firebase) {
-            // Firebase already initialized
-            database = firebase.database();
-            auth = firebase.auth();
-        } else {
-            // Initialize Firebase manually
+        function initializeFirebase() {
             const firebaseConfig = {
                 apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
                 authDomain: "users-8be65.firebaseapp.com",
@@ -876,38 +871,82 @@
                 appId: "1:829083030831:web:36a370e62691e560bc3dda"
             };
             
-            firebase.initializeApp(firebaseConfig);
+            console.log("Initializing Firebase for Audit Log...");
+            
+            // Check if Firebase is already initialized
+            if (firebase.apps.length === 0) {
+                console.log("No Firebase apps found, initializing new app");
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                console.log("Firebase already initialized, using existing app");
+            }
+            
             database = firebase.database();
             auth = firebase.auth();
+            
+            // Force browser to persist auth state
+            return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => {
+                    console.log("Firebase persistence set to LOCAL");
+                    return true;
+                })
+                .catch(error => {
+                    console.error("Firebase persistence error:", error);
+                    return true; // Continue despite error
+                });
         }
         
         const LOGS_PER_PAGE = 20;
         let currentLogs = [];
         
         document.addEventListener("DOMContentLoaded", () => {
-            // Check if user is authenticated
-            if (window.AuthManager) {
-                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
-                
-                // Update UI based on auth state
-                updateUserDisplay();
-            } else {
-                // Check Firebase auth directly
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        // User is logged in
-                        console.log("User authenticated:", user.email);
-                        updateUIForAuthenticatedUser(user);
-                        loadAuditLogs(1);
-                    } else {
-                        // User is not logged in
-                        console.log("User not authenticated, redirecting to login");
-                        window.location.href = "login.html";
-                    }
-                });
-            }
+            console.log("DOM loaded for Audit Log page");
             
-            // Set up event listeners
+            // Initialize Firebase first
+            initializeFirebase()
+                .then(() => {
+                    console.log("Firebase initialized successfully");
+                    
+                    // Set up auth timeout
+                    const authTimeout = setTimeout(() => {
+                        console.warn("Auth check timed out");
+                        hideLoading();
+                        showError("Authentication check timed out. Please refresh the page.");
+                    }, 10000);
+                    
+                    // Show loading overlay
+                    showLoadingOverlay("Checking authentication...");
+                    
+                    // Check auth state
+                    auth.onAuthStateChanged(user => {
+                        clearTimeout(authTimeout);
+                        
+                        if (user) {
+                            console.log("User authenticated:", user.email);
+                            updateUIForAuthenticatedUser(user);
+                            
+                            // Load the audit logs after authentication
+                            hideLoadingOverlay();
+                            loadAuditLogs(1);
+                            
+                            // Set up event listeners for filters
+                            setupEventListeners();
+                        } else {
+                            console.log("User not authenticated, redirecting to login");
+                            hideLoadingOverlay();
+                            window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error("Failed to initialize Firebase:", error);
+                    showError("Failed to initialize Firebase: " + error.message);
+                    hideLoadingOverlay();
+                });
+        });
+        
+        // Function to set up event listeners
+        function setupEventListeners() {
             document.getElementById('clearBtn').addEventListener('click', clearFilters);
             document.getElementById('applyBtn').addEventListener('click', () => {
                 loadAuditLogs(1);
@@ -915,13 +954,7 @@
             
             document.getElementById('logoutButton').addEventListener('click', function(e) {
                 e.preventDefault();
-                if (window.AuthManager) {
-                    AuthManager.logout();
-                } else {
-                    auth.signOut().then(() => {
-                        window.location.href = "login.html";
-                    });
-                }
+                logout();
             });
             
             // Set default date range to last 7 days
@@ -931,120 +964,12 @@
             
             document.getElementById('endDate').valueAsDate = today;
             document.getElementById('startDate').valueAsDate = lastWeek;
-            
-            // Load logs initially
-            if (!window.AuthManager) {
-                // We're handling auth manually, so loadAuditLogs will be called by the auth state change handler
-            } else {
-                // Using AuthManager, we can load logs right away
-                loadAuditLogs(1);
-            }
-        });
-        
-        // Function to update user display based on login state
-        function updateUserDisplay() {
-            if (window.AuthManager && AuthManager.isLoggedIn()) {
-                const user = AuthManager.getCurrentUser();
-                if (user) {
-                    updateUIForAuthenticatedUser(user);
-                } else {
-                    updateUIForNonAuthenticatedUser();
-                }
-            } else if (auth) {
-                // Check Firebase auth directly
-                const user = auth.currentUser;
-                if (user) {
-                    updateUIForAuthenticatedUser(user);
-                } else {
-                    updateUIForNonAuthenticatedUser();
-                }
-            } else {
-                updateUIForNonAuthenticatedUser();
-            }
         }
         
-        // Update UI elements based on authentication state
-        function updateUIForAuthenticatedUser(user) {
-            try {
-                // Update user email in dropdown
-                const userEmailElement = document.getElementById('userEmail');
-                if (userEmailElement) userEmailElement.textContent = user.email;
-                
-                // Get user data from Firebase
-                database.ref(`users/${user.uid}`).once('value').then((snapshot) => {
-                    const userData = snapshot.val() || {};
-                    
-                    // Update profile picture if available
-                    if (userData.profileImage) {
-                        const userAvatar = document.getElementById('userAvatar');
-                        const userInitial = document.getElementById('userInitial');
-                        
-                        if (userAvatar && userInitial) {
-                            userAvatar.src = userData.profileImage;
-                            userAvatar.style.display = 'block';
-                            userInitial.style.display = 'none';
-                        }
-                    } else {
-                        // Otherwise display initial
-                        const userInitial = document.getElementById('userInitial');
-                        if (userInitial) {
-                            userInitial.textContent = getUserInitial(user);
-                            userInitial.style.display = 'flex';
-                        }
-                        
-                        // Hide avatar image
-                        const userAvatar = document.getElementById('userAvatar');
-                        if (userAvatar) {
-                            userAvatar.style.display = 'none';
-                        }
-                    }
-                }).catch(error => {
-                    console.error("Error fetching user profile data:", error);
-                });
-                
-                // Show authenticated user links and hide login button
-                document.getElementById('profileLink').style.display = 'block';
-                document.getElementById('accountLink').style.display = 'block';
-                document.getElementById('logoutButton').style.display = 'block';
-                document.getElementById('loginButton').style.display = 'none';
-            } catch (error) {
-                console.warn("Error updating UI for authenticated user:", error);
-            }
-        }
-        
-        // Function to revert UI to non-authenticated state
-        function updateUIForNonAuthenticatedUser() {
-            try {
-                // Reset user initial to question mark
-                const userInitial = document.getElementById('userInitial');
-                if (userInitial) {
-                    userInitial.textContent = "?";
-                    userInitial.style.display = 'flex';
-                }
-                
-                // Hide avatar image
-                const userAvatar = document.getElementById('userAvatar');
-                if (userAvatar) {
-                    userAvatar.style.display = 'none';
-                }
-                
-                // Update email display
-                const userEmailElement = document.getElementById('userEmail');
-                if (userEmailElement) userEmailElement.textContent = "Not logged in";
-                
-                // Hide authenticated user links and show login button
-                document.getElementById('profileLink').style.display = 'none';
-                document.getElementById('accountLink').style.display = 'none';
-                document.getElementById('logoutButton').style.display = 'none';
-                document.getElementById('loginButton').style.display = 'block';
-            } catch (error) {
-                console.warn("Error updating UI for non-authenticated user:", error);
-            }
-        }
-        
-        // Function to load audit logs with filters
+        // Improved function to load audit logs with better error handling
         function loadAuditLogs(page = 1) {
             showLoading();
+            console.log(`Loading audit logs for page ${page}`);
             
             // Get filter values
             const startDate = document.getElementById('startDate').value ? 
@@ -1054,42 +979,80 @@
             const userFilter = document.getElementById('userFilter').value.toLowerCase();
             const actionFilter = document.getElementById('actionFilter').value;
             
+            // Add diagnostic logging
+            console.log("Filter values:", { 
+                startDate: startDate ? new Date(startDate).toISOString() : null,
+                endDate: endDate ? new Date(endDate).toISOString() : null,
+                userFilter,
+                actionFilter
+            });
+            
             // Create a reference to the audit logs in Firebase
             let auditLogsRef = database.ref('auditLogs');
             
-            // Apply date filters if provided
-            if (startDate && endDate) {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp').startAt(startDate).endAt(endDate);
-            } else if (startDate) {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp').startAt(startDate);
-            } else if (endDate) {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp').endAt(endDate);
-            } else {
-                auditLogsRef = auditLogsRef.orderByChild('timestamp');
-            }
+            console.log("Fetching audit logs from Firebase...");
             
-            // Fetch data from Firebase
+            // Set timeout for database operation
+            const fetchTimeout = setTimeout(() => {
+                console.error("Audit log fetch timed out");
+                hideLoading();
+                showError("Database operation timed out. Please try again.");
+                
+                // Try network diagnostics
+                if (window.NetworkDiagnostics) {
+                    NetworkDiagnostics.runDiagnostics().then(results => {
+                        console.log("Network diagnostics results:", results);
+                    });
+                }
+            }, 15000);
+            
+            // Fetch data from Firebase - try both with and without ordering
             auditLogsRef.once('value')
                 .then(snapshot => {
+                    clearTimeout(fetchTimeout);
+                    console.log("Received audit log data");
+                    
+                    // Log data snapshot info for debugging
+                    const childCount = snapshot.numChildren();
+                    console.log(`Received ${childCount} audit log entries`);
+                    
+                    if (!snapshot.exists()) {
+                        console.log("No audit logs found in database");
+                        hideLoading();
+                        document.getElementById('emptyState').innerHTML = '<p>No audit logs found in database.</p>';
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('auditTable').style.display = 'none';
+                        return;
+                    }
+                    
                     const logs = [];
                     snapshot.forEach(childSnapshot => {
                         const log = childSnapshot.val();
                         log.key = childSnapshot.key;
                         
-                        // Apply client-side filters
+                        // Apply date filters in code
+                        const timestampDate = log.timestamp || 0;
+                        const passesDateFilter = 
+                            (!startDate || timestampDate >= startDate) &&
+                            (!endDate || timestampDate <= endDate);
+                        
+                        // Apply other filters
                         const userMatch = !userFilter || 
                                          (log.userEmail && log.userEmail.toLowerCase().includes(userFilter)) ||
                                          (log.userName && log.userName.toLowerCase().includes(userFilter));
                         
-                        const actionMatch = !actionFilter || log.action === actionFilter;
+                        const actionMatch = !actionFilter || 
+                                          (log.action && log.action.includes(actionFilter));
                         
-                        if (userMatch && actionMatch) {
+                        if (passesDateFilter && userMatch && actionMatch) {
                             logs.push(log);
                         }
                     });
                     
+                    console.log(`Filtered to ${logs.length} relevant logs`);
+                    
                     // Sort logs by timestamp (most recent first)
-                    logs.sort((a, b) => b.timestamp - a.timestamp);
+                    logs.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
                     currentLogs = logs;
                     
                     // Calculate pagination
@@ -1098,205 +1061,131 @@
                     const end = start + LOGS_PER_PAGE;
                     const paginatedLogs = logs.slice(start, end);
                     
+                    console.log(`Displaying page ${page} of ${totalPages} (${paginatedLogs.length} logs)`);
+                    
                     // Update UI
                     renderLogs(paginatedLogs);
                     renderPagination(page, totalPages);
                     hideLoading();
                 })
                 .catch(error => {
+                    clearTimeout(fetchTimeout);
                     console.error("Error fetching audit logs:", error);
-                    document.getElementById('emptyState').innerHTML = 
-                        `<p>Error loading audit logs: ${error.message}</p>`;
-                    document.getElementById('emptyState').style.display = 'block';
-                    document.getElementById('auditTable').style.display = 'none';
-                    document.getElementById('pagination').innerHTML = '';
+                    
+                    // Try alternative approach without ordering
+                    if (error.code === "PERMISSION_DENIED") {
+                        showError("Permission denied. You do not have access to view audit logs.");
+                    } else {
+                        showError(`Error loading audit logs: ${error.message}`);
+                        
+                        // Try network diagnostics
+                        if (window.NetworkDiagnostics) {
+                            NetworkDiagnostics.runDiagnostics().then(results => {
+                                console.log("Network diagnostics results:", results);
+                                if (!results.isOnline) {
+                                    showError("You appear to be offline. Please check your internet connection.");
+                                }
+                            });
+                        }
+                    }
+                    
                     hideLoading();
                 });
         }
         
-        // Function to render logs to the table
-        function renderLogs(logs) {
-            const tbody = document.getElementById('auditLogBody');
-            tbody.innerHTML = '';
-            
-            if (logs.length === 0) {
-                document.getElementById('emptyState').style.display = 'block';
-                document.getElementById('auditTable').style.display = 'none';
-                return;
-            }
-            
-            document.getElementById('emptyState').style.display = 'none';
-            document.getElementById('auditTable').style.display = 'table';
-            
-            logs.forEach(log => {
-                const row = document.createElement('tr');
-                
-                // Format timestamp
-                const date = new Date(log.timestamp);
-                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
-                
-                // Format user info
-                const userInfo = log.userName ? 
-                    `${log.userName} (${log.userEmail || 'No email'})` : 
-                    log.userEmail || 'Unknown User';
-                
-                // Format details
-                let details = '';
-                if (log.details) {
-                    if (typeof log.details === 'object') {
-                        details = Object.entries(log.details)
-                            .map(([key, value]) => `${key}: ${value}`)
-                            .join('<br>');
-                    } else {
-                        details = log.details.toString();
-                    }
-                }
-                
-                // Create cells
-                row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td>${userInfo}</td>
-                    <td>${log.action || 'Unknown'}</td>
-                    <td>${details}</td>
-                `;
-                
-                tbody.appendChild(row);
-            });
-        }
-        
-        // Function to render pagination controls
-        function renderPagination(currentPage, totalPages) {
-            const paginationEl = document.getElementById('pagination');
-            paginationEl.innerHTML = '';
-            
-            if (totalPages <= 1) {
-                return;
-            }
-            
-            // Previous button
-            const prevButton = document.createElement('button');
-            prevButton.textContent = '« Previous';
-            prevButton.disabled = currentPage === 1;
-            prevButton.classList.toggle('disabled', currentPage === 1);
-            prevButton.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    loadAuditLogs(currentPage - 1);
-                }
-            });
-            paginationEl.appendChild(prevButton);
-            
-            // Page buttons
-            const maxVisiblePages = 5;
-            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-            
-            if (endPage - startPage + 1 < maxVisiblePages) {
-                startPage = Math.max(1, endPage - maxVisiblePages + 1);
-            }
-            
-            for (let i = startPage; i <= endPage; i++) {
-                const pageButton = document.createElement('button');
-                pageButton.textContent = i;
-                pageButton.classList.toggle('active', i === currentPage);
-                pageButton.addEventListener('click', () => {
-                    loadAuditLogs(i);
-                });
-                paginationEl.appendChild(pageButton);
-            }
-            
-            // Next button
-            const nextButton = document.createElement('button');
-            nextButton.textContent = 'Next »';
-            nextButton.disabled = currentPage === totalPages;
-            nextButton.classList.toggle('disabled', currentPage === totalPages);
-            nextButton.addEventListener('click', () => {
-                if (currentPage < totalPages) {
-                    loadAuditLogs(currentPage + 1);
-                }
-            });
-            paginationEl.appendChild(nextButton);
-        }
-        
-        // Function to clear all filters
-        function clearFilters() {
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-            document.getElementById('userFilter').value = '';
-            document.getElementById('actionFilter').value = '';
-            
-            loadAuditLogs(1);
-        }
-        
-        // Function to show loading indicator
-        function showLoading() {
-            document.getElementById('loadingIndicator').style.display = 'flex';
+        // Enhanced error display function
+        function showError(message) {
+            const emptyState = document.getElementById('emptyState');
+            emptyState.innerHTML = `
+                <div style="padding: 20px; background-color: #f8d7da; color: #721c24; border-radius: 4px; margin-bottom: 20px;">
+                    <strong>Error:</strong> ${message}
+                    <div style="margin-top: 15px;">
+                        <button onclick="location.reload()" style="padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                            Refresh Page
+                        </button>
+                        <button onclick="loadAuditLogs(1)" style="margin-left: 10px; padding: 5px 10px; background: #28a745; color: white; border: none; border-radius: 3px; cursor: pointer;">
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+            `;
+            emptyState.style.display = 'block';
             document.getElementById('auditTable').style.display = 'none';
-            document.getElementById('emptyState').style.display = 'none';
         }
         
-        // Function to hide loading indicator
-        function hideLoading() {
-            document.getElementById('loadingIndicator').style.display = 'none';
+        // Loading overlay functions
+        function showLoadingOverlay(message = 'Loading...') {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.innerHTML = `
+                    <div style="background-color: rgba(255, 255, 255, 0.9); padding: 20px; border-radius: 5px; text-align: center;">
+                        <div class="loading-spinner"></div>
+                        <div style="margin-top: 10px;">${message}</div>
+                    </div>
+                `;
+                loadingOverlay.style.display = 'flex';
+            }
+        }
+        
+        function hideLoadingOverlay() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+        
+        // Logout function
+        function logout() {
+            auth.signOut().then(() => {
+                console.log("User signed out successfully");
+                localStorage.removeItem('authToken');
+                sessionStorage.clear();
+                window.location.href = "login.html";
+            }).catch(error => {
+                console.error("Error during logout:", error);
+                alert("Failed to log out. Please try again.");
+            });
         }
 
-        // Function to get user initials
-        function getInitials(user) {
-            if (!user || (!user.userName && !user.userEmail)) {
-                return '?';
-            }
-            
-            if (user.userName) {
-                const nameParts = user.userName.split(/\s+/);
-                if (nameParts.length > 1) {
-                    return (nameParts[0][0] + nameParts[1][0]).toUpperCase();
-                }
-                return user.userName[0].toUpperCase();
-            }
-            
-            return user.userEmail[0].toUpperCase();
+        function getUserInitial(user) {
+            if (!user || !user.email) return '?';
+            return user.email.charAt(0).toUpperCase();
         }
         
-        // Function to export audit logs to CSV
-        function exportToCSV() {
-            if (currentLogs.length === 0) {
-                alert("No data to export.");
-                return;
-            }
+        // ... existing code for renderLogs, renderPagination, clearFilters, showLoading, hideLoading, etc. ...
+    </script>
+
+    <!-- Add this right before the closing </body> tag -->
+    <script>
+        // Diagnose issues on page load
+        window.addEventListener('load', function() {
+            console.log("Window loaded, checking if audit logs were loaded successfully");
             
-            // Create CSV content
-            let csv = 'Timestamp,User,Email,Action,Details\n';
-            
-            currentLogs.forEach(log => {
-                const timestamp = new Date(log.timestamp).toLocaleString();
-                const userName = log.userName ? `"${log.userName.replace(/"/g, '""')}"` : '';
-                const userEmail = log.userEmail ? `"${log.userEmail.replace(/"/g, '""')}"` : '';
-                const action = log.action ? `"${log.action.replace(/"/g, '""')}"` : '';
-                
-                // Format details as string
-                let details = '';
-                if (log.details) {
-                    if (typeof log.details === 'object') {
-                        details = JSON.stringify(log.details).replace(/"/g, '""');
+            // Check if the table is empty after 5 seconds
+            setTimeout(() => {
+                const tbody = document.getElementById('auditLogBody');
+                if (!tbody || tbody.children.length === 0) {
+                    console.warn("Audit log table appears to be empty, attempting recovery");
+                    
+                    // Try network diagnostics
+                    if (window.NetworkDiagnostics) {
+                        NetworkDiagnostics.runDiagnostics().then(results => {
+                            console.log("Network diagnostics results:", results);
+                            
+                            if (results.isOnline && auth && auth.currentUser) {
+                                console.log("Network is online and user is authenticated, trying to reload logs");
+                                loadAuditLogs(1);
+                            }
+                        });
                     } else {
-                        details = String(log.details).replace(/"/g, '""');
+                        // No diagnostics available, just try to reload
+                        if (auth && auth.currentUser) {
+                            loadAuditLogs(1);
+                        }
                     }
-                    details = `"${details}"`;
                 }
-                
-                csv += `${timestamp},${userName},${userEmail},${action},${details}\n`;
-            });
-            
-            // Create download link
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'audit_logs.csv');
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+            }, 5000);
+        });
     </script>
 </body>
 </html>
