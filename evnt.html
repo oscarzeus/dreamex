@@ -1526,6 +1526,354 @@
 
     // Keep other required functions but avoid duplicates
     // ... existing code for populateFormWithEventData, submitEventForm, etc...
+
+    // Function to submit the event form - fixed implementation to properly save to Firebase
+    function submitEventForm(e) {
+        e.preventDefault();
+        console.log("Submitting event form...");
+        
+        // Show loading overlay
+        showLoading("Saving event...");
+        
+        // Verify user is authenticated
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error("User not authenticated when submitting form");
+            hideLoading();
+            alert("You must be logged in to submit events");
+            return;
+        }
+        
+        try {
+            // Get form data
+            const form = document.getElementById('eventForm');
+            const eventId = document.getElementById('eventId').value.trim();
+            
+            // Collect form data
+            const eventType = document.getElementById('eventType').value;
+            const otherEventType = document.getElementById('otherEventType').value;
+            const eventTitle = document.getElementById('eventTitle').value;
+            const eventDateTime = document.getElementById('eventDateTime').value;
+            const eventLocation = document.getElementById('eventLocation').value;
+            
+            // Get people information
+            const reportedBySelect = document.getElementById('reportedByName');
+            const reportedById = reportedBySelect.value;
+            const reportedByName = reportedBySelect.options[reportedBySelect.selectedIndex].text;
+            const reportedByRole = document.getElementById('reportedByRole').value;
+            const reportedByContact = document.getElementById('reportedByContact').value;
+            
+            // Line manager
+            const lineManagerSelect = document.getElementById('lineManager');
+            const lineManagerId = lineManagerSelect.value;
+            const lineManagerName = lineManagerSelect.options[lineManagerSelect.selectedIndex].text;
+            const lineManagerEmail = lineManagerSelect.options[lineManagerSelect.selectedIndex].getAttribute('data-email') || '';
+            
+            // Other fields
+            const witnesses = document.getElementById('witnesses').value;
+            const personsInvolved = document.getElementById('personsInvolved').value;
+            const eventDescription = document.getElementById('eventDescription').value;
+            const sequenceOfEvents = document.getElementById('sequenceOfEvents').value;
+            const immediateActions = document.getElementById('immediateActions').value;
+            const severityLevel = document.getElementById('severityLevel').value;
+            
+            // Get selected checkboxes for actual consequences
+            const consequenceCheckboxes = form.querySelectorAll('input[name="actualConsequence[]"]:checked');
+            const actualConsequences = Array.from(consequenceCheckboxes).map(cb => cb.value);
+            
+            // RCA sections
+            const immediateCauses = document.getElementById('immediateCauses').value;
+            const rootCauses = document.getElementById('rootCauses').value;
+            const otherRootCause = document.getElementById('otherRootCause').value;
+            
+            // Actions
+            const correctiveActions = document.getElementById('correctiveActions').value;
+            const personResponsible = document.getElementById('personResponsible').value;
+            const actionDeadline = document.getElementById('actionDeadline').value;
+            
+            // Review fields
+            const supervisorComments = document.getElementById('supervisorComments').value;
+            const hseComments = document.getElementById('hseComments').value;
+            let approvalStatus = document.getElementById('approvalStatus').value || 'Pending';
+            const closureDate = document.getElementById('closureDate').value;
+            
+            // Set approval status to pending for new events or if not changed
+            if (eventId === '' || approvalStatus === '') {
+                approvalStatus = 'Pending';
+            }
+            
+            // Create event object
+            const eventData = {
+                eventType: eventType === 'Other' ? otherEventType : eventType,
+                otherEventType: eventType === 'Other' ? otherEventType : '',
+                eventTitle: eventTitle,
+                eventDateTime: eventDateTime,
+                eventLocation: eventLocation,
+                
+                // Reporter info
+                reportedById: reportedById,
+                reportedByName: reportedByName,
+                reportedByRole: reportedByRole,
+                reportedByContact: reportedByContact,
+                
+                // Line manager info
+                lineManagerId: lineManagerId,
+                lineManager: lineManagerName,
+                lineManagerEmail: lineManagerEmail,
+                
+                // Other people
+                witnesses: witnesses,
+                personsInvolved: personsInvolved,
+                
+                // Description
+                eventDescription: eventDescription,
+                sequenceOfEvents: sequenceOfEvents,
+                immediateActions: immediateActions,
+                
+                // Severity
+                severityLevel: severityLevel,
+                actualConsequences: actualConsequences,
+                
+                // RCA
+                immediateCauses: immediateCauses,
+                rootCauses: rootCauses === 'Other' ? otherRootCause : rootCauses,
+                otherRootCause: rootCauses === 'Other' ? otherRootCause : '',
+                
+                // Actions
+                correctiveActions: correctiveActions,
+                personResponsible: personResponsible,
+                actionDeadline: actionDeadline,
+                
+                // Review
+                supervisorComments: supervisorComments,
+                hseComments: hseComments,
+                approvalStatus: approvalStatus,
+                closureDate: closureDate,
+                
+                // Metadata - always updated
+                lastUpdatedBy: currentUser.uid,
+                lastUpdatedByEmail: currentUser.email,
+                lastUpdatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            // For new events, add creation metadata
+            if (!eventId) {
+                eventData.createdBy = currentUser.uid;
+                eventData.createdByEmail = currentUser.email;
+                eventData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+            }
+
+            // Get reference to Firebase database
+            let savePromise;
+            let newEventRef;
+            
+            if (eventId) {
+                // Update existing event
+                console.log(`Updating existing event with ID: ${eventId}`);
+                savePromise = database.ref(`events/${eventId}`).update(eventData);
+            } else {
+                // Create new event with push() to generate a unique key
+                console.log("Creating new event with generated ID");
+                newEventRef = database.ref('events').push();
+                savePromise = newEventRef.set(eventData);
+            }
+            
+            // Handle save result
+            savePromise.then(() => {
+                console.log("Event saved successfully");
+                
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'alert alert-success';
+                successMsg.style.display = 'block';
+                successMsg.style.backgroundColor = '#d4edda';
+                successMsg.style.color = '#155724';
+                successMsg.style.padding = '15px';
+                successMsg.style.marginBottom = '20px';
+                successMsg.style.borderRadius = '4px';
+                successMsg.style.border = '1px solid #c3e6cb';
+                
+                if (eventId) {
+                    successMsg.textContent = 'Event updated successfully!';
+                } else {
+                    successMsg.textContent = 'New event created successfully!';
+                    // Log the new event ID
+                    console.log(`New event created with ID: ${newEventRef.key}`);
+                }
+                
+                // Add view event board link
+                const linkContainer = document.createElement('p');
+                linkContainer.style.marginTop = '10px';
+                const link = document.createElement('a');
+                link.href = 'eventboard.html';
+                link.textContent = 'View Event Board';
+                link.style.color = '#155724';
+                link.style.fontWeight = 'bold';
+                linkContainer.appendChild(link);
+                successMsg.appendChild(linkContainer);
+                
+                // Add to DOM right after the form
+                const formElement = document.getElementById('eventForm');
+                formElement.parentNode.insertBefore(successMsg, formElement.nextSibling);
+                
+                // Hide loading overlay
+                hideLoading();
+                
+                // Reset form for new event creation if this was a new event
+                if (!eventId) {
+                    setTimeout(() => {
+                        formElement.reset();
+                        
+                        // Set current date and time for the event date field
+                        const now = new Date();
+                        const formattedDateTime = now.toISOString().slice(0, 16); // Format as YYYY-MM-DDThh:mm
+                        document.getElementById('eventDateTime').value = formattedDateTime;
+                        
+                        // Reset approval status to default
+                        document.getElementById('approvalStatus').value = '';
+                        
+                        // Remove success message after some time
+                        setTimeout(() => {
+                            successMsg.remove();
+                        }, 5000);
+                    }, 1500);
+                } else {
+                    // For edit mode, redirect back to event board after delay
+                    setTimeout(() => {
+                        window.location.href = 'eventboard.html';
+                    }, 2000);
+                }
+                
+                // Log to audit trail if available
+                if (typeof logAction === 'function') {
+                    logAction(eventId ? 'EVENT_UPDATED' : 'EVENT_CREATED', {
+                        eventId: eventId || newEventRef.key,
+                        eventTitle: eventTitle
+                    });
+                }
+                
+            }).catch(error => {
+                console.error("Error saving event:", error);
+                hideLoading();
+                alert(`Error saving event: ${error.message}`);
+            });
+            
+        } catch (error) {
+            console.error("Error in form submission:", error);
+            hideLoading();
+            alert(`An error occurred during form submission: ${error.message}`);
+        }
+    }
+
+    // Function to populate form fields with event data for editing
+    function populateFormWithEventData(event) {
+        console.log("Populating form with event data:", event);
+        
+        // Main event details
+        document.getElementById('eventType').value = event.eventType || '';
+        document.getElementById('otherEventType').value = event.otherEventType || '';
+        document.getElementById('eventTitle').value = event.eventTitle || '';
+        document.getElementById('eventDateTime').value = formatDateTimeForInput(event.eventDateTime);
+        document.getElementById('eventLocation').value = event.eventLocation || '';
+        
+        // Set reporter info
+        if (event.reportedById) {
+            document.getElementById('reportedByName').value = event.reportedById;
+        }
+        document.getElementById('reportedByRole').value = event.reportedByRole || '';
+        document.getElementById('reportedByContact').value = event.reportedByContact || '';
+        
+        // Set line manager info
+        if (event.lineManagerId) {
+            document.getElementById('lineManager').value = event.lineManagerId;
+        }
+        
+        // Set witnesses and involved persons
+        document.getElementById('witnesses').value = event.witnesses || '';
+        document.getElementById('personsInvolved').value = event.personsInvolved || '';
+        
+        // Set description fields
+        document.getElementById('eventDescription').value = event.eventDescription || '';
+        document.getElementById('sequenceOfEvents').value = event.sequenceOfEvents || '';
+        document.getElementById('immediateActions').value = event.immediateActions || '';
+        
+        // Set severity and consequences
+        document.getElementById('severityLevel').value = event.severityLevel || '';
+        
+        // Set checkboxes for consequences
+        if (event.actualConsequences && Array.isArray(event.actualConsequences)) {
+            event.actualConsequences.forEach(consequence => {
+                const checkbox = document.querySelector(`input[name="actualConsequence[]"][value="${consequence}"]`);
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+        
+        // Set RCA fields
+        document.getElementById('immediateCauses').value = event.immediateCauses || '';
+        document.getElementById('rootCauses').value = event.rootCauses || '';
+        document.getElementById('otherRootCause').value = event.otherRootCause || '';
+        
+        // Set corrective actions fields
+        document.getElementById('correctiveActions').value = event.correctiveActions || '';
+        document.getElementById('personResponsible').value = event.personResponsible || '';
+        document.getElementById('actionDeadline').value = formatDateForInput(event.actionDeadline);
+        
+        // Set review fields
+        document.getElementById('supervisorComments').value = event.supervisorComments || '';
+        document.getElementById('hseComments').value = event.hseComments || '';
+        document.getElementById('approvalStatus').value = event.approvalStatus || 'Pending';
+        document.getElementById('closureDate').value = formatDateForInput(event.closureDate);
+        
+        console.log("Form populated successfully");
+    }
+
+    // Helper function to format datetime string for datetime-local input
+    function formatDateTimeForInput(dateTimeStr) {
+        if (!dateTimeStr) return '';
+        try {
+            const date = new Date(dateTimeStr);
+            if (isNaN(date.getTime())) return '';
+            
+            // Format as YYYY-MM-DDThh:mm
+            return date.toISOString().slice(0, 16);
+        } catch (e) {
+            console.warn("Error formatting datetime:", e);
+            return '';
+        }
+    }
+
+    // Helper function to format date string for date input
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '';
+            
+            // Format as YYYY-MM-DD
+            return date.toISOString().slice(0, 10);
+        } catch (e) {
+            console.warn("Error formatting date:", e);
+            return '';
+        }
+    }
+
+    // Function to log actions to audit log
+    function logAction(action, details = {}) {
+        if (!database || !auth.currentUser) return;
+        
+        const logEntry = {
+            action: action,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            userId: auth.currentUser.uid,
+            userEmail: auth.currentUser.email,
+            details: details
+        };
+        
+        database.ref('auditLogs').push(logEntry)
+            .catch(error => console.error("Error logging action:", error));
+    }
+    
+    // ...existing code...
 </script>
 </body>
 </html>

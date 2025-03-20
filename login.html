@@ -333,27 +333,44 @@
     </div>
 
     <script>
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
-            authDomain: "users-8be65.firebaseapp.com",
-            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
-            projectId: "users-8be65",
-            storageBucket: "users-8be65.appspot.com",
-            messagingSenderId: "829083030831",
-            appId: "1:829083030831:web:36a370e62691e560bc3dda"
-        };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
-        
-        // Get return URL from query parameter or use default
-        const urlParams = new URLSearchParams(window.location.search);
-        const returnUrl = urlParams.get('returnUrl') || 'index.html';
-        
-        document.addEventListener('DOMContentLoaded', function() {
+    // Firebase configuration - we'll keep this for reference but let AuthManager handle initialization
+    const firebaseConfig = {
+        apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+        authDomain: "users-8be65.firebaseapp.com",
+        databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+        projectId: "users-8be65",
+        storageBucket: "users-8be65.appspot.com",
+        messagingSenderId: "829083030831",
+        appId: "1:829083030831:web:36a370e62691e560bc3dda"
+    };
+    
+    // Debug flag for verbose logging
+    const DEBUG_AUTH = true;
+
+    // Debug logger function
+    function debugAuth(message, data) {
+        if (DEBUG_AUTH) {
+            console.log(`[AUTH DEBUG] ${message}`, data || '');
+        }
+    }
+    
+    // Variables for Firebase services
+    let auth;
+    let database;
+    
+    // Get return URL from query parameter or use default
+    const urlParams = new URLSearchParams(window.location.search);
+    const returnUrl = urlParams.get('returnUrl') || 'index.html';
+    const redirectParam = urlParams.get('redirect') || '';
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load authManager.js script first to ensure it's available
+        loadScript('js/authManager.js', function() {
+            debugAuth('AuthManager script loaded');
+            
+            // Initialize Firebase and related references
+            initializeFirebase();
+            
             const loginForm = document.getElementById('loginForm');
             const googleSignInBtn = document.getElementById('googleSignInBtn');
             const errorAlert = document.getElementById('errorAlert');
@@ -362,6 +379,9 @@
             const alreadyLoggedInContainer = document.getElementById('alreadyLoggedInContainer');
             const continueToSiteBtn = document.getElementById('continueToSiteBtn');
             const switchAccountBtn = document.getElementById('switchAccountBtn');
+            
+            // Show loading initially
+            showLoading();
             
             // Email/Password Login
             loginForm.addEventListener('submit', function(e) {
@@ -394,55 +414,7 @@
             
             // Google Sign In
             googleSignInBtn.addEventListener('click', function() {
-                showLoading();
-                
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.setCustomParameters({ prompt: 'select_account' });
-                
-                auth.signInWithPopup(provider)
-                    .then((result) => {
-                        const user = result.user;
-                        
-                        // Save or update user data
-                        const userRef = database.ref('users/' + user.uid);
-                        userRef.once('value').then((snapshot) => {
-                            if (!snapshot.exists()) {
-                                userRef.set({
-                                    email: user.email,
-                                    displayName: user.displayName,
-                                    photoURL: user.photoURL,
-                                    role: 'user',
-                                    lastLogin: firebase.database.ServerValue.TIMESTAMP
-                                });
-                            } else {
-                                userRef.update({
-                                    lastLogin: firebase.database.ServerValue.TIMESTAMP,
-                                    photoURL: user.photoURL // Update photo in case it changed
-                                });
-                            }
-                        });
-                        
-                        // Log successful login
-                        logAction('LOGIN', {method: 'google', email: user.email});
-                        
-                        hideLoading();
-                        showSuccess("Login successful! Redirecting...");
-                        
-                        // Redirect after a short delay to show success message
-                        setTimeout(() => {
-                            window.location.href = returnUrl;
-                        }, 1500);
-                    })
-                    .catch((error) => {
-                        console.error("Google sign-in error:", error);
-                        logAction('FAILED_LOGIN', {
-                            method: 'google',
-                            error: error.code
-                        });
-                        
-                        hideLoading();
-                        showError(getAuthErrorMessage(error.code));
-                    });
+                handleGoogleSignIn();
             });
             
             // Continue to site button clicked
@@ -452,135 +424,529 @@
             
             // Switch account button clicked
             switchAccountBtn.addEventListener('click', function() {
-                showLoading();
+                handleSignOut();
+            });
+        });
+    });
+    
+    // Function to load script dynamically
+    function loadScript(src, callback) {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = callback;
+        script.onerror = function() {
+            console.error(`Failed to load script: ${src}`);
+            showError("Failed to load authentication system. Please refresh the page.");
+        };
+        document.head.appendChild(script);
+    }
+    
+    // Initialize Firebase safely
+    function initializeFirebase() {
+        try {
+            debugAuth('Initializing Firebase...');
+            
+            // Check if Firebase is already initialized (through AuthManager or directly)
+            if (typeof firebase !== 'undefined') {
+                if (firebase.apps.length === 0) {
+                    debugAuth('Initializing Firebase directly');
+                    firebase.initializeApp(firebaseConfig);
+                } else {
+                    debugAuth('Firebase already initialized');
+                }
                 
-                auth.signOut().then(() => {
-                    hideLoading();
-                    alreadyLoggedInContainer.style.display = 'none';
-                    loginForm.style.display = 'block';
+                // Get references to Firebase services
+                auth = firebase.auth();
+                database = firebase.database();
+                
+                // Set persistence to LOCAL to ensure login state persists
+                auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                    .then(() => {
+                        debugAuth('Firebase persistence set to LOCAL');
+                        checkAuthState();
+                    })
+                    .catch(error => {
+                        console.error("Error setting persistence:", error);
+                        checkAuthState(); // Continue anyway
+                    });
+            } else if (window.EnhancedAuthManager) {
+                debugAuth('Using EnhancedAuthManager');
+                window.EnhancedAuthManager.initFirebase();
+                checkAuthState();
+            } else {
+                throw new Error("Neither Firebase nor EnhancedAuthManager is available");
+            }
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            showError("Error initializing authentication system. Please refresh the page and try again.");
+        }
+    }
+    
+    // Check the current authentication state
+    function checkAuthState() {
+        debugAuth('Checking authentication state...');
+        
+        // Set timeout for auth check
+        const authTimeout = setTimeout(() => {
+            console.warn("Auth state check timed out");
+            hideLoading();
+            showError("Authentication check timed out. Please refresh and try again.");
+        }, 10000);
+        
+        const checkWithFirebase = () => {
+            auth.onAuthStateChanged(function(user) {
+                clearTimeout(authTimeout);
+                
+                if (user) {
+                    debugAuth('User is authenticated', { email: user.email, uid: user.uid });
+                    
+                    // Store authentication state with error handling
+                    try {
+                        storeAuthState(user);
+                        debugAuth('Auth state stored successfully');
+                    } catch (error) {
+                        console.error("Error storing auth state:", error);
+                    }
+                    
+                    // Show "already logged in" UI instead of redirecting
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.querySelector('.divider').style.display = 'none';
+                    document.querySelector('.social-login').style.display = 'none';
+                    document.getElementById('alreadyLoggedInContainer').style.display = 'block';
+                } else {
+                    debugAuth('No authenticated user found');
+                    
+                    // Clear any stale auth data
+                    try {
+                        clearAuthState();
+                        debugAuth('Auth state cleared');
+                    } catch (error) {
+                        console.error("Error clearing auth state:", error);
+                    }
+                    
+                    // User is not logged in, show the login form
+                    document.getElementById('loginForm').style.display = 'block';
+                    document.getElementById('alreadyLoggedInContainer').style.display = 'none';
                     document.querySelector('.divider').style.display = 'flex';
                     document.querySelector('.social-login').style.display = 'block';
-                }).catch((error) => {
+                }
+                
+                // Hide loading overlay
+                hideLoading();
+            });
+        };
+        
+        // First try with EnhancedAuthManager if available
+        if (window.EnhancedAuthManager) {
+            window.EnhancedAuthManager.addAuthStateListener(function(user) {
+                clearTimeout(authTimeout);
+                if (user) {
+                    debugAuth('User authenticated through EnhancedAuthManager', { email: user.email });
+                    
+                    // Store auth state
+                    storeAuthState(user);
+                    
+                    // Show "already logged in" UI
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.querySelector('.divider').style.display = 'none';
+                    document.querySelector('.social-login').style.display = 'none';
+                    document.getElementById('alreadyLoggedInContainer').style.display = 'block';
+                } else {
+                    debugAuth('No authenticated user found through EnhancedAuthManager');
+                    
+                    // User is not logged in, show the login form
+                    document.getElementById('loginForm').style.display = 'block';
+                    document.getElementById('alreadyLoggedInContainer').style.display = 'none';
+                    document.querySelector('.divider').style.display = 'flex';
+                    document.querySelector('.social-login').style.display = 'block';
+                }
+                
+                // Hide loading overlay
+                hideLoading();
+            });
+        } else {
+            // Use direct Firebase auth if EnhancedAuthManager is not available
+            checkWithFirebase();
+        }
+    }
+    
+    // Handle login with email and password
+    function handleLogin(email, password) {
+        debugAuth('Handling login for email:', email);
+        showLoading();
+        
+        // Try with EnhancedAuthManager first
+        if (window.EnhancedAuthManager) {
+            debugAuth('Using EnhancedAuthManager for login');
+            
+            window.EnhancedAuthManager.login(email, password)
+                .then(user => {
+                    debugAuth('Login successful with EnhancedAuthManager');
+                    processSuccessfulLogin(user, 'email');
+                })
+                .catch(error => {
+                    debugAuth('Login failed with EnhancedAuthManager:', error);
+                    
+                    // Fall back to direct Firebase auth
+                    fallbackToDirectFirebaseLogin(email, password);
+                });
+        } else {
+            debugAuth('EnhancedAuthManager not available, using direct Firebase auth');
+            // Use direct Firebase auth if EnhancedAuthManager is not available
+            fallbackToDirectFirebaseLogin(email, password);
+        }
+    }
+    
+    // Fallback to direct Firebase login if EnhancedAuthManager fails
+    function fallbackToDirectFirebaseLogin(email, password) {
+        if (!auth) {
+            console.error("Firebase auth not initialized");
+            hideLoading();
+            showError("Authentication system not initialized. Please refresh and try again.");
+            return;
+        }
+        
+        debugAuth('Attempting direct Firebase login');
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                const user = userCredential.user;
+                debugAuth('Login successful with direct Firebase auth');
+                processSuccessfulLogin(user, 'email');
+            })
+            .catch((error) => {
+                console.error("Login error:", error.code, error.message);
+                hideLoading();
+                showError(getAuthErrorMessage(error.code));
+                
+                // Log the failed login attempt
+                try {
+                    logAction('FAILED_LOGIN', {
+                        method: 'email',
+                        error: error.code,
+                        email: email
+                    });
+                } catch (logError) {
+                    console.error("Error logging failed login:", logError);
+                }
+            });
+    }
+    
+    // Handle Google Sign In
+    function handleGoogleSignIn() {
+        debugAuth('Handling Google sign in');
+        showLoading();
+        
+        if (!auth) {
+            console.error("Firebase auth not initialized");
+            hideLoading();
+            showError("Authentication system not initialized. Please refresh and try again.");
+            return;
+        }
+        
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        
+        auth.signInWithPopup(provider)
+            .then((result) => {
+                const user = result.user;
+                debugAuth('Google sign in successful');
+                processSuccessfulLogin(user, 'google');
+            })
+            .catch((error) => {
+                console.error("Google sign-in error:", error);
+                hideLoading();
+                showError(getAuthErrorMessage(error.code));
+                
+                // Log the failed login attempt
+                try {
+                    logAction('FAILED_LOGIN', {
+                        method: 'google',
+                        error: error.code
+                    });
+                } catch (logError) {
+                    console.error("Error logging failed login:", logError);
+                }
+            });
+    }
+    
+    // Handle sign out
+    function handleSignOut() {
+        debugAuth('Signing out user');
+        showLoading();
+        
+        // Try with EnhancedAuthManager first
+        if (window.EnhancedAuthManager) {
+            window.EnhancedAuthManager.logout()
+                .then(() => {
+                    signOutComplete();
+                })
+                .catch(error => {
+                    console.error("Error signing out with EnhancedAuthManager:", error);
+                    
+                    // Fall back to direct Firebase auth
+                    if (auth) {
+                        auth.signOut()
+                            .then(() => {
+                                signOutComplete();
+                            })
+                            .catch(error => {
+                                console.error("Error signing out with direct Firebase auth:", error);
+                                hideLoading();
+                                showError("Error signing out. Please try again.");
+                            });
+                    } else {
+                        hideLoading();
+                        showError("Authentication system not initialized. Please refresh and try again.");
+                    }
+                });
+        } else if (auth) {
+            auth.signOut()
+                .then(() => {
+                    signOutComplete();
+                })
+                .catch(error => {
                     console.error("Error signing out:", error);
                     hideLoading();
                     showError("Error signing out. Please try again.");
                 });
-            });
-            
-            // Function to show loading overlay
-            function showLoading() {
-                loadingOverlay.style.display = 'flex';
-            }
-            
-            // Function to hide loading overlay
-            function hideLoading() {
-                loadingOverlay.style.display = 'none';
-            }
-            
-            // Function to show error message
-            function showError(message) {
-                errorAlert.textContent = message;
-                errorAlert.style.display = 'block';
-                successAlert.style.display = 'none';
-                
-                // Hide the error after 5 seconds
-                setTimeout(() => {
-                    errorAlert.style.display = 'none';
-                }, 5000);
-            }
-            
-            // Function to show success message
-            function showSuccess(message) {
-                successAlert.textContent = message;
-                successAlert.style.display = 'block';
-                errorAlert.style.display = 'none';
-            }
-            
-            // Function to log actions to Firebase
-            function logAction(action, details = {}) {
-                const logRef = database.ref('auditLogs').push();
-                logRef.set({
-                    timestamp: firebase.database.ServerValue.TIMESTAMP,
-                    action: action,
-                    details: details
-                });
-            }
-            
-            // Function to get user-friendly error message
-            function getAuthErrorMessage(errorCode) {
-                switch (errorCode) {
-                    case 'auth/invalid-email':
-                        return 'The email address is not valid.';
-                    case 'auth/user-disabled':
-                        return 'This user account has been disabled.';
-                    case 'auth/user-not-found':
-                        return 'No account found with this email.';
-                    case 'auth/wrong-password':
-                        return 'Incorrect password.';
-                    case 'auth/too-many-requests':
-                        return 'Too many unsuccessful login attempts. Please try again later.';
-                    case 'auth/popup-closed-by-user':
-                        return 'Sign-in popup was closed before completing the sign in.';
-                    case 'auth/cancelled-popup-request':
-                        return 'Sign-in was cancelled.';
-                    case 'auth/popup-blocked':
-                        return 'Sign-in popup was blocked by the browser.';
-                    default:
-                        return 'An error occurred during sign-in. Please try again.';
-                }
-            }
-            
-            // Check for already logged in user - show different UI instead of auto-redirecting
-            auth.onAuthStateChanged(function(user) {
-                if (user) {
-                    console.log("User is already logged in:", user.email);
-                    
-                    // Show "already logged in" UI instead of redirecting
-                    loginForm.style.display = 'none';
-                    document.querySelector('.divider').style.display = 'none';
-                    document.querySelector('.social-login').style.display = 'none';
-                    alreadyLoggedInContainer.style.display = 'block';
-                    
-                    // No automatic redirect - let the user decide
-                } else {
-                    // User is not logged in, show the login form
-                    loginForm.style.display = 'block';
-                    alreadyLoggedInContainer.style.display = 'none';
-                    document.querySelector('.divider').style.display = 'flex';
-                    document.querySelector('.social-login').style.display = 'block';
-                }
-                
-                // Hide loading overlay in either case
-                hideLoading();
-            });
-        });
-        
-        // Modify the login function to use EnhancedAuthManager
-        function handleLogin(email, password) {
-            showLoading();
-            
-            EnhancedAuthManager.login(email, password)
-                .then(user => {
-                    console.log("Login successful");
-                    
-                    // Get redirect URL from query params if available
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const redirectPage = urlParams.get('redirect');
-                    
-                    hideLoading();
-                    if (redirectPage) {
-                        window.location.href = redirectPage;
-                    } else {
-                        window.location.href = "dashboard.html";
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error("Login error:", error);
-                    showError(error.message);
-                });
+        } else {
+            hideLoading();
+            showError("Authentication system not initialized. Please refresh and try again.");
         }
-    </script>
+    }
+    
+    // Complete sign out process
+    function signOutComplete() {
+        debugAuth('Sign out complete');
+        clearAuthState();
+        hideLoading();
+        document.getElementById('alreadyLoggedInContainer').style.display = 'none';
+        document.getElementById('loginForm').style.display = 'block';
+        document.querySelector('.divider').style.display = 'flex';
+        document.querySelector('.social-login').style.display = 'block';
+    }
+    
+    // Process successful login
+    function processSuccessfulLogin(user, method) {
+        debugAuth('Processing successful login', { method: method });
+        
+        // Save or update user data in database
+        if (database) {
+            const userRef = database.ref('users/' + user.uid);
+            userRef.once('value').then((snapshot) => {
+                if (!snapshot.exists()) {
+                    // Create new user record
+                    userRef.set({
+                        email: user.email,
+                        displayName: user.displayName || user.email,
+                        photoURL: user.photoURL || null,
+                        role: 'user',
+                        lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } else {
+                    // Update existing user record
+                    userRef.update({
+                        lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                        email: user.email, // Ensure email is up to date
+                        photoURL: user.photoURL || snapshot.val().photoURL // Update photo if available
+                    });
+                }
+                
+                // Store authentication state
+                storeAuthState(user);
+                
+                // Log successful login
+                logAction('LOGIN', {
+                    method: method, 
+                    email: user.email
+                });
+                
+                // Show success message and redirect
+                hideLoading();
+                showSuccess("Login successful! Redirecting...");
+                
+                // Determine where to redirect
+                let redirectTo = returnUrl;
+                if (redirectParam) {
+                    redirectTo = redirectParam;
+                }
+                
+                debugAuth('Will redirect to:', redirectTo);
+                
+                // Redirect after a short delay to show success message
+                setTimeout(() => {
+                    window.location.href = redirectTo;
+                }, 1500);
+            }).catch(error => {
+                console.error("Error updating user data:", error);
+                
+                // Continue with login even if database update fails
+                storeAuthState(user);
+                hideLoading();
+                showSuccess("Login successful! Redirecting...");
+                
+                // Redirect after a short delay
+                setTimeout(() => {
+                    window.location.href = returnUrl;
+                }, 1500);
+            });
+        } else {
+            // No database reference available
+            storeAuthState(user);
+            hideLoading();
+            showSuccess("Login successful! Redirecting...");
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+                window.location.href = returnUrl;
+            }, 1500);
+        }
+    }
+    
+    // Store authentication state in multiple storage mechanisms
+    function storeAuthState(user) {
+        if (!user) return;
+        
+        try {
+            // Store in localStorage
+            localStorage.setItem('loggedIn', 'true');
+            localStorage.setItem('userId', user.uid);
+            localStorage.setItem('userEmail', user.email);
+            localStorage.setItem('lastAuthTime', Date.now().toString());
+            
+            // Store in sessionStorage
+            sessionStorage.setItem('loggedIn', 'true');
+            sessionStorage.setItem('userId', user.uid);
+            sessionStorage.setItem('userEmail', user.email);
+            
+            // Store in cookies (with proper encoding)
+            const secureFlag = window.location.protocol === 'https:' ? '; secure' : '';
+            const expiryDate = new Date();
+            expiryDate.setDate(expiryDate.getDate() + 7); // 1 week
+            
+            document.cookie = `loggedIn=true; path=/; expires=${expiryDate.toUTCString()}${secureFlag}`;
+            document.cookie = `userId=${user.uid}; path=/; expires=${expiryDate.toUTCString()}${secureFlag}`;
+            document.cookie = `userEmail=${encodeURIComponent(user.email)}; path=/; expires=${expiryDate.toUTCString()}${secureFlag}`;
+        } catch (error) {
+            console.error("Error storing auth state:", error);
+        }
+    }
+    
+    // Clear authentication state
+    function clearAuthState() {
+        try {
+            // Clear localStorage
+            localStorage.removeItem('loggedIn');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('lastAuthTime');
+            
+            // Clear sessionStorage
+            sessionStorage.removeItem('loggedIn');
+            sessionStorage.removeItem('userId');
+            sessionStorage.removeItem('userEmail');
+            
+            // Clear cookies
+            const pastDate = new Date(0).toUTCString();
+            document.cookie = 'loggedIn=; path=/; expires=' + pastDate;
+            document.cookie = 'userId=; path=/; expires=' + pastDate;
+            document.cookie = 'userEmail=; path=/; expires=' + pastDate;
+        } catch (error) {
+            console.error("Error clearing auth state:", error);
+        }
+    }
+    
+    // Function to show loading overlay
+    function showLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
+        }
+    }
+    
+    // Function to hide loading overlay
+    function hideLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+    }
+    
+    // Function to show error message
+    function showError(message) {
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        
+        if (errorAlert && successAlert) {
+            errorAlert.textContent = message;
+            errorAlert.style.display = 'block';
+            successAlert.style.display = 'none';
+            
+            // Hide the error after 5 seconds
+            setTimeout(() => {
+                errorAlert.style.display = 'none';
+            }, 5000);
+        }
+    }
+    
+    // Function to show success message
+    function showSuccess(message) {
+        const errorAlert = document.getElementById('errorAlert');
+        const successAlert = document.getElementById('successAlert');
+        
+        if (errorAlert && successAlert) {
+            successAlert.textContent = message;
+            successAlert.style.display = 'block';
+            errorAlert.style.display = 'none';
+        }
+    }
+    
+    // Function to log actions to Firebase
+    function logAction(action, details = {}) {
+        if (!database) return;
+        
+        try {
+            const logRef = database.ref('auditLogs').push();
+            logRef.set({
+                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                action: action,
+                details: details,
+                userAgent: navigator.userAgent,
+                platform: navigator.platform
+            });
+        } catch (error) {
+            console.error("Error logging action:", error);
+        }
+    }
+    
+    // Function to get user-friendly error message
+    function getAuthErrorMessage(errorCode) {
+        switch (errorCode) {
+            case 'auth/invalid-email':
+                return 'The email address is not valid.';
+            case 'auth/user-disabled':
+                return 'This user account has been disabled.';
+            case 'auth/user-not-found':
+                return 'No account found with this email.';
+            case 'auth/wrong-password':
+                return 'Incorrect password.';
+            case 'auth/too-many-requests':
+                return 'Too many unsuccessful login attempts. Please try again later.';
+            case 'auth/popup-closed-by-user':
+                return 'Sign-in popup was closed before completing the sign in.';
+            case 'auth/cancelled-popup-request':
+                return 'Sign-in was cancelled.';
+            case 'auth/popup-blocked':
+                return 'Sign-in popup was blocked by the browser.';
+            case 'auth/network-request-failed':
+                return 'Network error. Please check your internet connection and try again.';
+            default:
+                return `An error occurred during sign-in (${errorCode}). Please try again.`;
+        }
+    }
+</script>
     <!-- Add this near the end of the body, before other scripts -->
     <script src="js/authManager.js"></script>
 </body>
