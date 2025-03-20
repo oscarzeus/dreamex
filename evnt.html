@@ -1022,397 +1022,501 @@
     </main>
 
     <script>
-        // FIXED FIREBASE INITIALIZATION FOR PRODUCTION ENVIRONMENT
-        let database;
-        let auth;
+    // CLEAN FIREBASE INITIALIZATION AND AUTHENTICATION
+    let database;
+    let auth;
+    
+    // Single, reliable Firebase initialization function
+    function initializeFirebase() {
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.appspot.com",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
         
-        // Better Firebase initialization with domain awareness
-        function initializeFirebase() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
-                authDomain: "users-8be65.firebaseapp.com",
-                databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
-                projectId: "users-8be65",
-                storageBucket: "users-8be65.appspot.com",
-                messagingSenderId: "829083030831",
-                appId: "1:829083030831:web:36a370e62691e560bc3dda"
-            };
-            
-            // Log current domain to help troubleshoot
-            const currentDomain = window.location.hostname;
-            console.log("Initializing Firebase for domain:", currentDomain);
-            
-            try {
-                // Check if Firebase is already initialized
-                if (firebase.apps.length === 0) {
-                    firebase.initializeApp(firebaseConfig);
-                }
-                
-                database = firebase.database();
-                auth = firebase.auth();
-                
-                // Always set persistence to LOCAL for better auth experience
-                return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-                    .then(() => {
-                        console.log("Firebase persistence set to LOCAL");
-                        return true;
-                    })
-                    .catch(error => {
-                        console.error("Error setting auth persistence:", error);
-                        return true; // Continue even if this fails
-                    });
-            } catch (error) {
-                console.error("Firebase initialization error:", error);
-                return Promise.reject(error);
-            }
-        }
-        
-        // Initialize Firebase immediately
-        initializeFirebase()
-            .then(() => console.log("Firebase initialized successfully"))
-            .catch(error => console.error("Critical Firebase initialization error:", error));
-            
-        const LOGS_PER_PAGE = 20;
-        let currentLogs = [];
-        let authInitialized = false;
-        let authCheckTimeout = null;
-
-        // Production-ready function to load users from Firebase
-        function loadUsersForDropdown() {
-            console.log("Loading users from Firebase...", new Date().toISOString());
-            const reportedByDropdown = document.getElementById('reportedByName');
-            const lineManagerDropdown = document.getElementById('lineManager');
-            
-            if (!reportedByDropdown || !lineManagerDropdown) {
-                console.error("Dropdown elements not found in DOM");
-                return Promise.reject(new Error("Dropdown elements not found"));
+        try {
+            // Check if Firebase is already initialized
+            if (firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+                console.log("Firebase initialized");
+            } else {
+                console.log("Firebase already initialized");
             }
             
-            // Clear dropdowns and show loading state
-            reportedByDropdown.innerHTML = '<option value="">Select a user</option><option disabled>Loading users...</option>';
-            lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option><option disabled>Loading users...</option>';
+            database = firebase.database();
+            auth = firebase.auth();
             
-            return new Promise((resolve, reject) => {
-                // Safety timeout
-                const timeoutId = setTimeout(() => {
-                    console.warn("Firebase user fetch timed out");
-                    reportedByDropdown.innerHTML = '<option value="">Timeout - Click to retry</option>';
-                    lineManagerDropdown.innerHTML = '<option value="">Timeout - Click to retry</option>';
-                    addRetryEventListeners();
-                    resolve([]); // Resolve with empty array
-                }, 15000);
-                
-                // Check authentication
-                if (!auth.currentUser) {
-                    console.warn("Not authenticated when loading users");
-                    clearTimeout(timeoutId);
-                    
-                    // Try to re-authenticate
-                    checkAuthAndRetryLoadUsers(reportedByDropdown, lineManagerDropdown, resolve, reject);
-                    return;
-                }
-                
-                // Get a reference to the database with timestamp to avoid cache
-                const usersRef = database.ref('users');
-                console.log("Fetching users from path:", usersRef.toString());
-                
-                // Fetch users from Firebase
-                usersRef.once('value')
-                    .then(snapshot => {
-                        clearTimeout(timeoutId);
-                        
-                        // Reset dropdowns
-                        reportedByDropdown.innerHTML = '<option value="">Select a user</option>';
-                        lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option>';
-                        
-                        const users = snapshot.val();
-                        
-                        // Check if we have users
-                        if (!users) {
-                            console.warn("No users found in Firebase snapshot");
-                            reportedByDropdown.appendChild(new Option("No users available", ""));
-                            lineManagerDropdown.appendChild(new Option("No users available", ""));
-                            resolve([]);
-                            return;
-                        }
-                        
-                        console.log(`Found ${Object.keys(users).length} users in Firebase`);
-                        
-                        // Create a sorted array of users
-                        const userArray = [];
-                        for (const userId in users) {
-                            if (users[userId]) {
-                                const userData = users[userId];
-                                userArray.push({
-                                    id: userId,
-                                    email: userData.email || 'No Email',
-                                    displayName: userData.firstName && userData.lastName ? 
-                                        `${userData.firstName} ${userData.lastName}` : 
-                                        (userData.email || 'Unknown User')
-                                });
-                            }
-                        }
-                        
-                        // Sort users
-                        userArray.sort((a, b) => a.displayName.localeCompare(b.displayName));
-                        
-                        // Add users to dropdowns
-                        userArray.forEach(user => {
-                            // Create option elements
-                            const option1 = document.createElement('option');
-                            option1.value = user.id;
-                            option1.textContent = user.displayName;
-                            reportedByDropdown.appendChild(option1);
-                            
-                            const option2 = document.createElement('option');
-                            option2.value = user.id;
-                            option2.setAttribute('data-email', user.email);
-                            option2.textContent = user.displayName;
-                            lineManagerDropdown.appendChild(option2);
-                        });
-                        
-                        console.log(`Successfully populated dropdowns with ${userArray.length} users`);
-                        resolve(userArray);
-                    })
-                    .catch(error => {
-                        clearTimeout(timeoutId);
-                        console.error("Error fetching users:", error);
-                        
-                        // Show error in dropdowns
-                        reportedByDropdown.innerHTML = '<option value="">Error loading users</option>';
-                        lineManagerDropdown.innerHTML = '<option value="">Error loading users</option>';
-                        
-                        // Add retry options
-                        const retryOption1 = document.createElement('option');
-                        retryOption1.value = "retry";
-                        retryOption1.textContent = "Click to retry";
-                        reportedByDropdown.appendChild(retryOption1);
-                        
-                        const retryOption2 = document.createElement('option');
-                        retryOption2.value = "retry";
-                        retryOption2.textContent = "Click to retry";
-                        lineManagerDropdown.appendChild(retryOption2);
-                        
-                        addRetryEventListeners();
-                        reject(error);
-                    });
-            });
+            // Set persistence to LOCAL
+            return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => true)
+                .catch(error => {
+                    console.error("Error setting persistence:", error);
+                    return true; // Continue despite error
+                });
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            return Promise.reject(error);
         }
-
-        // Function to check auth and retry loading users
-        function checkAuthAndRetryLoadUsers(reportedByDropdown, lineManagerDropdown, resolve, reject) {
-            reportedByDropdown.innerHTML = '<option value="">Checking authentication...</option>';
-            lineManagerDropdown.innerHTML = '<option value="">Checking authentication...</option>';
-            
-            // Create a timeout for auth check
-            const authCheckTimeoutId = setTimeout(() => {
-                console.warn("Auth check timed out, redirecting to login");
-                window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
-            }, 5000);
-            
-            // Check authentication state
-            auth.onAuthStateChanged(user => {
-                clearTimeout(authCheckTimeoutId);
-                
-                if (user) {
-                    console.log("Successfully authenticated as:", user.email);
-                    
-                    // Try loading users again
-                    const usersRef = database.ref('users');
-                    usersRef.once('value')
-                        .then(snapshot => {
-                            // Process snapshot and update dropdowns
-                            // This code is similar to the main function but separated to avoid nesting
-                            processUserSnapshot(snapshot, reportedByDropdown, lineManagerDropdown, resolve);
-                        })
-                        .catch(error => {
-                            console.error("Error in retry fetch:", error);
-                            reportedByDropdown.innerHTML = '<option value="">Error: Retry failed</option>';
-                            lineManagerDropdown.innerHTML = '<option value="">Error: Retry failed</option>';
-                            addRetryEventListeners();
-                            reject(error);
-                        });
-                } else {
-                    console.error("Not authenticated after check, redirecting to login");
-                    window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
-                    reject(new Error("Not authenticated"));
-                }
-            });
+    }
+    
+    // Global variables
+    let authInitialized = false;
+    let authCheckTimeout = null;
+    
+    // Initialize Firebase immediately at script load
+    initializeFirebase()
+        .then(() => console.log("Firebase setup complete"))
+        .catch(error => console.error("Firebase setup error:", error));
+    
+    // Enhanced user dropdown loading function
+    function loadUsersForDropdown() {
+        console.log("Loading users for dropdowns...");
+        const reportedByDropdown = document.getElementById('reportedByName');
+        const lineManagerDropdown = document.getElementById('lineManager');
+        
+        if (!reportedByDropdown || !lineManagerDropdown) {
+            return Promise.reject(new Error("Dropdown elements not found"));
         }
         
-        // Function to process user snapshot
-        function processUserSnapshot(snapshot, reportedByDropdown, lineManagerDropdown, resolve) {
-            reportedByDropdown.innerHTML = '<option value="">Select a user</option>';
-            lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option>';
-            
-            const users = snapshot.val();
-            if (!users) {
-                console.warn("No users found in snapshot during retry");
+        // Show loading state
+        reportedByDropdown.innerHTML = '<option value="">Select a user</option><option disabled>Loading users...</option>';
+        lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option><option disabled>Loading users...</option>';
+        
+        return new Promise((resolve, reject) => {
+            // Add safety timeout
+            const timeoutId = setTimeout(() => {
+                reportedByDropdown.innerHTML = '<option value="">Timeout - Click to retry</option>';
+                lineManagerDropdown.innerHTML = '<option value="">Timeout - Click to retry</option>';
+                addRetryEventListeners();
                 resolve([]);
+            }, 10000);
+            
+            // Check authentication
+            if (!auth.currentUser) {
+                clearTimeout(timeoutId);
+                console.warn("Not authenticated when loading users");
+                reportedByDropdown.innerHTML = '<option value="">Please log in</option>';
+                lineManagerDropdown.innerHTML = '<option value="">Please log in</option>';
+                reject(new Error("Not authenticated"));
                 return;
             }
             
-            const userArray = [];
-            for (const userId in users) {
-                if (users[userId]) {
-                    const userData = users[userId];
-                    userArray.push({
-                        id: userId,
-                        email: userData.email || 'No Email',
-                        displayName: userData.firstName && userData.lastName ? 
-                            `${userData.firstName} ${userData.lastName}` : 
-                            (userData.email || 'Unknown User')
+            // Fetch users from database
+            database.ref('users').once('value')
+                .then(snapshot => {
+                    clearTimeout(timeoutId);
+                    
+                    // Reset dropdowns
+                    reportedByDropdown.innerHTML = '<option value="">Select a user</option>';
+                    lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option>';
+                    
+                    const users = snapshot.val();
+                    
+                    if (!users) {
+                        console.warn("No users found");
+                        resolve([]);
+                        return;
+                    }
+                    
+                    // Process and sort users
+                    const userArray = [];
+                    for (const userId in users) {
+                        if (users[userId]) {
+                            const userData = users[userId];
+                            userArray.push({
+                                id: userId,
+                                email: userData.email || 'No Email',
+                                displayName: userData.firstName && userData.lastName ? 
+                                    `${userData.firstName} ${userData.lastName}` : 
+                                    (userData.email || 'Unknown User')
+                            });
+                        }
+                    }
+                    
+                    userArray.sort((a, b) => a.displayName.localeCompare(b.displayName));
+                    
+                    // Add users to dropdowns
+                    userArray.forEach(user => {
+                        const option1 = document.createElement('option');
+                        option1.value = user.id;
+                        option1.textContent = user.displayName;
+                        reportedByDropdown.appendChild(option1);
+                        
+                        const option2 = document.createElement('option');
+                        option2.value = user.id;
+                        option2.setAttribute('data-email', user.email);
+                        option2.textContent = user.displayName;
+                        lineManagerDropdown.appendChild(option2);
                     });
+                    
+                    sessionStorage.setItem('lastUserFetch', Date.now().toString());
+                    resolve(userArray);
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    console.error("Error fetching users:", error);
+                    reportedByDropdown.innerHTML = '<option value="">Error loading users</option>';
+                    lineManagerDropdown.innerHTML = '<option value="">Error loading users</option>';
+                    
+                    const retryOption = document.createElement('option');
+                    retryOption.value = "retry";
+                    retryOption.textContent = "Click to retry";
+                    reportedByDropdown.appendChild(retryOption.cloneNode(true));
+                    lineManagerDropdown.appendChild(retryOption);
+                    
+                    addRetryEventListeners();
+                    reject(error);
+                });
+        });
+    }
+    
+    // Helper function to add retry listeners to dropdowns
+    function addRetryEventListeners() {
+        const reportedByDropdown = document.getElementById('reportedByName');
+        const lineManagerDropdown = document.getElementById('lineManager');
+        
+        if (reportedByDropdown) {
+            reportedByDropdown.addEventListener('change', function() {
+                if (this.value === "retry") {
+                    loadUsersForDropdown();
+                    this.value = "";
                 }
-            }
-            
-            // Sort users
-            userArray.sort((a, b) => a.displayName.localeCompare(b.displayName));
-            
-            // Add users to dropdowns
-            userArray.forEach(user => {
-                const option1 = document.createElement('option');
-                option1.value = user.id;
-                option1.textContent = user.displayName;
-                reportedByDropdown.appendChild(option1);
+            });
+        }
+        
+        if (lineManagerDropdown) {
+            lineManagerDropdown.addEventListener('change', function() {
+                if (this.value === "retry") {
+                    loadUsersForDropdown();
+                    this.value = "";
+                }
+            });
+        }
+    }
+    
+    // Function to add refresh buttons to the form
+    function addRefreshButtonsToDom() {
+        const reportedByLabel = document.querySelector('label[for="reportedByName"]');
+        const lineManagerLabel = document.querySelector('label[for="lineManager"]');
+        
+        if (reportedByLabel && !reportedByLabel.querySelector('button')) {
+            const refreshBtn = createRefreshButton(refreshUserDropdowns);
+            reportedByLabel.appendChild(refreshBtn);
+        }
+        
+        if (lineManagerLabel && !lineManagerLabel.querySelector('button')) {
+            const refreshBtn = createRefreshButton(refreshUserDropdowns);
+            lineManagerLabel.appendChild(refreshBtn);
+        }
+    }
+    
+    // Helper to create refresh button
+    function createRefreshButton(clickHandler) {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.type = 'button';
+        refreshBtn.innerHTML = '↻';
+        refreshBtn.title = 'Refresh user list';
+        refreshBtn.style.marginLeft = '10px';
+        refreshBtn.style.padding = '2px 6px';
+        refreshBtn.style.backgroundColor = '#3498db';
+        refreshBtn.style.color = 'white';
+        refreshBtn.style.border = 'none';
+        refreshBtn.style.borderRadius = '3px';
+        refreshBtn.style.cursor = 'pointer';
+        refreshBtn.onclick = clickHandler;
+        return refreshBtn;
+    }
+    
+    // Function to refresh user dropdowns manually
+    function refreshUserDropdowns(event) {
+        console.log("Refreshing user dropdowns");
+        
+        const refreshBtn = event ? event.target : null;
+        if (refreshBtn) {
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '⌛';
+        }
+        
+        // Save currently selected values
+        const reportedByDropdown = document.getElementById('reportedByName');
+        const lineManagerDropdown = document.getElementById('lineManager');
+        const reportedByValue = reportedByDropdown ? reportedByDropdown.value : "";
+        const lineManagerValue = lineManagerDropdown ? lineManagerDropdown.value : "";
+        
+        loadUsersForDropdown()
+            .then(() => {
+                // Restore selected values if they exist
+                if (reportedByValue && reportedByDropdown) {
+                    reportedByDropdown.value = reportedByValue;
+                }
                 
-                const option2 = document.createElement('option');
-                option2.value = user.id;
-                option2.setAttribute('data-email', user.email);
-                option2.textContent = user.displayName;
-                lineManagerDropdown.appendChild(option2);
+                if (lineManagerValue && lineManagerDropdown) {
+                    lineManagerDropdown.value = lineManagerValue;
+                }
+                
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '✓';
+                    setTimeout(() => {
+                        refreshBtn.innerHTML = '↻';
+                        refreshBtn.disabled = false;
+                    }, 1000);
+                }
+            })
+            .catch(() => {
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '✗';
+                    setTimeout(() => {
+                        refreshBtn.innerHTML = '↻';
+                        refreshBtn.disabled = false;
+                    }, 1000);
+                }
+            });
+    }
+    
+    // Main DOM content loaded handler - streamlined authentication flow
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("DOM loaded, initializing event form");
+        
+        try {
+            showLoading("Checking login status...");
+            
+            // Set authentication timeout
+            authCheckTimeout = setTimeout(() => {
+                console.warn("Auth check timed out");
+                hideLoading();
+                window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+            }, 8000);
+            
+            // Single auth state listener
+            auth.onAuthStateChanged(user => {
+                clearTimeout(authCheckTimeout);
+                
+                if (authInitialized) return;
+                authInitialized = true;
+                
+                if (user) {
+                    // User is logged in
+                    console.log("User authenticated:", user.email);
+                    
+                    // Save token for session persistence
+                    user.getIdToken().then(token => {
+                        localStorage.setItem('authToken', token);
+                    });
+                    
+                    hideLoading();
+                    updateUIForAuthenticatedUser(user);
+                    
+                    // Load user data for dropdowns
+                    showLoading("Loading user data...");
+                    loadUsersForDropdown()
+                        .then(() => {
+                            hideLoading();
+                            checkUrlForEditMode();
+                        })
+                        .catch(error => {
+                            console.error("Error loading users:", error);
+                            hideLoading();
+                            alert("Error loading user data. Please try again.");
+                        });
+                } else {
+                    // Not logged in, redirect to login
+                    console.log("No user authenticated, redirecting to login");
+                    hideLoading();
+                    window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                }
             });
             
-            console.log(`Successfully populated dropdowns with ${userArray.length} users during retry`);
-            resolve(userArray);
-        }
-
-        // Helper function to add retry event listeners
-        function addRetryEventListeners() {
-            const reportedByDropdown = document.getElementById('reportedByName');
-            const lineManagerDropdown = document.getElementById('lineManager');
+            // Set up form event listeners
+            document.getElementById('eventForm').addEventListener('submit', submitEventForm);
             
-            if (reportedByDropdown) {
-                reportedByDropdown.addEventListener('change', function() {
-                    if (this.value === "retry") {
-                        loadUsersForDropdown();
-                        this.value = ""; // Reset to default option
-                    }
+            // Logout button handler
+            document.getElementById('logoutButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                auth.signOut().then(() => {
+                    localStorage.removeItem('authToken');
+                    sessionStorage.clear();
+                    window.location.href = "login.html";
+                }).catch(error => {
+                    console.error("Error during logout:", error);
+                    alert("Logout failed. Please try again.");
                 });
-            }
+            });
             
-            if (lineManagerDropdown) {
-                lineManagerDropdown.addEventListener('change', function() {
-                    if (this.value === "retry") {
-                        loadUsersForDropdown();
-                        this.value = ""; // Reset to default option
-                    }
-                });
-            }
+            // Add refresh buttons to dropdowns
+            addRefreshButtonsToDom();
+            
+        } catch (error) {
+            console.error("Critical initialization error:", error);
+            hideLoading();
+            alert("An error occurred while loading the page. Please refresh and try again.");
         }
-
-        // ... existing code ...
-
-        document.addEventListener("DOMContentLoaded", () => {
-            console.log("DOM loaded, setting up event form");
+    });
+    
+    // Check URL for edit mode parameter
+    function checkUrlForEditMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('edit');
+        
+        if (eventId) {
+            loadEventForEditing(eventId);
+        }
+    }
+    
+    // Function to load event for editing with better error handling
+    function loadEventForEditing(eventId) {
+        showLoading("Loading event data...");
+        
+        // Update page title
+        document.getElementById('formTitle').textContent = 'Edit Event';
+        
+        // Set the hidden event ID field
+        document.getElementById('eventId').value = eventId;
+        
+        // Fetch event data from Firebase
+        const eventRef = database.ref(`events/${eventId}`);
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        function tryLoadingEvent() {
+            attempts++;
+            console.log(`Attempt ${attempts} to load event data`);
             
-            try {
-                // Show a loading indicator while we check authentication
-                showLoading("Checking login status...");
-                
-                // Set a timeout to ensure we don't wait forever for auth
-                authCheckTimeout = setTimeout(() => {
-                    console.log("Auth check timed out, continuing without confirmation");
-                    hideLoading();
-                    checkForExistingSession();
-                }, 8000); // Increased timeout for production environment
-                
-                // Listen for authentication state change
-                auth.onAuthStateChanged(user => {
-                    // Clear the timeout since auth has responded
-                    clearTimeout(authCheckTimeout);
+            eventRef.once('value')
+                .then(snapshot => {
+                    const event = snapshot.val();
+                    if (!event) {
+                        throw new Error('Event not found');
+                    }
                     
-                    // Mark as initialized so we don't do this again
-                    if (authInitialized) return;
-                    authInitialized = true;
-                    
-                    if (user) {
-                        console.log("User authenticated:", user.email);
-                        
-                        // Store token for future use
-                        user.getIdToken().then(token => {
-                            localStorage.setItem('authToken', token);
+                    // First load user data, then populate form
+                    return loadUsersForDropdown()
+                        .then(() => {
+                            // Check if dropdowns have options
+                            const reportedByDropdown = document.getElementById('reportedByName');
+                            const lineManagerDropdown = document.getElementById('lineManager');
+                            
+                            if (reportedByDropdown.options.length <= 2 && 
+                                lineManagerDropdown.options.length <= 2 && 
+                                attempts < maxAttempts) {
+                                
+                                console.warn("Dropdown not properly populated, retrying");
+                                hideLoading();
+                                setTimeout(tryLoadingEvent, 1000);
+                                return;
+                            }
+                            
+                            populateFormWithEventData(event);
+                            sessionStorage.setItem('lastUserFetch', Date.now().toString());
+                            hideLoading();
                         });
-                        
-                        hideLoading();
-                        updateUIForAuthenticatedUser(user);
-                        
-                        // Load user data for dropdowns
-                        showLoading("Loading user data...");
-                        loadUsersForDropdown()
-                            .then(() => {
-                                hideLoading();
-                                checkUrlForEditMode();
-                            })
-                            .catch(err => {
-                                console.error("Error loading users for dropdown:", err);
-                                hideLoading();
-                                alert("Error loading users. Please check your connection and try again.");
-                            });
+                })
+                .catch(error => {
+                    console.error("Error loading event for editing:", error);
+                    
+                    if (attempts < maxAttempts) {
+                        console.warn("Retrying after error...");
+                        setTimeout(tryLoadingEvent, 1000);
                     } else {
-                        console.log("No user authenticated, checking for existing session");
-                        checkForExistingSession();
+                        alert(`Error loading event: ${error.message}`);
+                        window.location.href = 'eventboard.html';
+                        hideLoading();
                     }
                 });
-                
-                // Set up event listeners
-                document.getElementById('eventForm').addEventListener('submit', submitEventForm);
-                
-                document.getElementById('logoutButton').addEventListener('click', function(e) {
-                    e.preventDefault();
-                    auth.signOut().then(() => {
-                        // Clear storage
-                        localStorage.removeItem('authToken');
-                        sessionStorage.clear();
-                        window.location.href = "login.html";
-                    }).catch(error => {
-                        console.error("Error during logout:", error);
-                        alert("Logout failed. Please try again.");
-                    });
-                });
-                
-                // Add refresh buttons to the dropdowns
-                addRefreshButtonsToDom();
-                
-            } catch (error) {
-                console.error("Critical error during initialization:", error);
-                hideLoading();
-                alert("An error occurred while initializing the page. Please refresh and try again.");
-            }
-        });
-
-        // Function to show loading with a custom message
-        function showLoading(message = 'Loading...') {
-            // Remove any existing overlay first
-            const existingOverlay = document.getElementById('loadingOverlay');
-            if (existingOverlay) {
-                existingOverlay.remove();
+        }
+        
+        // Start loading process
+        tryLoadingEvent();
+    }
+    
+    // Clean unified loading functions
+    function showLoading(message = 'Loading...') {
+        const existingOverlay = document.getElementById('loadingOverlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+        
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay';
+        loadingOverlay.id = 'loadingOverlay';
+        loadingOverlay.innerHTML = `
+            <div style="text-align: center;">
+                <div class="loading-spinner"></div>
+                <div style="margin-top: 15px; color: #333; font-size: 14px;">${message}</div>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+        loadingOverlay.style.display = 'flex';
+    }
+    
+    function hideLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.remove();
+        }
+    }
+    
+    // Update UI for authenticated user
+    function updateUIForAuthenticatedUser(user) {
+        try {
+            // Update user email in dropdown
+            const userEmailElement = document.getElementById('userEmail');
+            if (userEmailElement) {
+                userEmailElement.textContent = user.email;
             }
             
-            const loadingOverlay = document.createElement('div');
-            loadingOverlay.className = 'loading-overlay';
-            loadingOverlay.id = 'loadingOverlay';
-            loadingOverlay.innerHTML = `
-                <div style="text-align: center;">
-                    <div class="loading-spinner"></div>
-                    <div style="margin-top: 15px; color: #333; font-size: 14px;">${message}</div>
-                </div>
-            `;
-            document.body.appendChild(loadingOverlay);
-            loadingOverlay.style.display = 'flex';
+            // Update profile display
+            database.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+                const userData = snapshot.val() || {};
+                
+                // Update avatar
+                if (userData.profileImage) {
+                    const userAvatar = document.getElementById('userAvatar');
+                    const userInitial = document.getElementById('userInitial');
+                    
+                    if (userAvatar && userInitial) {
+                        userAvatar.src = userData.profileImage;
+                        userAvatar.style.display = 'block';
+                        userInitial.style.display = 'none';
+                    }
+                } else {
+                    const userInitial = document.getElementById('userInitial');
+                    if (userInitial) {
+                        userInitial.textContent = getUserInitial(user);
+                        userInitial.style.display = 'flex';
+                    }
+                    
+                    const userAvatar = document.getElementById('userAvatar');
+                    if (userAvatar) {
+                        userAvatar.style.display = 'none';
+                    }
+                }
+            }).catch(error => {
+                console.error("Error fetching user profile:", error);
+            });
+            
+            // Show authenticated user links and hide login button
+            document.getElementById('profileLink').style.display = 'block';
+            document.getElementById('accountLink').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'none';
+        } catch (error) {
+            console.warn("Error updating UI for authenticated user:", error);
         }
+    }
+    
+    // Simple function to get initial from user object
+    function getUserInitial(user) {
+        if (!user || !user.email) return '?';
+        return user.email.charAt(0).toUpperCase();
+    }
 
-        // ... existing code ...
-    </script>
+    // Keep other required functions but avoid duplicates
+    // ... existing code for populateFormWithEventData, submitEventForm, etc...
+</script>
 </body>
 </html>
