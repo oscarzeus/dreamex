@@ -388,7 +388,53 @@
                 }
                 
                 if (isValid) {
-                    handleLogin(email, password);
+                    showLoading();
+                    
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            const user = userCredential.user;
+                            
+                            // Save additional user data if needed
+                            const userRef = database.ref('users/' + user.uid);
+                            userRef.once('value').then((snapshot) => {
+                                if (!snapshot.exists()) {
+                                    // First time login, save basic user data
+                                    userRef.set({
+                                        email: user.email,
+                                        displayName: user.displayName || email.split('@')[0],
+                                        role: 'user',
+                                        lastLogin: firebase.database.ServerValue.TIMESTAMP
+                                    });
+                                } else {
+                                    // Update last login time
+                                    userRef.update({
+                                        lastLogin: firebase.database.ServerValue.TIMESTAMP
+                                    });
+                                }
+                            });
+                            
+                            // Log successful login
+                            logAction('LOGIN', {method: 'email', email: email});
+                            
+                            hideLoading();
+                            showSuccess("Login successful! Redirecting...");
+                            
+                            // Redirect after a short delay to show success message
+                            setTimeout(() => {
+                                window.location.href = returnUrl;
+                            }, 1500);
+                        })
+                        .catch((error) => {
+                            console.error("Login error:", error);
+                            logAction('FAILED_LOGIN', {
+                                method: 'email',
+                                email: email,
+                                error: error.code
+                            });
+                            
+                            hideLoading();
+                            showError(getAuthErrorMessage(error.code));
+                        });
                 }
             });
             
@@ -554,34 +600,6 @@
                 hideLoading();
             });
         });
-        
-        // Modify the login function to use EnhancedAuthManager
-        function handleLogin(email, password) {
-            showLoading();
-            
-            EnhancedAuthManager.login(email, password)
-                .then(user => {
-                    console.log("Login successful");
-                    
-                    // Get redirect URL from query params if available
-                    const urlParams = new URLSearchParams(window.location.search);
-                    const redirectPage = urlParams.get('redirect');
-                    
-                    hideLoading();
-                    if (redirectPage) {
-                        window.location.href = redirectPage;
-                    } else {
-                        window.location.href = "dashboard.html";
-                    }
-                })
-                .catch(error => {
-                    hideLoading();
-                    console.error("Login error:", error);
-                    showError(error.message);
-                });
-        }
     </script>
-    <!-- Add this near the end of the body, before other scripts -->
-    <script src="js/authManager.js"></script>
 </body>
 </html>

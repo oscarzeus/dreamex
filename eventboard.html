@@ -1273,212 +1273,107 @@
     </div>
 
     <script>
-    // Initialize Firebase with enhanced domain handling
-    let database;
-    let auth;
-    
-    function initializeFirebase() {
-        const firebaseConfig = {
-            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
-            authDomain: "users-8be65.firebaseapp.com",
-            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
-            projectId: "users-8be65",
-            storageBucket: "users-8be65.appspot.com",
-            messagingSenderId: "829083030831",
-            appId: "1:829083030831:web:36a370e62691e560bc3dda"
-        };
+        // Initialize Firebase
+        let database;
+        let auth;
         
-        // Check if Firebase is already initialized
-        if (firebase.apps.length === 0) {
-            console.log("Initializing Firebase");
-            firebase.initializeApp(firebaseConfig);
+        if (window.firebase) {
+            database = firebase.database();
+            auth = firebase.auth();
         } else {
-            console.log("Firebase already initialized");
+            const firebaseConfig = {
+                apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+                authDomain: "users-8be65.firebaseapp.com",
+                databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+                projectId: "users-8be65",
+                storageBucket: "users-8be65.appspot.com",
+                messagingSenderId: "829083030831",
+                appId: "1:829083030831:web:36a370e62691e560bc3dda"
+            };
+            
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            auth = firebase.auth();
         }
         
-        database = firebase.database();
-        auth = firebase.auth();
+        // Variables for events handling
+        const EVENTS_PER_PAGE = 10;
+        let allEvents = [];
+        let currentPage = 1;
+        let sortField = 'eventDateTime';
+        let sortDirection = 'desc';
         
-        // Force browser to persist auth state
-        return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-            .then(() => console.log("Firebase persistence set to LOCAL"))
-            .catch(error => console.error("Firebase persistence error:", error));
-    }
-    
-    // Initialize Firebase at script load
-    initializeFirebase().then(() => {
-        console.log("Firebase initialized successfully");
-    }).catch(error => {
-        console.error("Firebase initialization failed:", error);
-        showError("Failed to initialize Firebase. Please check your connection and try again.");
-    });
-    
-    // Variables for events handling
-    const EVENTS_PER_PAGE = 10;
-    let allEvents = [];
-    let currentPage = 1;
-    let sortField = 'eventDateTime';
-    let sortDirection = 'desc';
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        console.log("DOM loaded, setting up event board");
-        
-        // Set loading state immediately
-        showLoading();
-        
-        // Check authentication with a timeout
-        const authTimeout = setTimeout(() => {
-            console.warn("Auth check timed out");
-            hideLoading();
-            showError("Authentication timed out. Please try logging in again.");
-            window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
-        }, 10000);
-        
-        // Check authentication state
-        auth.onAuthStateChanged(user => {
-            clearTimeout(authTimeout);
-            
-            if (user) {
-                console.log("User authenticated:", user.email);
-                
-                // Update UI for authenticated user
-                updateUserDisplay(user);
-                
-                // Load events from Firebase
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if user is authenticated
+            if (window.AuthManager) {
+                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
+                updateUserDisplay();
                 loadEvents();
-                
-                // Set up event listeners for filtering, sorting, etc.
-                setupEventListeners();
             } else {
-                console.log("Not authenticated, redirecting to login page");
-                hideLoading();
-                window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
-            }
-        });
-    });
-    
-    // Helper function to update user display in UI
-    function updateUserDisplay(user) {
-        // Update user email in dropdown
-        document.getElementById('userEmail').textContent = user.email || "Not logged in";
-        
-        // Show logout button and hide login button
-        document.getElementById('profileLink').style.display = 'block';
-        document.getElementById('accountLink').style.display = 'block';
-        document.getElementById('logoutButton').style.display = 'block';
-        document.getElementById('loginButton').style.display = 'none';
-        
-        // Update user avatar/initial
-        if (user) {
-            const userInitial = document.getElementById('userInitial');
-            const userAvatar = document.getElementById('userAvatar');
-            
-            // Get user data from Firebase
-            database.ref(`users/${user.uid}`).once('value')
-                .then(snapshot => {
-                    const userData = snapshot.val() || {};
-                    
-                    if (userData.profileImage) {
-                        // Show profile image
-                        userAvatar.src = userData.profileImage;
-                        userAvatar.style.display = 'block';
-                        userInitial.style.display = 'none';
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        updateUIForAuthenticatedUser(user);
+                        loadEvents();
                     } else {
-                        // Show initial
-                        userInitial.textContent = getUserInitial(user);
-                        userInitial.style.display = 'flex';
-                        userAvatar.style.display = 'none';
+                        window.location.href = "login.html";
                     }
-                })
-                .catch(error => {
-                    console.error("Error fetching user data:", error);
                 });
-        }
-    }
-    
-    // Function to set up all event listeners
-    function setupEventListeners() {
-        // Logout button
-        document.getElementById('logoutButton').addEventListener('click', function(e) {
-            e.preventDefault();
-            auth.signOut().then(() => {
-                window.location.href = "login.html";
-            }).catch(error => {
-                console.error("Error during logout:", error);
-            });
-        });
-        
-        // Filters
-        document.getElementById('applyFiltersBtn').addEventListener('click', filterEvents);
-        document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
-        document.getElementById('searchInput').addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') filterEvents();
-        });
-        
-        // Sorting
-        const tableHeaders = document.querySelectorAll('th[data-sort]');
-        tableHeaders.forEach(header => {
-            header.addEventListener('click', () => {
-                const field = header.getAttribute('data-sort');
-                if (sortField === field) {
-                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-                } else {
-                    sortField = field;
-                    sortDirection = 'asc';
-                }
-                displayEvents(filterEventArray(allEvents));
-            });
-        });
-        
-        // Modal close buttons
-        document.getElementById('closeModalBtn').addEventListener('click', closeEventModal);
-        document.getElementById('closeEventBtn').addEventListener('click', closeEventModal);
-        
-        // Edit modal
-        document.getElementById('closeEditModalBtn').addEventListener('click', closeEditModal);
-        document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
-        document.getElementById('editEventForm').addEventListener('submit', saveEventChanges);
-    }
-    
-    // Function to load events from Firebase - enhanced with better error handling
-    function loadEvents() {
-        showLoading();
-        
-        console.log("Loading events from Firebase...");
-        
-        const eventsRef = database.ref('events');
-        
-        // Set a timeout for the database operation
-        const loadTimeout = setTimeout(() => {
-            console.warn("Loading events timed out");
-            hideLoading();
-            showError("Loading events timed out. Please check your connection and try again.");
-            
-            // Try to run network diagnostics
-            if (window.NetworkDiagnostics) {
-                window.NetworkDiagnostics.runDiagnostics()
-                    .then(results => {
-                        console.log("Network diagnostics:", results);
-                    });
             }
-        }, 15000);
-        
-        // Listen for real-time updates
-        eventsRef.on('value', 
-            (snapshot) => {
-                // Clear timeout since we got a response
-                clearTimeout(loadTimeout);
-                
-                console.log("Received events data from Firebase");
-                allEvents = [];
-                
-                if (!snapshot.exists()) {
-                    console.log("No events found in Firebase");
-                    hideLoading();
-                    showError("No events found. Create an event to get started.");
-                    return;
+            
+            // Set up event listeners
+            document.getElementById('logoutButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.AuthManager) {
+                    AuthManager.logout();
+                } else {
+                    auth.signOut().then(() => {
+                        window.location.href = "login.html";
+                    });
                 }
-                
+            });
+            
+            // Add event listeners for filtering and sorting
+            document.getElementById('applyFiltersBtn').addEventListener('click', filterEvents);
+            document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+            document.getElementById('searchInput').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    filterEvents();
+                }
+            });
+            
+            // Add event listeners for sorting
+            const tableHeaders = document.querySelectorAll('th[data-sort]');
+            tableHeaders.forEach(header => {
+                header.addEventListener('click', () => {
+                    const field = header.getAttribute('data-sort');
+                    if (sortField === field) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortField = field;
+                        sortDirection = 'asc';
+                    }
+                    displayEvents(filterEventArray(allEvents));
+                });
+            });
+            
+            // Modal close buttons
+            document.getElementById('closeModalBtn').addEventListener('click', closeEventModal);
+            document.getElementById('closeEventBtn').addEventListener('click', closeEventModal);
+
+            // Add event listeners for edit modal
+            document.getElementById('closeEditModalBtn').addEventListener('click', closeEditModal);
+            document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
+            document.getElementById('editEventForm').addEventListener('submit', saveEventChanges);
+        });
+        
+        // Function to load events from Firebase - updated to use real-time updates
+        function loadEvents() {
+            showLoading();
+            const eventsRef = database.ref('events');
+            
+            // Listen for real-time updates
+            eventsRef.on('value', (snapshot) => {
+                allEvents = [];
                 snapshot.forEach((childSnapshot) => {
                     const event = childSnapshot.val();
                     event.id = childSnapshot.key;
@@ -1486,839 +1381,813 @@
                 });
                 
                 hideLoading();
-                
                 // Use the current filter settings when displaying events
                 displayEvents(filterEventArray(allEvents));
                 
                 // Log in console for debugging
                 console.log(`Loaded ${allEvents.length} events from database`);
-            }, 
-            (error) => {
-                // Clear timeout since we got an error response
-                clearTimeout(loadTimeout);
-                
+            }, (error) => {
                 console.error("Error loading events:", error);
                 hideLoading();
-                showError("Failed to load events: " + error.message);
+                showError("Failed to load events. Please try again later.");
+            });
+        }
+        
+        // Function to display events in the table
+        function displayEvents(events) {
+            const tableBody = document.getElementById('eventTableBody');
+            const emptyState = document.getElementById('emptyState');
+            const tableContainer = document.getElementById('eventTableContainer');
+            
+            // Sort events based on current sort field and direction
+            events.sort((a, b) => {
+                let valueA = a[sortField] || '';
+                let valueB = b[sortField] || '';
                 
-                // Try to run network diagnostics
-                if (window.NetworkDiagnostics) {
-                    window.NetworkDiagnostics.runDiagnostics()
-                        .then(results => {
-                            console.log("Network diagnostics:", results);
-                        })
-                        .then(() => {
-                            return window.NetworkDiagnostics.attemptFixes();
-                        })
-                        .then(fixResults => {
-                            console.log("Fix attempts:", fixResults);
-                            
-                            // If fixes applied, try loading again
-                            if (fixResults && !fixResults.noFixesApplied) {
-                                console.log("Retrying event load after fix attempt");
-                                setTimeout(loadEvents, 1000);
-                            }
-                        });
+                // Handle dates
+                if (sortField === 'eventDateTime') {
+                    valueA = new Date(valueA).getTime() || 0;
+                    valueB = new Date(valueB).getTime() || 0;
+                } else {
+                    valueA = valueA.toString().toLowerCase();
+                    valueB = valueB.toString().toLowerCase();
                 }
-            }
-        );
-    }
-
-    // Function to display events in the table
-    function displayEvents(events) {
-        const tableBody = document.getElementById('eventTableBody');
-        const emptyState = document.getElementById('emptyState');
-        const tableContainer = document.getElementById('eventTableContainer');
-        
-        // Sort events based on current sort field and direction
-        events.sort((a, b) => {
-            let valueA = a[sortField] || '';
-            let valueB = b[sortField] || '';
-            
-            // Handle dates
-            if (sortField === 'eventDateTime') {
-                valueA = new Date(valueA).getTime() || 0;
-                valueB = new Date(valueB).getTime() || 0;
-            } else {
-                valueA = valueA.toString().toLowerCase();
-                valueB = valueB.toString().toLowerCase();
-            }
-            
-            if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
-            if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
-            return 0;
-        });
-        
-        // Calculate pagination
-        const totalPages = Math.ceil(events.length / EVENTS_PER_PAGE);
-        const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
-        const paginatedEvents = events.slice(startIndex, startIndex + EVENTS_PER_PAGE);
-        
-        // Check if there are any events to display
-        if (events.length === 0) {
-            emptyState.style.display = 'block';
-            tableContainer.style.display = 'none';
-        } else {
-            emptyState.style.display = 'none';
-            tableContainer.style.display = 'block';
-            
-            // Clear the table
-            tableBody.innerHTML = '';
-            
-            // Add events to the table
-            paginatedEvents.forEach(event => {
-                const row = document.createElement('tr');
                 
-                // Format date and time
-                const date = event.eventDateTime ? new Date(event.eventDateTime) : null;
-                const formattedDate = date ? date.toLocaleString() : 'N/A';
-                
-                // Create event type badge class
-                const eventTypeClass = event.eventType ? 
-                    `type-${event.eventType.toLowerCase().replace(/\s+/g, '-')}` : '';
-                
-                // Create severity class
-                const severityClass = event.severityLevel ? 
-                    `severity-${event.severityLevel.toLowerCase()}` : '';
-                
-                // Create status class
-                const statusClass = event.approvalStatus ? 
-                    `status-${event.approvalStatus.toLowerCase()}` : 'status-pending';
-                
-                // Determine if we should disable action buttons
-                const isAlreadyApproved = event.approvalStatus === 'Approved';
-                const isAlreadyRejected = event.approvalStatus === 'Rejected';
-                const disableApproveBtn = isAlreadyApproved || isAlreadyRejected;
-                const disableRejectBtn = isAlreadyApproved || isAlreadyRejected;
-                
-                // Get current user
-                const currentUser = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
-                const currentUserEmail = currentUser ? currentUser.email.toLowerCase() : '';
-                
-                // Check if current user is the line manager
-                const lineManagerEmail = (event.lineManagerEmail || '').toLowerCase();
-                const isLineManager = lineManagerEmail === currentUserEmail;
-                
-                // Get line manager name if available
-                const lineManagerName = event.lineManager || event.managerName || 'Not specified';
-                
-                // Determine button states based on permissions
-                const canEdit = isLineManager;
-                const canApprove = isLineManager && !disableApproveBtn;
-                const canReject = isLineManager && !disableRejectBtn;
-                
-                // Create tooltips for buttons
-                const editTooltip = !isLineManager ? 
-                    'Only the line manager can edit this event' : '';
-                
-                const approveTooltip = !isLineManager ? 
-                    'Only the line manager can approve this event' : 
-                    (isAlreadyApproved || isAlreadyRejected ? 
-                        'This event has already been processed' : '');
-                
-                const rejectTooltip = !isLineManager ? 
-                    'Only the line manager can reject this event' : 
-                    (isAlreadyApproved || isAlreadyRejected ? 
-                        'This event has already been processed' : '');
-                
-                row.innerHTML = `
-                    <td>${formattedDate}</td>
-                    <td><span class="event-type-badge ${eventTypeClass}">${event.eventType || 'Unknown'}</span></td>
-                    <td>${escapeHtml(event.eventTitle || 'Untitled')}</td>
-                    <td>${escapeHtml(event.eventLocation || 'Not specified')}</td>
-                    <td class="${severityClass}">${event.severityLevel || 'Not specified'}</td>
-                    <td class="${statusClass}">${event.approvalStatus || 'Pending'}</td>
-                    <td>${escapeHtml(event.reportedByName || 'Anonymous')}</td>
-                    <td>${escapeHtml(lineManagerName)}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button 
-                                class="btn-edit ${!canEdit ? 'btn-disabled' : ''}"
-                                data-event-id="${event.id}"
-                                onclick="redirectToEditForm('${event.id}', event)"
-                                ${!canEdit ? 'disabled' : ''}
-                                title="${editTooltip}"
-                            >
-                                Edit
-                            </button>
-                            <button 
-                                class="btn-approve ${!canApprove ? 'btn-disabled' : ''}"
-                                data-event-id="${event.id}"
-                                ${!canApprove ? 'disabled' : ''}
-                                onclick="approveEvent('${event.id}', event)"
-                                title="${approveTooltip}"
-                            >
-                                Approve
-                            </button>
-                            <button 
-                                class="btn-reject ${!canReject ? 'btn-disabled' : ''}"
-                                data-event-id="${event.id}"
-                                ${!canReject ? 'disabled' : ''}
-                                onclick="rejectEvent('${event.id}', event)"
-                                title="${rejectTooltip}"
-                            >
-                                Reject
-                            </button>
-                        </div>
-                    </td>
-                `;
-                
-                // Add click event to show details (exclude clicking on action buttons)
-                row.addEventListener('click', (e) => {
-                    // Don't trigger row click if user clicked on action buttons
-                    if (!e.target.closest('.action-buttons')) {
-                        showEventDetails(event);
-                    }
-                });
-                
-                tableBody.appendChild(row);
+                if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
+                if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
             });
             
-            // Update pagination
-            renderPagination(currentPage, totalPages);
-        }
-    }
-    
-    // Function to filter events based on selected criteria
-    function filterEvents() {
-        const filteredEvents = filterEventArray(allEvents);
-        currentPage = 1; // Reset to first page when filtering
-        displayEvents(filteredEvents);
-    }
-    
-    // Helper function to apply filters to the event array
-    function filterEventArray(events) {
-        const typeFilter = document.getElementById('eventTypeFilter').value;
-        const severityFilter = document.getElementById('severityFilter').value;
-        const statusFilter = document.getElementById('statusFilter').value;
-        const searchText = document.getElementById('searchInput').value.toLowerCase();
-        
-        return events.filter(event => {
-            // Apply type filter
-            if (typeFilter && event.eventType !== typeFilter) {
-                return false;
-            }
+            // Calculate pagination
+            const totalPages = Math.ceil(events.length / EVENTS_PER_PAGE);
+            const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
+            const paginatedEvents = events.slice(startIndex, startIndex + EVENTS_PER_PAGE);
             
-            // Apply severity filter
-            if (severityFilter && event.severityLevel !== severityFilter) {
-                return false;
-            }
-            
-            // Apply status filter
-            if (statusFilter && event.approvalStatus !== statusFilter) {
-                return false;
-            }
-            
-            // Apply search filter
-            if (searchText) {
-                const title = (event.eventTitle || '').toLowerCase();
-                const location = (event.eventLocation || '').toLowerCase();
-                const description = (event.eventDescription || '').toLowerCase();
-                const reportedBy = (event.reportedByName || '').toLowerCase();
+            // Check if there are any events to display
+            if (events.length === 0) {
+                emptyState.style.display = 'block';
+                tableContainer.style.display = 'none';
+            } else {
+                emptyState.style.display = 'none';
+                tableContainer.style.display = 'block';
                 
-                if (!title.includes(searchText) && 
-                    !location.includes(searchText) && 
-                    !description.includes(searchText) &&
-                    !reportedBy.includes(searchText)) {
+                // Clear the table
+                tableBody.innerHTML = '';
+                
+                // Add events to the table
+                paginatedEvents.forEach(event => {
+                    const row = document.createElement('tr');
+                    
+                    // Format date and time
+                    const date = event.eventDateTime ? new Date(event.eventDateTime) : null;
+                    const formattedDate = date ? date.toLocaleString() : 'N/A';
+                    
+                    // Create event type badge class
+                    const eventTypeClass = event.eventType ? 
+                        `type-${event.eventType.toLowerCase().replace(/\s+/g, '-')}` : '';
+                    
+                    // Create severity class
+                    const severityClass = event.severityLevel ? 
+                        `severity-${event.severityLevel.toLowerCase()}` : '';
+                    
+                    // Create status class
+                    const statusClass = event.approvalStatus ? 
+                        `status-${event.approvalStatus.toLowerCase()}` : 'status-pending';
+                    
+                    // Determine if we should disable action buttons
+                    const isAlreadyApproved = event.approvalStatus === 'Approved';
+                    const isAlreadyRejected = event.approvalStatus === 'Rejected';
+                    const disableApproveBtn = isAlreadyApproved || isAlreadyRejected;
+                    const disableRejectBtn = isAlreadyApproved || isAlreadyRejected;
+                    
+                    // Get current user
+                    const currentUser = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
+                    const currentUserEmail = currentUser ? currentUser.email.toLowerCase() : '';
+                    
+                    // Check if current user is the line manager
+                    const lineManagerEmail = (event.lineManagerEmail || '').toLowerCase();
+                    const isLineManager = lineManagerEmail === currentUserEmail;
+                    
+                    // Get line manager name if available
+                    const lineManagerName = event.lineManager || event.managerName || 'Not specified';
+                    
+                    // Determine button states based on permissions
+                    const canEdit = isLineManager;
+                    const canApprove = isLineManager && !disableApproveBtn;
+                    const canReject = isLineManager && !disableRejectBtn;
+                    
+                    // Create tooltips for buttons
+                    const editTooltip = !isLineManager ? 
+                        'Only the line manager can edit this event' : '';
+                    
+                    const approveTooltip = !isLineManager ? 
+                        'Only the line manager can approve this event' : 
+                        (isAlreadyApproved || isAlreadyRejected ? 
+                            'This event has already been processed' : '');
+                    
+                    const rejectTooltip = !isLineManager ? 
+                        'Only the line manager can reject this event' : 
+                        (isAlreadyApproved || isAlreadyRejected ? 
+                            'This event has already been processed' : '');
+                    
+                    row.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td><span class="event-type-badge ${eventTypeClass}">${event.eventType || 'Unknown'}</span></td>
+                        <td>${escapeHtml(event.eventTitle || 'Untitled')}</td>
+                        <td>${escapeHtml(event.eventLocation || 'Not specified')}</td>
+                        <td class="${severityClass}">${event.severityLevel || 'Not specified'}</td>
+                        <td class="${statusClass}">${event.approvalStatus || 'Pending'}</td>
+                        <td>${escapeHtml(event.reportedByName || 'Anonymous')}</td>
+                        <td>${escapeHtml(lineManagerName)}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button 
+                                    class="btn-edit ${!canEdit ? 'btn-disabled' : ''}"
+                                    data-event-id="${event.id}"
+                                    onclick="redirectToEditForm('${event.id}', event)"
+                                    ${!canEdit ? 'disabled' : ''}
+                                    title="${editTooltip}"
+                                >
+                                    Edit
+                                </button>
+                                <button 
+                                    class="btn-approve ${!canApprove ? 'btn-disabled' : ''}"
+                                    data-event-id="${event.id}"
+                                    ${!canApprove ? 'disabled' : ''}
+                                    onclick="approveEvent('${event.id}', event)"
+                                    title="${approveTooltip}"
+                                >
+                                    Approve
+                                </button>
+                                <button 
+                                    class="btn-reject ${!canReject ? 'btn-disabled' : ''}"
+                                    data-event-id="${event.id}"
+                                    ${!canReject ? 'disabled' : ''}
+                                    onclick="rejectEvent('${event.id}', event)"
+                                    title="${rejectTooltip}"
+                                >
+                                    Reject
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    
+                    // Add click event to show details (exclude clicking on action buttons)
+                    row.addEventListener('click', (e) => {
+                        // Don't trigger row click if user clicked on action buttons
+                        if (!e.target.closest('.action-buttons')) {
+                            showEventDetails(event);
+                        }
+                    });
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Update pagination
+                renderPagination(currentPage, totalPages);
+            }
+        }
+        
+        // Function to filter events based on selected criteria
+        function filterEvents() {
+            const filteredEvents = filterEventArray(allEvents);
+            currentPage = 1; // Reset to first page when filtering
+            displayEvents(filteredEvents);
+        }
+        
+        // Helper function to apply filters to the event array
+        function filterEventArray(events) {
+            const typeFilter = document.getElementById('eventTypeFilter').value;
+            const severityFilter = document.getElementById('severityFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            return events.filter(event => {
+                // Apply type filter
+                if (typeFilter && event.eventType !== typeFilter) {
                     return false;
                 }
-            }
-            
-            return true;
-        });
-    }
-    
-    // Function to reset all filters
-    function resetFilters() {
-        document.getElementById('eventTypeFilter').value = '';
-        document.getElementById('severityFilter').value = '';
-        document.getElementById('statusFilter').value = '';
-        document.getElementById('searchInput').value = '';
-        
-        currentPage = 1;
-        sortField = 'eventDateTime';
-        sortDirection = 'desc';
-        
-        displayEvents(allEvents);
-    }
-    
-    // Function to render pagination controls
-    function renderPagination(currentPage, totalPages) {
-        const paginationEl = document.getElementById('pagination');
-        paginationEl.innerHTML = '';
-        
-        if (totalPages <= 1) {
-            return;
-        }
-        
-        // Previous button
-        const prevButton = document.createElement('button');
-        prevButton.textContent = '« Previous';
-        prevButton.disabled = currentPage === 1;
-        prevButton.classList.toggle('disabled', currentPage === 1);
-        prevButton.addEventListener('click', () => {
-            if (currentPage > 1) {
-                currentPage--;
-                displayEvents(filterEventArray(allEvents));
-            }
-        });
-        paginationEl.appendChild(prevButton);
-        
-        // Page buttons
-        const maxVisiblePages = 5;
-        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-        
-        if (endPage - startPage + 1 < maxVisiblePages) {
-            startPage = Math.max(1, endPage - maxVisiblePages + 1);
-        }
-        
-        for (let i = startPage; i <= endPage; i++) {
-            const pageButton = document.createElement('button');
-            pageButton.textContent = i;
-            pageButton.classList.toggle('active', i === currentPage);
-            pageButton.addEventListener('click', () => {
-                currentPage = i;
-                displayEvents(filterEventArray(allEvents));
-            });
-            paginationEl.appendChild(pageButton);
-        }
-        
-        // Next button
-        const nextButton = document.createElement('button');
-        nextButton.textContent = 'Next »';
-        nextButton.disabled = currentPage === totalPages;
-        nextButton.classList.toggle('disabled', currentPage === totalPages);
-        nextButton.addEventListener('click', () => {
-            if (currentPage < totalPages) {
-                currentPage++;
-                displayEvents(filterEventArray(allEvents));
-            }
-        });
-        paginationEl.appendChild(nextButton);
-    }
-    
-    // Function to show event details in a modal
-    function showEventDetails(event) {
-        const modal = document.getElementById('eventDetailsModal');
-        const content = document.getElementById('eventDetailsContent');
-        const title = document.getElementById('modalEventTitle');
-        
-        // Set title
-        title.textContent = event.eventTitle || 'Event Details';
-        
-        // Build content HTML
-        let html = `
-            <div class="event-details">
-                <div class="detail-row">
-                    <strong>Event Type:</strong> ${escapeHtml(event.eventType || 'Not specified')}
-                </div>
-                <div class="detail-row">
-                    <strong>Date & Time:</strong> ${formatDateTime(event.eventDateTime)}
-                </div>
-                <div class="detail-row">
-                    <strong>Location:</strong> ${escapeHtml(event.eventLocation || 'Not specified')}
-                </div>
-                <div class="detail-row">
-                    <strong>Severity:</strong> ${event.severityLevel || 'Not specified'}
-                </div>
-                <div class="detail-row">
-                    <strong>Status:</strong> ${event.approvalStatus || 'Pending'}
-                </div>
-                <div class="detail-row">
-                    <strong>Reported By:</strong> ${escapeHtml(event.reportedByName || 'Anonymous')}
-                </div>
-                <div class="detail-row">
-                    <strong>Line Manager:</strong> ${escapeHtml(event.lineManager || event.managerName || 'Not specified')}
-                </div>
-                <div class="detail-row">
-                    <strong>Description:</strong>
-                    <p>${escapeHtml(event.eventDescription || 'No description provided.')}</p>
-                </div>
-            `;
-            
-            if (event.sequenceOfEvents) {
-                html += `
-                <div class="detail-row">
-                    <strong>Sequence of Events:</strong>
-                    <p>${escapeHtml(event.sequenceOfEvents)}</p>
-                </div>`;
-            }
-            
-            if (event.immediateActions) {
-                html += `
-                <div class="detail-row">
-                    <strong>Immediate Actions:</strong>
-                    <p>${escapeHtml(event.immediateActions)}</p>
-                </div>`;
-            }
-            
-            // Root cause section
-            if (event.rootCauses || event.immediateCauses) {
-                html += `
-                <div class="detail-section">
-                    <h4>Root Cause Analysis</h4>`;
                 
-                if (event.immediateCauses) {
-                    html += `
-                    <div class="detail-row">
-                        <strong>Immediate Causes:</strong>
-                        <p>${escapeHtml(event.immediateCauses)}</p>
-                    </div>`;
+                // Apply severity filter
+                if (severityFilter && event.severityLevel !== severityFilter) {
+                    return false;
                 }
                 
-                if (event.rootCauses) {
-                    html += `
-                    <div class="detail-row">
-                        <strong>Root Causes:</strong>
-                        <p>${escapeHtml(event.rootCauses)}</p>
-                    </div>`;
+                // Apply status filter
+                if (statusFilter && event.approvalStatus !== statusFilter) {
+                    return false;
                 }
                 
-                html += `</div>`;
-            }
-            
-            // Corrective actions section
-            if (event.correctiveActions) {
-                html += `
-                <div class="detail-section">
-                    <h4>Corrective & Preventive Actions</h4>
-                    <div class="detail-row">
-                        <p>${escapeHtml(event.correctiveActions)}</p>
-                    </div>`;
-                
-                if (event.personResponsible) {
-                    html += `
-                    <div class="detail-row">
-                        <strong>Person Responsible:</strong>
-                        <p>${escapeHtml(event.personResponsible)}</p>
-                    </div>`;
-                }
-                
-                if (event.actionDeadline) {
-                    html += `
-                    <div class="detail-row">
-                        <strong>Deadline:</strong>
-                        <p>${formatDate(event.actionDeadline)}</p>
-                    </div>`;
-                }
-                
-                html += `</div>`;
-            }
-            
-        html += `</div>`;
-        
-        // Set content
-        content.innerHTML = html;
-        
-        // Show modal
-        modal.classList.add('modal-visible');
-    }
-    
-    // Function to close event details modal
-    function closeEventModal() {
-        const modal = document.getElementById('eventDetailsModal');
-        modal.classList.remove('modal-visible');
-    }
-    
-    // Function to open the edit modal with event data
-    function openEditModal(eventId, e) {
-        // Stop event propagation to prevent row click
-        if (e) e.stopPropagation();
-        
-        // Get the event data
-        const event = allEvents.find(event => event.id === eventId);
-        if (!event) {
-            alert('Event not found.');
-            return;
-        }
-        
-        // Populate the form fields
-        document.getElementById('editEventId').value = eventId;
-        document.getElementById('editEventType').value = event.eventType || '';
-        document.getElementById('editEventTitle').value = event.eventTitle || '';
-        document.getElementById('editEventDateTime').value = formatDateTimeForInput(event.eventDateTime);
-        document.getElementById('editEventLocation').value = event.eventLocation || '';
-        document.getElementById('editSeverityLevel').value = event.severityLevel || '';
-        document.getElementById('editEventDescription').value = event.eventDescription || '';
-        document.getElementById('editImmediateActions').value = event.immediateActions || '';
-        
-        // Load users for line manager dropdown if not already loaded
-        loadUsersForLineManagerDropdown();
-        
-        // Set the selected line manager if available
-        const lineManagerDropdown = document.getElementById('editLineManager');
-        if (event.lineManagerId) {
-            // Check if the option exists, if not create it
-            if (!lineManagerDropdown.querySelector(`option[value="${event.lineManagerId}"]`)) {
-                const option = document.createElement('option');
-                option.value = event.lineManagerId;
-                option.textContent = event.lineManager || 'Unknown Manager';
-                option.setAttribute('data-email', event.lineManagerEmail || '');
-                lineManagerDropdown.appendChild(option);
-            }
-            lineManagerDropdown.value = event.lineManagerId;
-        } else {
-            lineManagerDropdown.value = '';
-        }
-        
-        // Show the modal
-        document.getElementById('editEventModal').classList.add('modal-visible');
-    }
-    
-    // Function to close the edit modal
-    function closeEditModal() {
-        document.getElementById('editEventModal').classList.remove('modal-visible');
-    }
-    
-    // Function to save event changes
-    function saveEventChanges(e) {
-        e.preventDefault();
-        
-        // Get the current user
-        const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
-        if (!user) {
-            alert('You must be logged in to edit events.');
-            return;
-        }
-        
-        // Get form data
-        const eventId = document.getElementById('editEventId').value;
-        const eventType = document.getElementById('editEventType').value;
-        const eventTitle = document.getElementById('editEventTitle').value;
-        const eventDateTime = document.getElementById('editEventDateTime').value;
-        const eventLocation = document.getElementById('editEventLocation').value;
-        const severityLevel = document.getElementById('editSeverityLevel').value;
-        const eventDescription = document.getElementById('editEventDescription').value;
-        const immediateActions = document.getElementById('editImmediateActions').value;
-        
-        // Get the selected line manager
-        const lineManagerSelect = document.getElementById('editLineManager');
-        const lineManagerId = lineManagerSelect.value;
-        const lineManagerName = lineManagerSelect.options[lineManagerSelect.selectedIndex].textContent;
-        const lineManagerEmail = lineManagerSelect.options[lineManagerSelect.selectedIndex].getAttribute('data-email');
-        
-        // Basic validation
-        if (!eventTitle || !eventDateTime) {
-            alert('Please fill in all required fields.');
-            return;
-        }
-        
-        // Show loading
-        showLoading();
-        
-        // Get the original event to preserve data we're not changing
-        const originalEvent = allEvents.find(event => event.id === eventId);
-        if (!originalEvent) {
-            hideLoading();
-            alert('Event not found.');
-            return;
-        }
-        
-        // Create update data object - only include fields that are being edited
-        const updateData = {
-            eventType,
-            eventTitle,
-            eventDateTime,
-            eventLocation,
-            severityLevel,
-            eventDescription,
-            immediateActions,
-            
-            // Line manager info
-            lineManagerId,
-            lineManager: lineManagerName,
-            lineManagerEmail,
-            
-            // Add last modified info
-            lastModifiedBy: user.uid,
-            lastModifiedByEmail: user.email,
-            lastModifiedAt: firebase.database.ServerValue.TIMESTAMP
-        };
-        
-        // Update the event in Firebase
-        const eventRef = database.ref(`events/${eventId}`);
-        eventRef.update(updateData)
-            .then(() => {
-                // Log the edit action
-                logEvent('Event Edited', { eventId, eventTitle });
-                
-                // Hide loading and close modal
-                hideLoading();
-                closeEditModal();
-            })
-            .catch(error => {
-                console.error("Error updating event:", error);
-                hideLoading();
-                alert('Failed to update event. Please try again.');
-            });
-    }
-    
-    // Function to format datetime for input field
-    function formatDateTimeForInput(dateTimeStr) {
-        if (!dateTimeStr) return '';
-        const date = new Date(dateTimeStr);
-        if (isNaN(date)) return '';
-        
-        // Format as YYYY-MM-DDThh:mm
-        return date.toISOString().slice(0, 16);
-    }
-    
-    // Function to load users for the line manager dropdown
-    function loadUsersForLineManagerDropdown() {
-        const lineManagerDropdown = document.getElementById('editLineManager');
-        
-        // Only load users if the dropdown is empty
-        if (lineManagerDropdown.options.length <= 1) {
-            // Reference to users in Firebase
-            const usersRef = database.ref('users');
-            
-            // Fetch all users
-            usersRef.once('value')
-                .then((snapshot) => {
-                    const users = snapshot.val();
+                // Apply search filter
+                if (searchText) {
+                    const title = (event.eventTitle || '').toLowerCase();
+                    const location = (event.eventLocation || '').toLowerCase();
+                    const description = (event.eventDescription || '').toLowerCase();
+                    const reportedBy = (event.reportedByName || '').toLowerCase();
                     
-                    // Add users to dropdown
-                    for (const userId in users) {
-                        const user = users[userId];
-                        const displayName = user.firstName && user.lastName ? 
-                            `${user.firstName} ${user.lastName}` : 
-                            user.email || 'Unknown User';
-                            
-                        const option = document.createElement('option');
-                        option.value = userId;
-                        option.setAttribute('data-email', user.email || '');
-                        option.textContent = displayName;
-                        lineManagerDropdown.appendChild(option);
+                    if (!title.includes(searchText) && 
+                        !location.includes(searchText) && 
+                        !description.includes(searchText) &&
+                        !reportedBy.includes(searchText)) {
+                        return false;
                     }
+                }
+                
+                return true;
+            });
+        }
+        
+        // Function to reset all filters
+        function resetFilters() {
+            document.getElementById('eventTypeFilter').value = '';
+            document.getElementById('severityFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            
+            currentPage = 1;
+            sortField = 'eventDateTime';
+            sortDirection = 'desc';
+            
+            displayEvents(allEvents);
+        }
+        
+        // Function to render pagination controls
+        function renderPagination(currentPage, totalPages) {
+            const paginationEl = document.getElementById('pagination');
+            paginationEl.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                return;
+            }
+            
+            // Previous button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '« Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.classList.toggle('disabled', currentPage === 1);
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    displayEvents(filterEventArray(allEvents));
+                }
+            });
+            paginationEl.appendChild(prevButton);
+            
+            // Page buttons
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.toggle('active', i === currentPage);
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    displayEvents(filterEventArray(allEvents));
+                });
+                paginationEl.appendChild(pageButton);
+            }
+            
+            // Next button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next »';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.classList.toggle('disabled', currentPage === totalPages);
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    displayEvents(filterEventArray(allEvents));
+                }
+            });
+            paginationEl.appendChild(nextButton);
+        }
+        
+        // Function to show event details in a modal
+        function showEventDetails(event) {
+            const modal = document.getElementById('eventDetailsModal');
+            const content = document.getElementById('eventDetailsContent');
+            const title = document.getElementById('modalEventTitle');
+            
+            // Set title
+            title.textContent = event.eventTitle || 'Event Details';
+            
+            // Build content HTML
+            let html = `
+                <div class="event-details">
+                    <div class="detail-row">
+                        <strong>Event Type:</strong> ${escapeHtml(event.eventType || 'Not specified')}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Date & Time:</strong> ${formatDateTime(event.eventDateTime)}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Location:</strong> ${escapeHtml(event.eventLocation || 'Not specified')}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Severity:</strong> ${event.severityLevel || 'Not specified'}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Status:</strong> ${event.approvalStatus || 'Pending'}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Reported By:</strong> ${escapeHtml(event.reportedByName || 'Anonymous')}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Line Manager:</strong> ${escapeHtml(event.lineManager || event.managerName || 'Not specified')}
+                    </div>
+                    <div class="detail-row">
+                        <strong>Description:</strong>
+                        <p>${escapeHtml(event.eventDescription || 'No description provided.')}</p>
+                    </div>
+                `;
+                
+                if (event.sequenceOfEvents) {
+                    html += `
+                    <div class="detail-row">
+                        <strong>Sequence of Events:</strong>
+                        <p>${escapeHtml(event.sequenceOfEvents)}</p>
+                    </div>`;
+                }
+                
+                if (event.immediateActions) {
+                    html += `
+                    <div class="detail-row">
+                        <strong>Immediate Actions:</strong>
+                        <p>${escapeHtml(event.immediateActions)}</p>
+                    </div>`;
+                }
+                
+                // Root cause section
+                if (event.rootCauses || event.immediateCauses) {
+                    html += `
+                    <div class="detail-section">
+                        <h4>Root Cause Analysis</h4>`;
+                    
+                    if (event.immediateCauses) {
+                        html += `
+                        <div class="detail-row">
+                            <strong>Immediate Causes:</strong>
+                            <p>${escapeHtml(event.immediateCauses)}</p>
+                        </div>`;
+                    }
+                    
+                    if (event.rootCauses) {
+                        html += `
+                        <div class="detail-row">
+                            <strong>Root Causes:</strong>
+                            <p>${escapeHtml(event.rootCauses)}</p>
+                        </div>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+                
+                // Corrective actions section
+                if (event.correctiveActions) {
+                    html += `
+                    <div class="detail-section">
+                        <h4>Corrective & Preventive Actions</h4>
+                        <div class="detail-row">
+                            <p>${escapeHtml(event.correctiveActions)}</p>
+                        </div>`;
+                    
+                    if (event.personResponsible) {
+                        html += `
+                        <div class="detail-row">
+                            <strong>Person Responsible:</strong>
+                            <p>${escapeHtml(event.personResponsible)}</p>
+                        </div>`;
+                    }
+                    
+                    if (event.actionDeadline) {
+                        html += `
+                        <div class="detail-row">
+                            <strong>Deadline:</strong>
+                            <p>${formatDate(event.actionDeadline)}</p>
+                        </div>`;
+                    }
+                    
+                    html += `</div>`;
+                }
+                
+            html += `</div>`;
+            
+            // Set content
+            content.innerHTML = html;
+            
+            // Show modal
+            modal.classList.add('modal-visible');
+        }
+        
+        // Function to close event details modal
+        function closeEventModal() {
+            const modal = document.getElementById('eventDetailsModal');
+            modal.classList.remove('modal-visible');
+        }
+        
+        // Function to open the edit modal with event data
+        function openEditModal(eventId, e) {
+            // Stop event propagation to prevent row click
+            if (e) e.stopPropagation();
+            
+            // Get the event data
+            const event = allEvents.find(event => event.id === eventId);
+            if (!event) {
+                alert('Event not found.');
+                return;
+            }
+            
+            // Populate the form fields
+            document.getElementById('editEventId').value = eventId;
+            document.getElementById('editEventType').value = event.eventType || '';
+            document.getElementById('editEventTitle').value = event.eventTitle || '';
+            document.getElementById('editEventDateTime').value = formatDateTimeForInput(event.eventDateTime);
+            document.getElementById('editEventLocation').value = event.eventLocation || '';
+            document.getElementById('editSeverityLevel').value = event.severityLevel || '';
+            document.getElementById('editEventDescription').value = event.eventDescription || '';
+            document.getElementById('editImmediateActions').value = event.immediateActions || '';
+            
+            // Load users for line manager dropdown if not already loaded
+            loadUsersForLineManagerDropdown();
+            
+            // Set the selected line manager if available
+            const lineManagerDropdown = document.getElementById('editLineManager');
+            if (event.lineManagerId) {
+                // Check if the option exists, if not create it
+                if (!lineManagerDropdown.querySelector(`option[value="${event.lineManagerId}"]`)) {
+                    const option = document.createElement('option');
+                    option.value = event.lineManagerId;
+                    option.textContent = event.lineManager || 'Unknown Manager';
+                    option.setAttribute('data-email', event.lineManagerEmail || '');
+                    lineManagerDropdown.appendChild(option);
+                }
+                lineManagerDropdown.value = event.lineManagerId;
+            } else {
+                lineManagerDropdown.value = '';
+            }
+            
+            // Show the modal
+            document.getElementById('editEventModal').classList.add('modal-visible');
+        }
+        
+        // Function to close the edit modal
+        function closeEditModal() {
+            document.getElementById('editEventModal').classList.remove('modal-visible');
+        }
+        
+        // Function to save event changes
+        function saveEventChanges(e) {
+            e.preventDefault();
+            
+            // Get the current user
+            const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
+            if (!user) {
+                alert('You must be logged in to edit events.');
+                return;
+            }
+            
+            // Get form data
+            const eventId = document.getElementById('editEventId').value;
+            const eventType = document.getElementById('editEventType').value;
+            const eventTitle = document.getElementById('editEventTitle').value;
+            const eventDateTime = document.getElementById('editEventDateTime').value;
+            const eventLocation = document.getElementById('editEventLocation').value;
+            const severityLevel = document.getElementById('editSeverityLevel').value;
+            const eventDescription = document.getElementById('editEventDescription').value;
+            const immediateActions = document.getElementById('editImmediateActions').value;
+            
+            // Get the selected line manager
+            const lineManagerSelect = document.getElementById('editLineManager');
+            const lineManagerId = lineManagerSelect.value;
+            const lineManagerName = lineManagerSelect.options[lineManagerSelect.selectedIndex].textContent;
+            const lineManagerEmail = lineManagerSelect.options[lineManagerSelect.selectedIndex].getAttribute('data-email');
+            
+            // Basic validation
+            if (!eventTitle || !eventDateTime) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+            
+            // Show loading
+            showLoading();
+            
+            // Get the original event to preserve data we're not changing
+            const originalEvent = allEvents.find(event => event.id === eventId);
+            if (!originalEvent) {
+                hideLoading();
+                alert('Event not found.');
+                return;
+            }
+            
+            // Create update data object - only include fields that are being edited
+            const updateData = {
+                eventType,
+                eventTitle,
+                eventDateTime,
+                eventLocation,
+                severityLevel,
+                eventDescription,
+                immediateActions,
+                
+                // Line manager info
+                lineManagerId,
+                lineManager: lineManagerName,
+                lineManagerEmail,
+                
+                // Add last modified info
+                lastModifiedBy: user.uid,
+                lastModifiedByEmail: user.email,
+                lastModifiedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            // Update the event in Firebase
+            const eventRef = database.ref(`events/${eventId}`);
+            eventRef.update(updateData)
+                .then(() => {
+                    // Log the edit action
+                    logEvent('Event Edited', { eventId, eventTitle });
+                    
+                    // Hide loading and close modal
+                    hideLoading();
+                    closeEditModal();
                 })
-                .catch((error) => {
-                    console.error("Error loading users:", error);
+                .catch(error => {
+                    console.error("Error updating event:", error);
+                    hideLoading();
+                    alert('Failed to update event. Please try again.');
                 });
         }
-    }
-    
-    // Helper functions
-    function showLoading() {
-        document.getElementById('loadingIndicator').style.display = 'flex';
-        document.getElementById('eventTableContainer').style.display = 'none';
-        document.getElementById('emptyState').style.display = 'none';
-    }
-    
-    function hideLoading() {
-        document.getElementById('loadingIndicator').style.display = 'none';
-    }
-    
-    function showError(message) {
-        const emptyState = document.getElementById('emptyState');
-        emptyState.innerHTML = `<p>${message}</p>`;
-        emptyState.style.display = 'block';
-        document.getElementById('eventTableContainer').style.display = 'none';
-    }
-    
-    function formatDateTime(dateTimeStr) {
-        if (!dateTimeStr) return 'Not specified';
-        const date = new Date(dateTimeStr);
-        return isNaN(date) ? 'Invalid date' : date.toLocaleString();
-    }
-    
-    function formatDate(dateStr) {
-        if (!dateStr) return 'Not specified';
-        const date = new Date(dateStr);
-        return isNaN(date) ? 'Invalid date' : date.toLocaleDateString();
-    }
-    
-    function escapeHtml(unsafe) {
-        if (!unsafe) return '';
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    // User authentication related functions
-    function updateUserDisplay() {
-        // ...existing code...
-    }
-    
-    function updateUIForAuthenticatedUser(user) {
-        // ...existing code...
-    }
-    
-    function updateUIForNonAuthenticatedUser() {
-        // ...existing code...
-    }
-
-    function getUserInitial(user) {
-        if (!user || !user.email) return '?';
-        return user.email.charAt(0).toUpperCase();
-    }
-
-    // Function to approve an event
-    function approveEvent(eventId, e) {
-        // Stop event propagation to prevent row click
-        if (e) e.stopPropagation();
         
-        // Get the current user
-        const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
-        if (!user) {
-            alert('You must be logged in to approve events.');
-            return;
-        }
-        
-        // Find the event to verify the user is the line manager
-        const event = allEvents.find(event => event.id === eventId);
-        if (!event) {
-            alert('Event not found.');
-            return;
-        }
-        
-        // Verify the current user is the line manager
-        if (!isUserLineManager(user, event)) {
-            alert('Only the line manager can approve events.');
-            return;
-        }
-        
-        // Show loading
-        showLoading();
-        
-        // Update the event status in Firebase
-        const eventRef = database.ref(`events/${eventId}`);
-        eventRef.update({
-            approvalStatus: 'Approved',
-            approvedBy: user.uid,
-            approvedByEmail: user.email,
-            approvedAt: firebase.database.ServerValue.TIMESTAMP
-        })
-        .then(() => {
-            // Log the approval action
-            logEvent('Event Approved', { eventId });
-            hideLoading();
+        // Function to format datetime for input field
+        function formatDateTimeForInput(dateTimeStr) {
+            if (!dateTimeStr) return '';
+            const date = new Date(dateTimeStr);
+            if (isNaN(date)) return '';
             
-            // No need to manually refresh the table, as we're using real-time updates
-        })
-        .catch(error => {
-            console.error("Error approving event:", error);
-            hideLoading();
-            alert('Failed to approve event. Please try again.');
-        });
-    }
-    
-    // Function to reject an event
-    function rejectEvent(eventId, e) {
-        // Stop event propagation to prevent row click
-        if (e) e.stopPropagation();
-        
-        // Confirm rejection
-        if (!confirm('Are you sure you want to reject this event?')) {
-            return;
+            // Format as YYYY-MM-DDThh:mm
+            return date.toISOString().slice(0, 16);
         }
         
-        // Get the current user
-        const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
-        if (!user) {
-            alert('You must be logged in to reject events.');
-            return;
-        }
-        
-        // Find the event to verify the user is the line manager
-        const event = allEvents.find(event => event.id === eventId);
-        if (!event) {
-            alert('Event not found.');
-            return;
-        }
-        
-        // Verify the current user is the line manager
-        if (!isUserLineManager(user, event)) {
-            alert('Only the line manager can reject events.');
-            return;
-        }
-        
-        // Show loading
-        showLoading();
-        
-        // Update the event status in Firebase
-        const eventRef = database.ref(`events/${eventId}`);
-        eventRef.update({
-            approvalStatus: 'Rejected',
-            rejectedBy: user.uid,
-            rejectedByEmail: user.email,
-            rejectedAt: firebase.database.ServerValue.TIMESTAMP
-        })
-        .then(() => {
-            // Log the rejection action
-            logEvent('Event Rejected', { eventId });
-            hideLoading();
+        // Function to load users for the line manager dropdown
+        function loadUsersForLineManagerDropdown() {
+            const lineManagerDropdown = document.getElementById('editLineManager');
             
-            // No need to manually refresh the table, as we're using real-time updates
-        })
-        .catch(error => {
-            console.error("Error rejecting event:", error);
-            hideLoading();
-            alert('Failed to reject event. Please try again.');
-        });
-    }
-    
-    // Function to redirect to the event form for editing
-    function redirectToEditForm(eventId, e) {
-        // Stop event propagation to prevent row click
-        if (e) e.stopPropagation();
-        
-        // Get the current user
-        const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
-        if (!user) {
-            alert('You must be logged in to edit events.');
-            return;
+            // Only load users if the dropdown is empty
+            if (lineManagerDropdown.options.length <= 1) {
+                // Reference to users in Firebase
+                const usersRef = database.ref('users');
+                
+                // Fetch all users
+                usersRef.once('value')
+                    .then((snapshot) => {
+                        const users = snapshot.val();
+                        
+                        // Add users to dropdown
+                        for (const userId in users) {
+                            const user = users[userId];
+                            const displayName = user.firstName && user.lastName ? 
+                                `${user.firstName} ${user.lastName}` : 
+                                user.email || 'Unknown User';
+                                
+                            const option = document.createElement('option');
+                            option.value = userId;
+                            option.setAttribute('data-email', user.email || '');
+                            option.textContent = displayName;
+                            lineManagerDropdown.appendChild(option);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error("Error loading users:", error);
+                    });
+            }
         }
         
-        // Find the event to verify the user is the line manager
-        const event = allEvents.find(event => event.id === eventId);
-        if (!event) {
-            alert('Event not found.');
-            return;
+        // Helper functions
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'flex';
+            document.getElementById('eventTableContainer').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'none';
         }
         
-        // Verify the current user is the line manager
-        if (!isUserLineManager(user, event)) {
-            alert('Only the line manager can edit events.');
-            return;
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
         }
         
-        // Redirect to the event form with the event ID as a parameter
-        window.location.href = `evnt.html?edit=${eventId}`;
-    }
-    
-    // Helper function to check if user is the line manager for an event
-    function isUserLineManager(user, event) {
-        if (!user || !event) return false;
+        function showError(message) {
+            const emptyState = document.getElementById('emptyState');
+            emptyState.innerHTML = `<p>${message}</p>`;
+            emptyState.style.display = 'block';
+            document.getElementById('eventTableContainer').style.display = 'none';
+        }
         
-        const currentUserEmail = user.email.toLowerCase();
-        const lineManagerEmail = (event.lineManagerEmail || '').toLowerCase();
+        function formatDateTime(dateTimeStr) {
+            if (!dateTimeStr) return 'Not specified';
+            const date = new Date(dateTimeStr);
+            return isNaN(date) ? 'Invalid date' : date.toLocaleString();
+        }
         
-        return lineManagerEmail === currentUserEmail;
-    }
-    
-    // Function to log events to audit logs
-    function logEvent(action, details) {
-        const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
+        function formatDate(dateStr) {
+            if (!dateStr) return 'Not specified';
+            const date = new Date(dateStr);
+            return isNaN(date) ? 'Invalid date' : date.toLocaleDateString();
+        }
         
-        if (!user) return;
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // User authentication related functions
+        function updateUserDisplay() {
+            // ...existing code...
+        }
         
-        const logEntry = {
-            userId: user.uid,
-            userEmail: user.email,
-            action: action,
-            details: details,
-            timestamp: firebase.database.ServerValue.TIMESTAMP
-        };
+        function updateUIForAuthenticatedUser(user) {
+            // ...existing code...
+        }
         
-        database.ref('auditLogs').push(logEntry)
+        function updateUIForNonAuthenticatedUser() {
+            // ...existing code...
+        }
+
+        function getUserInitial(user) {
+            if (!user || !user.email) return '?';
+            return user.email.charAt(0).toUpperCase();
+        }
+
+        // Function to approve an event
+        function approveEvent(eventId, e) {
+            // Stop event propagation to prevent row click
+            if (e) e.stopPropagation();
+            
+            // Get the current user
+            const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
+            if (!user) {
+                alert('You must be logged in to approve events.');
+                return;
+            }
+            
+            // Find the event to verify the user is the line manager
+            const event = allEvents.find(event => event.id === eventId);
+            if (!event) {
+                alert('Event not found.');
+                return;
+            }
+            
+            // Verify the current user is the line manager
+            if (!isUserLineManager(user, event)) {
+                alert('Only the line manager can approve events.');
+                return;
+            }
+            
+            // Show loading
+            showLoading();
+            
+            // Update the event status in Firebase
+            const eventRef = database.ref(`events/${eventId}`);
+            eventRef.update({
+                approvalStatus: 'Approved',
+                approvedBy: user.uid,
+                approvedByEmail: user.email,
+                approvedAt: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                // Log the approval action
+                logEvent('Event Approved', { eventId });
+                hideLoading();
+                
+                // No need to manually refresh the table, as we're using real-time updates
+            })
             .catch(error => {
-                console.error('Error logging event:', error);
+                console.error("Error approving event:", error);
+                hideLoading();
+                alert('Failed to approve event. Please try again.');
             });
-    }
-</script>
+        }
+        
+        // Function to reject an event
+        function rejectEvent(eventId, e) {
+            // Stop event propagation to prevent row click
+            if (e) e.stopPropagation();
+            
+            // Confirm rejection
+            if (!confirm('Are you sure you want to reject this event?')) {
+                return;
+            }
+            
+            // Get the current user
+            const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
+            if (!user) {
+                alert('You must be logged in to reject events.');
+                return;
+            }
+            
+            // Find the event to verify the user is the line manager
+            const event = allEvents.find(event => event.id === eventId);
+            if (!event) {
+                alert('Event not found.');
+                return;
+            }
+            
+            // Verify the current user is the line manager
+            if (!isUserLineManager(user, event)) {
+                alert('Only the line manager can reject events.');
+                return;
+            }
+            
+            // Show loading
+            showLoading();
+            
+            // Update the event status in Firebase
+            const eventRef = database.ref(`events/${eventId}`);
+            eventRef.update({
+                approvalStatus: 'Rejected',
+                rejectedBy: user.uid,
+                rejectedByEmail: user.email,
+                rejectedAt: firebase.database.ServerValue.TIMESTAMP
+            })
+            .then(() => {
+                // Log the rejection action
+                logEvent('Event Rejected', { eventId });
+                hideLoading();
+                
+                // No need to manually refresh the table, as we're using real-time updates
+            })
+            .catch(error => {
+                console.error("Error rejecting event:", error);
+                hideLoading();
+                alert('Failed to reject event. Please try again.');
+            });
+        }
+        
+        // Function to redirect to the event form for editing
+        function redirectToEditForm(eventId, e) {
+            // Stop event propagation to prevent row click
+            if (e) e.stopPropagation();
+            
+            // Get the current user
+            const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
+            if (!user) {
+                alert('You must be logged in to edit events.');
+                return;
+            }
+            
+            // Find the event to verify the user is the line manager
+            const event = allEvents.find(event => event.id === eventId);
+            if (!event) {
+                alert('Event not found.');
+                return;
+            }
+            
+            // Verify the current user is the line manager
+            if (!isUserLineManager(user, event)) {
+                alert('Only the line manager can edit events.');
+                return;
+            }
+            
+            // Redirect to the event form with the event ID as a parameter
+            window.location.href = `evnt.html?edit=${eventId}`;
+        }
+        
+        // Helper function to check if user is the line manager for an event
+        function isUserLineManager(user, event) {
+            if (!user || !event) return false;
+            
+            const currentUserEmail = user.email.toLowerCase();
+            const lineManagerEmail = (event.lineManagerEmail || '').toLowerCase();
+            
+            return lineManagerEmail === currentUserEmail;
+        }
+        
+        // Function to log events to audit logs
+        function logEvent(action, details) {
+            const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
+            
+            if (!user) return;
+            
+            const logEntry = {
+                userId: user.uid,
+                userEmail: user.email,
+                action: action,
+                details: details,
+                timestamp: firebase.database.ServerValue.TIMESTAMP
+            };
+            
+            database.ref('auditLogs').push(logEntry)
+                .catch(error => {
+                    console.error('Error logging event:', error);
+                });
+        }
+    </script>
 </body>
 </html>
