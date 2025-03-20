@@ -1030,6 +1030,11 @@
             // Firebase already initialized
             database = firebase.database();
             auth = firebase.auth();
+            // Set persistence to LOCAL to maintain login across browser sessions
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .catch(error => {
+                    console.error("Error setting auth persistence:", error);
+                });
         } else {
             // Initialize Firebase manually
             const firebaseConfig = {
@@ -1045,54 +1050,70 @@
             firebase.initializeApp(firebaseConfig);
             database = firebase.database();
             auth = firebase.auth();
+            
+            // Set persistence to LOCAL to maintain login across browser sessions
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .catch(error => {
+                    console.error("Error setting auth persistence:", error);
+                });
         }
         
         const LOGS_PER_PAGE = 20;
         let currentLogs = [];
         let authInitialized = false;
+        let authCheckTimeout = null;
         
         document.addEventListener("DOMContentLoaded", () => {
             // Show a loading indicator while we check authentication
             showLoading();
             
-            // Add a small delay to give Firebase auth time to initialize
-            setTimeout(() => {
-                // Check if user is authenticated
-                if (window.AuthManager) {
-                    // Use AuthManager but don't redirect immediately
-                    if (AuthManager.isLoggedIn()) {
-                        console.log("User authenticated via AuthManager");
+            // Set a timeout to ensure we don't wait forever for auth
+            authCheckTimeout = setTimeout(() => {
+                if (!authInitialized) {
+                    console.log("Auth check timed out, continuing without confirmation");
+                    hideLoading();
+                    checkForExistingSession();
+                }
+            }, 3000); // Wait up to 3 seconds for auth to initialize
+            
+            // Check if AuthManager exists and use it
+            if (window.AuthManager) {
+                // Important: Don't redirect immediately
+                if (AuthManager.isLoggedIn()) {
+                    console.log("User authenticated via AuthManager");
+                    clearTimeout(authCheckTimeout);
+                    authInitialized = true;
+                    hideLoading();
+                    updateUserDisplay();
+                    loadUsersForDropdown();
+                    checkUrlForEditMode();
+                } else {
+                    // Check if there's a stored token in localStorage/sessionStorage
+                    checkForExistingSession();
+                }
+            } else {
+                // Use direct Firebase Auth
+                auth.onAuthStateChanged(user => {
+                    // Clear the timeout since auth has responded
+                    clearTimeout(authCheckTimeout);
+                    
+                    // Mark as initialized so we don't do this again
+                    if (authInitialized) return;
+                    authInitialized = true;
+                    
+                    if (user) {
+                        // User is logged in
+                        console.log("User authenticated:", user.email);
                         hideLoading();
-                        updateUserDisplay();
+                        updateUIForAuthenticatedUser(user);
                         loadUsersForDropdown();
                         checkUrlForEditMode();
                     } else {
-                        // Only redirect if we're sure user isn't logged in
-                        console.log("User not authenticated via AuthManager, redirecting to login");
-                        window.location.href = "login.html";
+                        // Only redirect if we're sure there's no session
+                        checkForExistingSession();
                     }
-                } else {
-                    // Check Firebase auth directly with a persistent listener
-                    auth.onAuthStateChanged(user => {
-                        // Set flag so we don't check multiple times
-                        if (authInitialized) return;
-                        authInitialized = true;
-                        
-                        if (user) {
-                            // User is logged in
-                            console.log("User authenticated:", user.email);
-                            hideLoading();
-                            updateUIForAuthenticatedUser(user);
-                            loadUsersForDropdown();
-                            checkUrlForEditMode();
-                        } else {
-                            // User is not logged in
-                            console.log("User not authenticated, redirecting to login");
-                            window.location.href = "login.html";
-                        }
-                    });
-                }
-            }, 500); // Small delay to allow auth to initialize
+                });
+            }
             
             // Set up event listeners for the form
             document.getElementById('eventForm').addEventListener('submit', submitEventForm);
@@ -1103,11 +1124,32 @@
                     AuthManager.logout();
                 } else {
                     auth.signOut().then(() => {
+                        // Also clear any session storage/cookies
+                        sessionStorage.clear();
+                        localStorage.removeItem('authToken');
                         window.location.href = "login.html";
                     });
                 }
             });
         });
+        
+        // Function to check for existing session in localStorage/sessionStorage
+        function checkForExistingSession() {
+            // Check for a stored token
+            const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+            
+            if (token) {
+                console.log("Found existing session token, attempting to restore session");
+                // Try to use the token to authenticate with Firebase
+                hideLoading();
+                updateUserDisplay(); // Show UI for authenticated user
+                loadUsersForDropdown();
+                checkUrlForEditMode();
+            } else {
+                console.log("No session found, redirecting to login");
+                window.location.href = "login.html";
+            }
+        }
         
         // Function to check URL for edit mode parameter
         function checkUrlForEditMode() {
