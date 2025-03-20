@@ -833,6 +833,8 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <!-- Include auth.js after Firebase SDKs -->
     <script src="js/auth.js"></script>
+    <!-- Add user dropdown handler script -->
+    <script src="user-dropdown-handler.js"></script>
 </head>
 <body>
     <header>
@@ -1516,7 +1518,7 @@
             });
         });
         
-        // Function to load users for the dropdown - modified to return a promise
+        // Function to load users for the dropdown - modified to properly populate dropdowns
         function loadUsersForDropdown() {
             const reportedByDropdown = document.getElementById('reportedByName');
             const lineManagerDropdown = document.getElementById('lineManager');
@@ -1538,34 +1540,56 @@
                 // Fetch all users
                 usersRef.once('value')
                     .then((snapshot) => {
-                        const users = snapshot.val();
+                        const users = [];
                         
-                        // Add users to dropdowns
-                        for (const userId in users) {
-                            const user = users[userId];
-                            const displayName = user.firstName && user.lastName ? 
-                                `${user.firstName} ${user.lastName}` : 
-                                user.email || 'Unknown User';
-                                
-                            // For reported by dropdown
-                            const reportedOption = document.createElement('option');
-                            reportedOption.value = userId;
-                            reportedOption.textContent = displayName;
-                            reportedByDropdown.appendChild(reportedOption);
+                        // Collect all users
+                        snapshot.forEach((childSnapshot) => {
+                            const userId = childSnapshot.key;
+                            const userData = childSnapshot.val();
                             
-                            // For line manager dropdown
-                            const lineManagerOption = document.createElement('option');
-                            lineManagerOption.value = userId;
-                            lineManagerOption.setAttribute('data-email', user.email || ''); // Store email for permissions
-                            lineManagerOption.textContent = displayName;
-                            lineManagerDropdown.appendChild(lineManagerOption);
-                        }
+                            // Skip inactive users
+                            if (userData.status === 'inactive') return;
+                            
+                            users.push({
+                                id: userId,
+                                name: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || userData.email || 'Unknown User',
+                                email: userData.email
+                            });
+                        });
                         
-                        // Resolve the promise when done
+                        // Sort users alphabetically by name
+                        users.sort((a, b) => a.name.localeCompare(b.name));
+                        
+                        // Add users to both dropdowns
+                        users.forEach(user => {
+                            // Add to reported by dropdown
+                            const reportedByOption = document.createElement('option');
+                            reportedByOption.value = user.id;
+                            reportedByOption.textContent = user.name;
+                            reportedByOption.setAttribute('data-email', user.email);
+                            reportedByDropdown.appendChild(reportedByOption);
+                            
+                            // Add to line manager dropdown
+                            const lineManagerOption = document.createElement('option');
+                            lineManagerOption.value = user.id;
+                            lineManagerOption.textContent = user.name;
+                            lineManagerOption.setAttribute('data-email', user.email);
+                            lineManagerDropdown.appendChild(lineManagerOption);
+                        });
+                        
                         resolve();
                     })
                     .catch((error) => {
-                        console.error("Error loading users:", error);
+                        console.error("Error loading users for dropdowns:", error);
+                        
+                        // Add error option to dropdowns
+                        const errorOption = document.createElement('option');
+                        errorOption.textContent = 'Error loading users';
+                        errorOption.disabled = true;
+                        
+                        reportedByDropdown.appendChild(errorOption.cloneNode(true));
+                        lineManagerDropdown.appendChild(errorOption);
+                        
                         reject(error);
                     });
             });
@@ -1591,10 +1615,15 @@
                     }
                     
                     // Load users for dropdowns first, then populate form fields when users are loaded
-                    return loadUsersForDropdown().then(() => {
-                        // Populate form fields with event data
+                    // Use the imported function if available, otherwise use local function
+                    if (window.initializeUserDropdowns) {
+                        window.initializeUserDropdowns();
                         populateFormWithEventData(event);
-                    });
+                    } else {
+                        return loadUsersForDropdown().then(() => {
+                            populateFormWithEventData(event);
+                        });
+                    }
                 })
                 .catch(error => {
                     console.error("Error loading event for editing:", error);
