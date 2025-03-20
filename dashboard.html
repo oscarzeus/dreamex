@@ -2998,155 +2998,50 @@
                     document.getElementById('restrictedViewBanner').style.display = 'none';
                 });
 
-                // Function to set up notifications for events
-                function setupEventNotifications() {
-                    // Reference to the events in Firebase
-                    const eventsRef = database.ref('events');
-                    
-                    // Get the last event check timestamp or use current time
-                    let lastCheckTime = localStorage.getItem('lastEventCheckTime') || Date.now();
-                    
-                    // Listen for new events that were created after the last check
-                    eventsRef.orderByChild('createdAt').startAt(parseInt(lastCheckTime))
-                        .on('child_added', function(snapshot) {
-                            const eventData = snapshot.val();
-                            const eventId = snapshot.key;
-                            
-                            // Only notify for new events, not the initial data load
-                            if (eventData.createdAt > parseInt(lastCheckTime)) {
-                                // Create a notification for the new event
-                                showNotification({
-                                    title: 'New Event Submitted',
-                                    message: `${eventData.title || 'Unnamed event'} has been submitted by ${eventData.submitter || 'a user'}`,
-                                    type: 'info',
-                                    duration: 10000 // 10 seconds
-                                });
-                            }
-                        });
-                    
-                    // Update the last check time
-                    localStorage.setItem('lastEventCheckTime', Date.now().toString());
-                    
-                    // Also check for updated events
-                    eventsRef.orderByChild('updatedAt').startAt(parseInt(lastCheckTime))
-                        .on('child_changed', function(snapshot) {
-                            const eventData = snapshot.val();
-                            const eventId = snapshot.key;
-                            
-                            // Only notify for events updated after the last check
-                            if (eventData.updatedAt > parseInt(lastCheckTime)) {
-                                showNotification({
-                                    title: 'Event Updated',
-                                    message: `${eventData.title || 'Unnamed event'} has been updated`,
-                                    type: 'warning',
-                                    duration: 8000 // 8 seconds
-                                });
-                            }
-                        });
-                }
-                
-                // Function to show a notification
-                function showNotification(options) {
-                    const { title, message, type = 'info', duration = 5000 } = options;
-                    const container = document.getElementById('notificationContainer');
-                    
-                    // Create notification element
-                    const notification = document.createElement('div');
-                    notification.className = `notification ${type}`;
-                    
-                    // Generate a unique ID for the notification
-                    const notificationId = 'notification-' + Date.now();
-                    notification.id = notificationId;
-                    
-                    // Create the notification content
-                    notification.innerHTML = `
-                        <div class="notification-header">
-                            <h4 class="notification-title">${title}</h4>
-                            <button class="notification-close" onclick="closeNotification('${notificationId}')">&times;</button>
-                        </div>
-                        <div class="notification-body">${message}</div>
-                        <div class="notification-time">${new Date().toLocaleTimeString()}</div>
-                    `;
-                    
-                    // Add to container
-                    container.appendChild(notification);
-                    
-                    // Auto-remove after duration
-                    if (duration > 0) {
-                        setTimeout(() => {
-                            closeNotification(notificationId);
-                        }, duration);
-                    }
-                    
-                    return notificationId;
-                }
-                
-                // Add the closeNotification function to the global scope
-                window.closeNotification = function(id) {
-                    const notification = document.getElementById(id);
-                    if (notification) {
-                        notification.style.animation = 'fadeOut 0.3s forwards';
-                        setTimeout(() => {
-                            notification.remove();
-                        }, 300);
-                    }
-                };
-
-                // Add notification bell click event handler
-                const notificationBellContainer = document.getElementById('notificationBellContainer');
-                
-                // Toggle active class on click to keep dropdown open
-                notificationBellContainer.addEventListener('click', function() {
-                    this.classList.toggle('active');
-                    
-                    // If opening the dropdown, mark notifications as read
-                    if (this.classList.contains('active')) {
-                        markNotificationsAsRead();
-                    }
-                });
-                
-                // Close notification dropdown when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!notificationBellContainer.contains(event.target)) {
-                        notificationBellContainer.classList.remove('active');
-                    }
-                });
-                
-                // Setup notification controls
-                document.getElementById('markAllReadBtn').addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    markNotificationsAsRead();
-                });
-                
-                document.getElementById('clearAllBtn').addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    clearAllNotifications();
-                });
-                
                 // Function to set up notifications for events - updated to populate the dropdown
                 function setupEventNotifications() {
                     // Reference to the events in Firebase
                     const eventsRef = database.ref('events');
                     
-                    // Get the last event check timestamp or use current time
-                    let lastCheckTime = localStorage.getItem('lastEventCheckTime') || Date.now();
+                    // Get the current user
+                    const currentUser = auth.currentUser;
+                    if (!currentUser) return;
                     
-                    // Initialize notifications in localStorage if they don't exist
-                    if (!localStorage.getItem('notifications')) {
-                        localStorage.setItem('notifications', JSON.stringify([]));
-                    }
+                    // Get the last event check timestamp or use current time
+                    let lastCheckTime = Date.now() - (24 * 60 * 60 * 1000); // Default to last 24 hours
+                    
+                    // Create a reference to the user's notifications
+                    const userNotificationsRef = database.ref(`userNotifications/${currentUser.uid}`);
+                    
+                    // First, listen for new notifications to display immediately
+                    userNotificationsRef.orderByChild('time').limitToLast(50).on('child_added', function(snapshot) {
+                        const notification = snapshot.val();
+                        notification.id = snapshot.key;
+                        
+                        // Update UI with this notification
+                        updateNotificationUI();
+                        
+                        // Show toast for recent notifications (less than 1 minute old)
+                        if (notification.time > Date.now() - 60000 && !notification.read) {
+                            showToastNotification(notification);
+                        }
+                    });
+                    
+                    // Listen for changes to notifications (e.g., marked as read)
+                    userNotificationsRef.on('child_changed', function(snapshot) {
+                        updateNotificationUI();
+                    });
                     
                     // Listen for new events that were created after the last check
-                    eventsRef.orderByChild('createdAt').startAt(parseInt(lastCheckTime))
+                    eventsRef.orderByChild('createdAt').startAt(lastCheckTime)
                         .on('child_added', function(snapshot) {
                             const eventData = snapshot.val();
                             const eventId = snapshot.key;
                             
                             // Only notify for new events, not the initial data load
-                            if (eventData.createdAt > parseInt(lastCheckTime)) {
+                            if (eventData.createdAt > lastCheckTime) {
                                 // Create notification object
                                 const notification = {
-                                    id: 'event_new_' + eventId + '_' + Date.now(),
                                     title: 'New Event Submitted',
                                     message: `${eventData.title || 'Unnamed event'} has been submitted by ${eventData.submitter || 'a user'}`,
                                     type: 'info',
@@ -3155,28 +3050,21 @@
                                     eventId: eventId
                                 };
                                 
-                                // Add to notifications storage
+                                // Add to notifications in Firebase
                                 addNotification(notification);
-                                
-                                // Show toast notification
-                                showToastNotification(notification);
                             }
                         });
                     
-                    // Update the last check time
-                    localStorage.setItem('lastEventCheckTime', Date.now().toString());
-                    
                     // Also check for updated events
-                    eventsRef.orderByChild('updatedAt').startAt(parseInt(lastCheckTime))
+                    eventsRef.orderByChild('updatedAt').startAt(lastCheckTime)
                         .on('child_changed', function(snapshot) {
                             const eventData = snapshot.val();
                             const eventId = snapshot.key;
                             
                             // Only notify for events updated after the last check
-                            if (eventData.updatedAt > parseInt(lastCheckTime)) {
+                            if (eventData.updatedAt > lastCheckTime) {
                                 // Create notification object
                                 const notification = {
-                                    id: 'event_update_' + eventId + '_' + Date.now(),
                                     title: 'Event Updated',
                                     message: `${eventData.title || 'Unnamed event'} has been updated`,
                                     type: 'warning',
@@ -3185,65 +3073,83 @@
                                     eventId: eventId
                                 };
                                 
-                                // Add to notifications storage
+                                // Add to notifications in Firebase
                                 addNotification(notification);
-                                
-                                // Show toast notification
-                                showToastNotification(notification);
                             }
                         });
-                        
+                    
                     // Load existing notifications
                     loadNotifications();
                 }
                 
-                // Function to add a notification to storage and update UI
+                // Function to add a notification to Firebase and update UI
                 function addNotification(notification) {
-                    // Get current notifications
-                    let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                    const currentUser = auth.currentUser;
+                    if (!currentUser) return;
                     
-                    // Add new notification at the beginning
-                    notifications.unshift(notification);
+                    // Create a reference to the user's notifications
+                    const userNotificationsRef = database.ref(`userNotifications/${currentUser.uid}`);
                     
-                    // Limit to 50 notifications
-                    if (notifications.length > 50) {
-                        notifications = notifications.slice(0, 50);
-                    }
-                    
-                    // Save back to storage
-                    localStorage.setItem('notifications', JSON.stringify(notifications));
-                    
-                    // Update the UI
-                    updateNotificationUI();
-                    
-                    // Update the counter
-                    updateNotificationCounter();
+                    // Push new notification to Firebase
+                    userNotificationsRef.push(notification)
+                        .then(() => {
+                            // Update the UI happens via the 'child_added' listener
+                            console.log('Notification added to Firebase');
+                        })
+                        .catch(error => {
+                            console.error('Error adding notification to Firebase:', error);
+                        });
                 }
                 
-                // Function to load notifications from storage and update UI
+                // Function to load notifications from Firebase and update UI
                 function loadNotifications() {
-                    // Get current notifications
-                    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                    const currentUser = auth.currentUser;
+                    if (!currentUser) return;
                     
-                    // Clear the list
+                    // Clear the list first
                     const notificationList = document.getElementById('notificationList');
-                    notificationList.innerHTML = '';
+                    notificationList.innerHTML = '<div class="notification-empty">Loading notifications...</div>';
                     
-                    if (notifications.length === 0) {
-                        notificationList.innerHTML = '<div class="notification-empty">No notifications to display</div>';
-                        return;
-                    }
+                    // Create a reference to the user's notifications
+                    const userNotificationsRef = database.ref(`userNotifications/${currentUser.uid}`);
                     
-                    // Add each notification to the list
-                    notifications.forEach(notification => {
-                        addNotificationToUI(notification);
-                    });
-                    
-                    // Update the counter
-                    updateNotificationCounter();
+                    // Get notifications ordered by time (newest first)
+                    userNotificationsRef.orderByChild('time').limitToLast(50).once('value')
+                        .then(snapshot => {
+                            // Clear the list
+                            notificationList.innerHTML = '';
+                            
+                            // Convert to array and sort by time descending
+                            const notifications = [];
+                            snapshot.forEach(childSnapshot => {
+                                const notification = childSnapshot.val();
+                                notification.id = childSnapshot.key;
+                                notifications.push(notification);
+                            });
+                            
+                            // Sort by time descending
+                            notifications.sort((a, b) => b.time - a.time);
+                            
+                            if (notifications.length === 0) {
+                                notificationList.innerHTML = '<div class="notification-empty">No notifications to display</div>';
+                                return;
+                            }
+                            
+                            // Add each notification to the list
+                            notifications.forEach(notification => {
+                                addNotificationToUI(notification);
+                            });
+                            
+                            // Update the counter
+                            updateNotificationCounter();
+                        })
+                        .catch(error => {
+                            console.error('Error loading notifications from Firebase:', error);
+                            notificationList.innerHTML = '<div class="notification-empty">Error loading notifications</div>';
+                        });
                 }
                 
-                // Function to add a notification to the UI
+                // Function to add a notification to the UI - unchanged except for event listener
                 function addNotificationToUI(notification) {
                     const notificationList = document.getElementById('notificationList');
                     
@@ -3296,94 +3202,126 @@
                 
                 // Function to update notification UI
                 function updateNotificationUI() {
-                    // Get current notifications
-                    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-                    
-                    // Clear the list
-                    const notificationList = document.getElementById('notificationList');
-                    notificationList.innerHTML = '';
-                    
-                    if (notifications.length === 0) {
-                        notificationList.innerHTML = '<div class="notification-empty">No notifications to display</div>';
-                        return;
-                    }
-                    
-                    // Add each notification to the list
-                    notifications.forEach(notification => {
-                        addNotificationToUI(notification);
-                    });
+                    // Load notifications from Firebase
+                    loadNotifications();
                 }
                 
                 // Function to update notification counter
                 function updateNotificationCounter() {
-                    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-                    const unreadCount = notifications.filter(n => !n.read).length;
+                    const currentUser = auth.currentUser;
+                    if (!currentUser) return;
                     
-                    const counter = document.getElementById('notificationCounter');
+                    // Create a reference to the user's notifications
+                    const userNotificationsRef = database.ref(`userNotifications/${currentUser.uid}`);
                     
-                    if (unreadCount > 0) {
-                        counter.textContent = unreadCount > 99 ? '99+' : unreadCount;
-                        counter.style.display = 'flex';
-                    } else {
-                        counter.style.display = 'none';
-                    }
+                    // Count unread notifications
+                    userNotificationsRef.orderByChild('read').equalTo(false).once('value')
+                        .then(snapshot => {
+                            const unreadCount = snapshot.numChildren();
+                            const counter = document.getElementById('notificationCounter');
+                            
+                            if (unreadCount > 0) {
+                                counter.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                                counter.style.display = 'flex';
+                                
+                                // Add has-new class to bell for animation
+                                document.getElementById('notificationBell').classList.add('has-new');
+                            } else {
+                                counter.style.display = 'none';
+                                
+                                // Remove has-new class from bell
+                                document.getElementById('notificationBell').classList.remove('has-new');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error counting unread notifications:', error);
+                        });
                 }
                 
                 // Function to mark a notification as read
                 function markNotificationAsRead(notificationId) {
-                    // Get current notifications
-                    let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                    const currentUser = auth.currentUser;
+                    if (!currentUser) return;
                     
-                    // Find the notification
-                    const notificationIndex = notifications.findIndex(n => n.id === notificationId);
-                    if (notificationIndex !== -1) {
-                        notifications[notificationIndex].read = true;
-                    }
-                    
-                    // Save back to storage
-                    localStorage.setItem('notifications', JSON.stringify(notifications));
-                    
-                    // Update the UI
-                    const notificationItem = document.querySelector(`.notification-list-item[data-id="${notificationId}"]`);
-                    if (notificationItem) {
-                        notificationItem.classList.remove('unread');
-                    }
-                    
-                    // Update the counter
-                    updateNotificationCounter();
+                    // Update the notification in Firebase
+                    database.ref(`userNotifications/${currentUser.uid}/${notificationId}`).update({
+                        read: true
+                    }).then(() => {
+                        // UI update will happen via the 'child_changed' listener
+                        console.log('Notification marked as read in Firebase');
+                        
+                        // Update the UI element immediately for better UX
+                        const notificationItem = document.querySelector(`.notification-list-item[data-id="${notificationId}"]`);
+                        if (notificationItem) {
+                            notificationItem.classList.remove('unread');
+                        }
+                        
+                        // Update counter
+                        updateNotificationCounter();
+                    }).catch(error => {
+                        console.error('Error marking notification as read:', error);
+                    });
                 }
                 
                 // Function to mark all notifications as read
                 function markNotificationsAsRead() {
-                    // Get current notifications
-                    let notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
+                    const currentUser = auth.currentUser;
+                    if (!currentUser) return;
                     
-                    // Mark all as read
-                    notifications = notifications.map(n => ({...n, read: true}));
-                    
-                    // Save back to storage
-                    localStorage.setItem('notifications', JSON.stringify(notifications));
-                    
-                    // Update the UI
-                    document.querySelectorAll('.notification-list-item').forEach(item => {
-                        item.classList.remove('unread');
-                    });
-                    
-                    // Update the counter
-                    updateNotificationCounter();
+                    // Get all unread notifications
+                    database.ref(`userNotifications/${currentUser.uid}`).orderByChild('read').equalTo(false).once('value')
+                        .then(snapshot => {
+                            const updates = {};
+                            
+                            // Create batch update object
+                            snapshot.forEach(childSnapshot => {
+                                updates[`${childSnapshot.key}/read`] = true;
+                            });
+                            
+                            // Apply updates if there are any
+                            if (Object.keys(updates).length > 0) {
+                                return database.ref(`userNotifications/${currentUser.uid}`).update(updates);
+                            }
+                            
+                            return null;
+                        })
+                        .then(() => {
+                            // UI update will happen via the 'child_changed' listener
+                            console.log('All notifications marked as read');
+                            
+                            // Update the UI elements immediately for better UX
+                            document.querySelectorAll('.notification-list-item').forEach(item => {
+                                item.classList.remove('unread');
+                            });
+                            
+                            // Update counter
+                            updateNotificationCounter();
+                        })
+                        .catch(error => {
+                            console.error('Error marking all notifications as read:', error);
+                        });
                 }
                 
                 // Function to clear all notifications
                 function clearAllNotifications() {
-                    // Clear notifications in storage
-                    localStorage.setItem('notifications', JSON.stringify([]));
+                    const currentUser = auth.currentUser;
+                    if (!currentUser) return;
                     
-                    // Update the UI
-                    const notificationList = document.getElementById('notificationList');
-                    notificationList.innerHTML = '<div class="notification-empty">No notifications to display</div>';
-                    
-                    // Update the counter
-                    updateNotificationCounter();
+                    // Remove all notifications
+                    database.ref(`userNotifications/${currentUser.uid}`).remove()
+                        .then(() => {
+                            console.log('All notifications cleared');
+                            
+                            // Update the UI
+                            const notificationList = document.getElementById('notificationList');
+                            notificationList.innerHTML = '<div class="notification-empty">No notifications to display</div>';
+                            
+                            // Update the counter
+                            updateNotificationCounter();
+                        })
+                        .catch(error => {
+                            console.error('Error clearing notifications:', error);
+                        });
                 }
                 
                 // Function to show toast notification (the floating notifications)
@@ -3396,7 +3334,7 @@
                     });
                 }
                 
-                // Helper function to format time ago
+                // Helper function to format time ago - unchanged
                 function getTimeAgo(date) {
                     const seconds = Math.floor((new Date() - date) / 1000);
                     

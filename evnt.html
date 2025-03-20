@@ -1049,35 +1049,53 @@
         
         const LOGS_PER_PAGE = 20;
         let currentLogs = [];
+        let authInitialized = false;
         
         document.addEventListener("DOMContentLoaded", () => {
-            // Check if user is authenticated
-            if (window.AuthManager) {
-                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
-                
-                // Update UI based on auth state
-                updateUserDisplay();
-            } else {
-                // Check Firebase auth directly
-                auth.onAuthStateChanged(user => {
-                    if (user) {
-                        // User is logged in
-                        console.log("User authenticated:", user.email);
-                        updateUIForAuthenticatedUser(user);
-                        loadAuditLogs(1);
+            // Show a loading indicator while we check authentication
+            showLoading();
+            
+            // Add a small delay to give Firebase auth time to initialize
+            setTimeout(() => {
+                // Check if user is authenticated
+                if (window.AuthManager) {
+                    // Use AuthManager but don't redirect immediately
+                    if (AuthManager.isLoggedIn()) {
+                        console.log("User authenticated via AuthManager");
+                        hideLoading();
+                        updateUserDisplay();
+                        loadUsersForDropdown();
+                        checkUrlForEditMode();
                     } else {
-                        // User is not logged in
-                        console.log("User not authenticated, redirecting to login");
+                        // Only redirect if we're sure user isn't logged in
+                        console.log("User not authenticated via AuthManager, redirecting to login");
                         window.location.href = "login.html";
                     }
-                });
-            }
+                } else {
+                    // Check Firebase auth directly with a persistent listener
+                    auth.onAuthStateChanged(user => {
+                        // Set flag so we don't check multiple times
+                        if (authInitialized) return;
+                        authInitialized = true;
+                        
+                        if (user) {
+                            // User is logged in
+                            console.log("User authenticated:", user.email);
+                            hideLoading();
+                            updateUIForAuthenticatedUser(user);
+                            loadUsersForDropdown();
+                            checkUrlForEditMode();
+                        } else {
+                            // User is not logged in
+                            console.log("User not authenticated, redirecting to login");
+                            window.location.href = "login.html";
+                        }
+                    });
+                }
+            }, 500); // Small delay to allow auth to initialize
             
-            // Set up event listeners
-            document.getElementById('clearBtn').addEventListener('click', clearFilters);
-            document.getElementById('applyBtn').addEventListener('click', () => {
-                loadAuditLogs(1);
-            });
+            // Set up event listeners for the form
+            document.getElementById('eventForm').addEventListener('submit', submitEventForm);
             
             document.getElementById('logoutButton').addEventListener('click', function(e) {
                 e.preventDefault();
@@ -1089,23 +1107,18 @@
                     });
                 }
             });
-            
-            // Set default date range to last 7 days
-            const today = new Date();
-            const lastWeek = new Date();
-            lastWeek.setDate(lastWeek.getDate() - 7);
-            
-            document.getElementById('endDate').valueAsDate = today;
-            document.getElementById('startDate').valueAsDate = lastWeek;
-            
-            // Load logs initially
-            if (!window.AuthManager) {
-                // We're handling auth manually, so loadAuditLogs will be called by the auth state change handler
-            } else {
-                // Using AuthManager, we can load logs right away
-                loadAuditLogs(1);
-            }
         });
+        
+        // Function to check URL for edit mode parameter
+        function checkUrlForEditMode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const eventId = urlParams.get('edit');
+            
+            if (eventId) {
+                // We're in edit mode, load event data
+                loadEventForEditing(eventId);
+            }
+        }
         
         // Function to update user display based on login state
         function updateUserDisplay() {
