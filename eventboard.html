@@ -1273,7 +1273,7 @@
     </div>
 
     <script>
-    // Initialize Firebase with enhanced domain handling and persistent auth
+    // Initialize Firebase with enhanced domain handling
     let database;
     let auth;
     
@@ -1290,7 +1290,7 @@
         
         // Check if Firebase is already initialized
         if (firebase.apps.length === 0) {
-            console.log("Initializing Firebase for event board");
+            console.log("Initializing Firebase");
             firebase.initializeApp(firebaseConfig);
         } else {
             console.log("Firebase already initialized");
@@ -1299,16 +1299,10 @@
         database = firebase.database();
         auth = firebase.auth();
         
-        // Force browser to persist auth state across sessions
+        // Force browser to persist auth state
         return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
-            .then(() => {
-                console.log("Firebase persistence set to LOCAL");
-                return true;
-            })
-            .catch(error => {
-                console.error("Firebase persistence error:", error);
-                return true; // Continue despite error
-            });
+            .then(() => console.log("Firebase persistence set to LOCAL"))
+            .catch(error => console.error("Firebase persistence error:", error));
     }
     
     // Initialize Firebase at script load
@@ -1336,8 +1330,9 @@
         const authTimeout = setTimeout(() => {
             console.warn("Auth check timed out");
             hideLoading();
-            checkAuthFromStorage();
-        }, 5000);
+            showError("Authentication timed out. Please try logging in again.");
+            window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+        }, 10000);
         
         // Check authentication state
         auth.onAuthStateChanged(user => {
@@ -1345,13 +1340,6 @@
             
             if (user) {
                 console.log("User authenticated:", user.email);
-                
-                // Store auth token for persistence across pages
-                user.getIdToken().then(token => {
-                    localStorage.setItem('authToken', token);
-                    localStorage.setItem('userId', user.uid);
-                    localStorage.setItem('userEmail', user.email);
-                });
                 
                 // Update UI for authenticated user
                 updateUserDisplay(user);
@@ -1362,66 +1350,15 @@
                 // Set up event listeners for filtering, sorting, etc.
                 setupEventListeners();
             } else {
-                console.log("Not authenticated, checking localStorage for token");
-                checkAuthFromStorage();
+                console.log("Not authenticated, redirecting to login page");
+                hideLoading();
+                window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
             }
         });
     });
     
-    // Check auth from localStorage as fallback
-    function checkAuthFromStorage() {
-        const token = localStorage.getItem('authToken');
-        const userId = localStorage.getItem('userId');
-        
-        if (token && userId) {
-            console.log("Found auth token in localStorage, attempting to use it");
-            
-            // Show loading while we try to authenticate
-            showLoading();
-            
-            // Attempt to reauthenticate with custom token (this is a simplified example)
-            // In a real app, you'd verify this token with your backend
-            auth.signInWithCustomToken(token)
-                .then(userCredential => {
-                    console.log("Successfully authenticated using stored token");
-                    updateUserDisplay(userCredential.user);
-                    loadEvents();
-                    setupEventListeners();
-                })
-                .catch(error => {
-                    console.error("Error using stored token:", error);
-                    
-                    // If that fails, try to use the current auth state one more time
-                    const currentUser = auth.currentUser;
-                    if (currentUser) {
-                        console.log("Using current auth user as fallback");
-                        updateUserDisplay(currentUser);
-                        loadEvents();
-                        setupEventListeners();
-                    } else {
-                        // Give up and redirect to login
-                        console.log("No valid authentication found, redirecting to login");
-                        hideLoading();
-                        redirectToLogin();
-                    }
-                });
-        } else {
-            console.log("No stored authentication found, redirecting to login");
-            hideLoading();
-            redirectToLogin();
-        }
-    }
-    
-    // Function to redirect to login
-    function redirectToLogin() {
-        const currentPath = encodeURIComponent(window.location.pathname);
-        window.location.href = `login.html?redirect=${currentPath}`;
-    }
-    
     // Helper function to update user display in UI
     function updateUserDisplay(user) {
-        if (!user) return;
-        
         // Update user email in dropdown
         document.getElementById('userEmail').textContent = user.email || "Not logged in";
         
@@ -1432,80 +1369,75 @@
         document.getElementById('loginButton').style.display = 'none';
         
         // Update user avatar/initial
-        const userInitial = document.getElementById('userInitial');
-        const userAvatar = document.getElementById('userAvatar');
-        
-        if (!userInitial || !userAvatar) {
-            console.warn("Avatar elements not found in DOM");
-            return;
+        if (user) {
+            const userInitial = document.getElementById('userInitial');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            // Get user data from Firebase
+            database.ref(`users/${user.uid}`).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val() || {};
+                    
+                    if (userData.profileImage) {
+                        // Show profile image
+                        userAvatar.src = userData.profileImage;
+                        userAvatar.style.display = 'block';
+                        userInitial.style.display = 'none';
+                    } else {
+                        // Show initial
+                        userInitial.textContent = getUserInitial(user);
+                        userInitial.style.display = 'flex';
+                        userAvatar.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching user data:", error);
+                });
         }
-        
-        // Get user data from Firebase
-        database.ref(`users/${user.uid}`).once('value')
-            .then(snapshot => {
-                const userData = snapshot.val() || {};
-                
-                if (userData.profileImage) {
-                    // Show profile image
-                    userAvatar.src = userData.profileImage;
-                    userAvatar.style.display = 'block';
-                    userInitial.style.display = 'none';
-                } else {
-                    // Show initial
-                    userInitial.textContent = getUserInitial(user);
-                    userInitial.style.display = 'flex';
-                    userAvatar.style.display = 'none';
-                }
-            })
-            .catch(error => {
-                console.error("Error fetching user data:", error);
-                // Show initial as fallback
-                userInitial.textContent = getUserInitial(user);
-                userInitial.style.display = 'flex';
-                userAvatar.style.display = 'none';
-            });
-        
-        // Update last login time in database
-        database.ref(`users/${user.uid}`).update({
-            lastLogin: firebase.database.ServerValue.TIMESTAMP
-        }).catch(err => console.warn("Could not update last login time:", err));
-    }
-    
-    // Helper function to get user initial
-    function getUserInitial(user) {
-        if (!user) return '?';
-        if (user.displayName && user.displayName.length > 0) {
-            return user.displayName.charAt(0).toUpperCase();
-        }
-        if (user.email && user.email.length > 0) {
-            return user.email.charAt(0).toUpperCase();
-        }
-        return '?';
     }
     
     // Function to set up all event listeners
     function setupEventListeners() {
         // Logout button
-        const logoutButton = document.getElementById('logoutButton');
-        if (logoutButton) {
-            logoutButton.addEventListener('click', function(e) {
-                e.preventDefault();
-                auth.signOut().then(() => {
-                    // Clear stored tokens
-                    localStorage.removeItem('authToken');
-                    localStorage.removeItem('userId');
-                    localStorage.removeItem('userEmail');
-                    sessionStorage.clear();
-                    
-                    window.location.href = "login.html";
-                }).catch(error => {
-                    console.error("Error during logout:", error);
-                });
+        document.getElementById('logoutButton').addEventListener('click', function(e) {
+            e.preventDefault();
+            auth.signOut().then(() => {
+                window.location.href = "login.html";
+            }).catch(error => {
+                console.error("Error during logout:", error);
             });
-        }
+        });
         
-        // Add remaining event listeners here...
-        // ...existing code...
+        // Filters
+        document.getElementById('applyFiltersBtn').addEventListener('click', filterEvents);
+        document.getElementById('resetFiltersBtn').addEventListener('click', resetFilters);
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') filterEvents();
+        });
+        
+        // Sorting
+        const tableHeaders = document.querySelectorAll('th[data-sort]');
+        tableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const field = header.getAttribute('data-sort');
+                if (sortField === field) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortField = field;
+                    sortDirection = 'asc';
+                }
+                displayEvents(filterEventArray(allEvents));
+            });
+        });
+        
+        // Modal close buttons
+        document.getElementById('closeModalBtn').addEventListener('click', closeEventModal);
+        document.getElementById('closeEventBtn').addEventListener('click', closeEventModal);
+        
+        // Edit modal
+        document.getElementById('closeEditModalBtn').addEventListener('click', closeEditModal);
+        document.getElementById('cancelEditBtn').addEventListener('click', closeEditModal);
+        document.getElementById('editEventForm').addEventListener('submit', saveEventChanges);
     }
     
     // Function to load events from Firebase - enhanced with better error handling
