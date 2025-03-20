@@ -637,24 +637,442 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
 <script>
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
-        authDomain: "users-8be65.firebaseapp.com",
-        databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
-        projectId: "users-8be65",
-        storageBucket: "users-8be65.appspot.com",
-        messagingSenderId: "829083030831",
-        appId: "1:829083030831:web:36a370e62691e560bc3dda"
-    };
+    // Initialize Firebase with better error handling and persistence
+    let database;
+    let auth;
+    let authInitialized = false;
     
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+    function initializeFirebase() {
+        console.log("Initializing Firebase for account page...");
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.appspot.com",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Check if Firebase is already initialized
+        if (firebase.apps.length === 0) {
+            console.log("No Firebase apps found, initializing new app");
+            firebase.initializeApp(firebaseConfig);
+        } else {
+            console.log("Firebase already initialized");
+        }
+        
+        database = firebase.database();
+        auth = firebase.auth();
+        
+        // Explicitly set persistence to LOCAL to fix session issues
+        return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(() => {
+                console.log("Firebase persistence set to LOCAL");
+                return true;
+            })
+            .catch(error => {
+                console.error("Firebase persistence error:", error);
+                return true; // Continue despite error
+            });
+    }
     
-    // Get references to Firebase services
-    const storage = firebase.storage();
-    const database = firebase.database();
+    // DOM Ready handler with better error handling
+    document.addEventListener('DOMContentLoaded', () => {
+        console.log("DOM loaded for account page");
+        
+        try {
+            showLoading("Initializing...");
+            
+            // Initialize Firebase first
+            initializeFirebase()
+                .then(() => {
+                    console.log("Firebase initialized successfully");
+                    
+                    // Set auth timeout to prevent infinite loading
+                    const authTimeout = setTimeout(() => {
+                        console.warn("Auth check timed out");
+                        hideLoading();
+                        
+                        // Check if there's a token in localStorage before redirecting
+                        const token = localStorage.getItem('authToken');
+                        if (!token) {
+                            redirectToLogin();
+                        } else {
+                            // Try to recover using the token
+                            recoverSession(token);
+                        }
+                    }, 10000);
+                    
+                    // Check if user is already logged in
+                    checkForExistingAuth()
+                        .then(user => {
+                            clearTimeout(authTimeout);
+                            
+                            if (user) {
+                                console.log("User is already logged in:", user.email);
+                                hideLoading();
+                                setupAccountPage(user);
+                            } else {
+                                // Check localStorage for auth token before redirecting
+                                const token = localStorage.getItem('authToken');
+                                if (token) {
+                                    recoverSession(token);
+                                } else {
+                                    console.log("No authentication found, redirecting to login");
+                                    hideLoading();
+                                    redirectToLogin();
+                                }
+                            }
+                        })
+                        .catch(error => {
+                            clearTimeout(authTimeout);
+                            console.error("Auth check error:", error);
+                            hideLoading();
+                            
+                            // Show error message instead of immediate redirect
+                            showErrorMessage("Authentication error. Please try refreshing the page or log in again.");
+                        });
+                })
+                .catch(error => {
+                    console.error("Firebase initialization error:", error);
+                    hideLoading();
+                    showErrorMessage("Failed to initialize Firebase. Please check your connection and try again.");
+                });
+            
+            // Set up UI event listeners
+            setupUIEventListeners();
+            
+        } catch (error) {
+            console.error("Critical error in account page initialization:", error);
+            hideLoading();
+            showErrorMessage("An unexpected error occurred. Please refresh the page and try again.");
+        }
+    });
     
+    // Function to check for existing authentication
+    function checkForExistingAuth() {
+        return new Promise((resolve, reject) => {
+            // First check if there's a current user
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                resolve(currentUser);
+                return;
+            }
+            
+            // Set up auth state listener
+            const unsubscribe = auth.onAuthStateChanged(user => {
+                unsubscribe(); // Unsubscribe immediately to avoid multiple callbacks
+                resolve(user);
+            }, error => {
+                reject(error);
+            });
+        });
+    }
+    
+    // Function to try to recover session using a token
+    function recoverSession(token) {
+        console.log("Attempting to recover session using token");
+        showLoading("Recovering session...");
+        
+        // Try to sign in with custom token or verify the token with your backend
+        // This is a simplified example - in a real app, you would verify with your backend
+        
+        auth.signInWithCustomToken(token)
+            .then(userCredential => {
+                console.log("Session recovered successfully");
+                hideLoading();
+                setupAccountPage(userCredential.user);
+            })
+            .catch(error => {
+                console.error("Failed to recover session:", error);
+                
+                // As a fallback, check if the user is somehow still logged in
+                if (auth.currentUser) {
+                    console.log("User is still logged in despite token error");
+                    hideLoading();
+                    setupAccountPage(auth.currentUser);
+                } else {
+                    console.log("Session recovery failed, redirecting to login");
+                    localStorage.removeItem('authToken'); // Clear invalid token
+                    hideLoading();
+                    redirectToLogin();
+                }
+            });
+    }
+    
+    // Function to redirect to login page
+    function redirectToLogin() {
+        const currentPath = encodeURIComponent(window.location.pathname);
+        window.location.href = `login.html?redirect=${currentPath}`;
+    }
+    
+    // Function to show loading overlay
+    function showLoading(message = "Loading...") {
+        const existingOverlay = document.getElementById('loadingOverlay');
+        if (existingOverlay) {
+            const messageElement = existingOverlay.querySelector('div > div:last-child');
+            if (messageElement) messageElement.textContent = message;
+            existingOverlay.style.display = 'flex';
+            return;
+        }
+        
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loadingOverlay';
+        loadingOverlay.className = 'loading-overlay';
+        loadingOverlay.innerHTML = `
+            <div style="text-align: center; background: rgba(255,255,255,0.9); padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <div class="loading-spinner"></div>
+                <div style="margin-top: 15px; color: #333;">${message}</div>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+    }
+    
+    // Function to hide loading overlay
+    function hideLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+    }
+    
+    // Function to show error message
+    function showErrorMessage(message) {
+        // Create error container if it doesn't exist
+        let errorContainer = document.getElementById('errorContainer');
+        if (!errorContainer) {
+            errorContainer = document.createElement('div');
+            errorContainer.id = 'errorContainer';
+            errorContainer.style.backgroundColor = '#f8d7da';
+            errorContainer.style.color = '#721c24';
+            errorContainer.style.padding = '15px 20px';
+            errorContainer.style.margin = '20px auto';
+            errorContainer.style.borderRadius = '5px';
+            errorContainer.style.maxWidth = '800px';
+            errorContainer.style.textAlign = 'center';
+            errorContainer.style.position = 'fixed';
+            errorContainer.style.top = '20px';
+            errorContainer.style.left = '50%';
+            errorContainer.style.transform = 'translateX(-50%)';
+            errorContainer.style.zIndex = '1000';
+            errorContainer.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+            
+            // Add retry button
+            const retryButton = document.createElement('button');
+            retryButton.textContent = 'Retry';
+            retryButton.style.marginLeft = '10px';
+            retryButton.style.padding = '5px 10px';
+            retryButton.style.backgroundColor = '#dc3545';
+            retryButton.style.color = 'white';
+            retryButton.style.border = 'none';
+            retryButton.style.borderRadius = '3px';
+            retryButton.style.cursor = 'pointer';
+            retryButton.onclick = function() {
+                window.location.reload();
+            };
+            
+            errorContainer.innerHTML = `<span>${message}</span>`;
+            errorContainer.appendChild(retryButton);
+            
+            document.body.appendChild(errorContainer);
+        } else {
+            errorContainer.querySelector('span').textContent = message;
+            errorContainer.style.display = 'block';
+        }
+    }
+    
+    // Function to setup account page after successful authentication
+    function setupAccountPage(user) {
+        if (!user) {
+            console.error("No user provided to setupAccountPage");
+            return;
+        }
+        
+        console.log("Setting up account page for user:", user.email);
+        
+        // Update user display
+        updateUserDisplay(user);
+        
+        // Load user data
+        loadUserData(user);
+        
+        // Make sure the token is stored for session recovery
+        user.getIdToken().then(token => {
+            localStorage.setItem('authToken', token);
+        });
+    }
+    
+    // Function to update user display in header
+    function updateUserDisplay(user) {
+        // Update user email in dropdown
+        const userEmailElement = document.getElementById('userEmail');
+        if (userEmailElement) {
+            userEmailElement.textContent = user.email || "Not logged in";
+        }
+        
+        // Show profile links and hide login button
+        document.getElementById('profileLink').style.display = 'block';
+        document.getElementById('accountLink').style.display = 'block';
+        document.getElementById('logoutButton').style.display = 'block';
+        document.getElementById('loginButton').style.display = 'none';
+        
+        // Update avatar/initial
+        const userInitial = document.getElementById('userInitial');
+        const userAvatar = document.getElementById('userAvatar');
+        
+        // Get user profile data
+        database.ref(`users/${user.uid}`).once('value')
+            .then(snapshot => {
+                const userData = snapshot.val() || {};
+                
+                if (userData.profileImage) {
+                    // Show profile image
+                    userAvatar.src = userData.profileImage;
+                    userAvatar.style.display = 'block';
+                    userInitial.style.display = 'none';
+                    
+                    // Update account page profile image if it exists
+                    const accountProfileImage = document.getElementById('accountProfileImage');
+                    if (accountProfileImage) {
+                        accountProfileImage.src = userData.profileImage;
+                    }
+                } else {
+                    // Show initial
+                    userInitial.textContent = getUserInitial(user);
+                    userInitial.style.display = 'flex';
+                    userAvatar.style.display = 'none';
+                }
+                
+                // Populate account form with user data
+                populateAccountForm(userData);
+            })
+            .catch(error => {
+                console.error("Error loading user profile:", error);
+            });
+    }
+    
+    // Helper function to get user initial
+    function getUserInitial(user) {
+        if (!user || !user.email) return '?';
+        return user.email.charAt(0).toUpperCase();
+    }
+    
+    // Function to load user data for the account page
+    function loadUserData(user) {
+        const userId = user.uid;
+        
+        // Get user data from Firebase
+        database.ref(`users/${userId}`).once('value')
+            .then(snapshot => {
+                const userData = snapshot.val() || {};
+                
+                // Populate form fields with user data
+                populateAccountForm(userData);
+            })
+            .catch(error => {
+                console.error("Error loading user data:", error);
+                showErrorMessage("Failed to load your account data. Please try again.");
+            });
+    }
+    
+    // Function to populate account form with user data
+    function populateAccountForm(userData) {
+        // Populate form fields if they exist
+        const fields = [
+            'firstName', 'lastName', 'email', 'phone', 'department',
+            'position', 'profileImage', 'bio', 'address', 'city',
+            'state', 'zipCode', 'country', 'company'
+        ];
+        
+        fields.forEach(field => {
+            const element = document.getElementById(field);
+            if (element && userData[field]) {
+                element.value = userData[field];
+            }
+        });
+        
+        // Update any display elements with user data
+        document.querySelectorAll('[data-user-field]').forEach(element => {
+            const field = element.dataset.userField;
+            if (userData[field]) {
+                element.textContent = userData[field];
+            }
+        });
+    }
+    
+    // Function to set up UI event listeners
+    function setupUIEventListeners() {
+        // Logout button
+        const logoutButton = document.getElementById('logoutButton');
+        if (logoutButton) {
+            logoutButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                logout();
+            });
+        }
+        
+        // Account form submission
+        const accountForm = document.getElementById('accountForm');
+        if (accountForm) {
+            accountForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveAccountChanges();
+            });
+        }
+    }
+    
+    // Function to handle logout
+    function logout() {
+        auth.signOut().then(() => {
+            console.log("User signed out");
+            localStorage.removeItem('authToken');
+            sessionStorage.clear();
+            window.location.href = "login.html";
+        }).catch(error => {
+            console.error("Error signing out:", error);
+            showErrorMessage("Failed to log out. Please try again.");
+        });
+    }
+    
+    // Function to save account changes
+    function saveAccountChanges() {
+        const user = auth.currentUser;
+        if (!user) {
+            showErrorMessage("You must be logged in to save changes.");
+            return;
+        }
+        
+        showLoading("Saving changes...");
+        
+        // Get form data
+        const formData = {};
+        document.querySelectorAll('#accountForm [id]').forEach(input => {
+            if (input.id && input.value) {
+                formData[input.id] = input.value.trim();
+            }
+        });
+        
+        // Add updated timestamp
+        formData.updatedAt = firebase.database.ServerValue.TIMESTAMP;
+        
+        // Save to Firebase
+        database.ref(`users/${user.uid}`).update(formData)
+            .then(() => {
+                hideLoading();
+                // Show success message
+                alert("Account updated successfully!");
+                
+                // Refresh user display
+                updateUserDisplay(user);
+            })
+            .catch(error => {
+                hideLoading();
+                console.error("Error saving account changes:", error);
+                showErrorMessage("Failed to save changes. Please try again.");
+            });
+    }
+
     // Global reference to DOM elements we'll need throughout the code
     let successMessage, errorMessage, profileInitial, profileImageUpload;
 
