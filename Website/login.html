@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Register</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+        }
+        .form-container, .exit-button-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 300px;
+        }
+        .or-text {
+            font-size: 16px;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #666;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .login-button {
+            background-color: #1877f2;
+        }
+        .login-button:hover {
+            background-color: #135ab4;
+        }
+        .register-button {
+            background-color: #28a745;
+        }
+        .register-button:hover {
+            background-color: #218838;
+        }
+        .exit-button {
+            background-color: #d9534f;
+            cursor: pointer;
+        }
+        .exit-button:hover {
+            background-color: #c9302c;
+        }
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container" id="login-container">
+            <img src='https://cdn-icons-png.flaticon.com/512/2919/2919600.png' alt='Login Icon' width='50'>
+            <input type="email" id="login-email" placeholder="Email" required>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <button class="login-button" onclick="login()">Login</button>
+            <p class="error" id="login-error-message"></p>
+            <div class="or-text">Or</div>
+            <button class="register-button" id="register-btn">Register</button>
+        </div>
+        
+        <div class="form-container hidden" id="register-container">
+            <h2>Register</h2>
+            <input type="email" id="register-email" placeholder="Email" required>
+            <input type="password" id="register-password" placeholder="Password" required>
+            <button class="register-button" onclick="register()">Create Account</button>
+            <p class="error" id="register-error-message"></p>
+            <button class="login-button" id="back-to-login">Back to Login</button>
+        </div>
+        
+        <div class="exit-button-container">
+            <button class="exit-button" id="exit-button">Exit</button>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+        const auth = getAuth(app);
+
+        document.getElementById("register-btn").addEventListener("click", function() {
+            document.getElementById("login-container").classList.add("hidden");
+            document.getElementById("register-container").classList.remove("hidden");
+        });
+        
+        document.getElementById("back-to-login").addEventListener("click", function() {
+            document.getElementById("register-container").classList.add("hidden");
+            document.getElementById("login-container").classList.remove("hidden");
+        });
+
+        document.getElementById("exit-button").addEventListener("click", () => {
+            window.location.href = "index.html";
+        });
+
+        // Added functions for account creation and login
+        window.login = function login() {
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    window.location.href = "index.html";
+                })
+                .catch((error) => {
+                    document.getElementById("login-error-message").textContent = error.message;
+                });
+        }
+        
+        window.register = function register() {
+            const email = document.getElementById("register-email").value;
+            const password = document.getElementById("register-password").value;
+            createUserWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    window.location.href = "index.html";
+                })
+                .catch((error) => {
+                    document.getElementById("register-error-message").textContent = error.message;
+                });
+        }
+    </script>
+</body>
+</html>

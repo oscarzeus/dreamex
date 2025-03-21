@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Analysis Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Add FontAwesome for icons if not already included -->
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        /* Freeze disabled menu buttons */
+        .menu-bar ul li.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li class="current"><a href="index.html">Home</a></li>
+                <li class="current"><a href="dashboard.html">Dashboard</a></li>
+                <li class="disabled"><a href="about.html">About</a></li>
+                <li class="disabled"><a href="services.html">Services</a></li>
+                <li class="disabled"><a href="risk-assessment.html">Risk Assessment</a></li>
+                <li class="disabled"><a href="data-analysis.html">Data Analysis</a></li>
+            </ul>
+            <ul class="menu-right">
+                <li style="margin-right: 30px;">
+                    <a href="login.html">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="#fff" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="hero">
+        <h1>Welcome to Data Analysis Hub</h1>
+        <p>Your trusted partner for data-driven decision making.</p>
+        <a href="services.html" class="btn">Explore Services</a>
+        <a href="account.html" class="btn">Manage Account</a>
+    </section>
+
+    <section id="dynamic-insight">
+        <h2>Today's Data Insight</h2>
+        <p id="insight-text">Loading insight...</p>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Data Analysis Hub. All Rights Reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // If logged in, unlock navigation items; otherwise disable them.
+            if(localStorage.getItem("loggedIn") === "true") {
+                document.querySelectorAll("nav ul li.disabled").forEach(li => 
+                    li.classList.remove("disabled")
+                );
+            } else {
+                // Disable non-current, non-last, and non-always-enabled items.
+                document.querySelectorAll("nav ul li:not(.current):not(:last-child):not(.always-enabled)").forEach(li => 
+                    li.classList.add("disabled")
+                );
+            }
+        });
+        const insights = [
+            "80% of enterprises are transforming operations with data-driven insights.",
+            "Predictive analytics can boost efficiency by over 25%.",
+            "Real-time data monitoring leads to faster decision making.",
+            "Big Data is the fuel driving smarter and faster innovations.",
+            "Harnessing data can unlock hidden revenue streams."
+        ];
+        const insightEl = document.getElementById('insight-text');
+        let currentIndex = 0;
+        function updateInsight() {
+            insightEl.textContent = insights[currentIndex];
+            currentIndex = (currentIndex + 1) % insights.length;
+        }
+        updateInsight();
+        setInterval(updateInsight, 5000);
+    </script>
+</body>
+</html>
