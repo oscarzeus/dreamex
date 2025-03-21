@@ -2651,3 +2651,523 @@
 </script>
 </body>
 </html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome - Dreamex Lab</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .welcome-container {
+            max-width: 800px;
+            margin: 80px auto;
+            padding: 40px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .welcome-header {
+            margin-bottom: 30px;
+        }
+        
+        .welcome-header h1 {
+            color: #34495e;
+            margin-bottom: 10px;
+        }
+        
+        .welcome-header p {
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+        
+        .user-profile {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .user-avatar-lg {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: block;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .user-initial-lg {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 42px;
+            font-weight: bold;
+            margin: 0 auto 15px;
+            border: 3px solid #fff;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .user-name {
+            font-size: 24px;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .user-email {
+            color: #7f8c8d;
+            margin-bottom: 15px;
+        }
+        
+        .quick-links {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .quick-link {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            width: 200px;
+            text-align: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: #34495e;
+        }
+        
+        .quick-link:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        
+        .quick-link-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .quick-link-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .quick-link-desc {
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        /* Menu bar styles */
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #34495e;
+            padding: 0 20px;
+        }
+        
+        .menu-bar ul {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .menu-bar ul li {
+            margin: 0 10px;
+        }
+        
+        .menu-bar ul li a {
+            display: block;
+            padding: 15px 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .menu-bar ul li a:hover {
+            color: #f1f3f5;
+        }
+        
+        .menu-bar ul li.current a {
+            color: #fafcfd;
+            font-weight: bold;
+        }
+
+        /* User Avatar Styles */
+        .user-avatar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 10px;
+            min-width: 150px;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .user-avatar-container:hover .user-dropdown {
+            display: block;
+        }
+        
+        .user-dropdown .user-email {
+            padding: 5px 0;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .user-dropdown a {
+            display: block;
+            padding: 5px 0;
+            color: #34495e;
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+        
+        .user-initial {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- Include auth.js after Firebase SDKs -->
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li class="current"><a href="index.html">Home</a></li>
+                <li><a href="riskassessment.html">Risk Assessment</a></li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+                <li><a href="account.html">Account</a></li>
+                <li><a href="log.html">Log</a></li>
+                <li><a href="evnt.html">Event</a></li>
+                <li><a href="eventboard.html">Event Board</a></li>
+            </ul>
+            <ul class="menu-right">
+                <!-- User Avatar Button -->
+                <li class="user-avatar-container">
+                    <div id="userAvatarContainer">
+                        <img src="https://via.placeholder.com/32" alt="User" class="user-avatar" id="userAvatar" style="display: none;">
+                        <div id="userInitial" class="user-initial">?</div>
+                    </div>
+                    <div class="user-dropdown">
+                        <div class="user-email" id="userEmail">Not logged in</div>
+                        <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                        <a href="account.html" id="accountLink" style="display: none;">Account Settings</a>
+                        <a href="#" id="logoutButton" style="display: none;">Log Out</a>
+                        <a href="login.html" id="loginButton">Log In</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="welcome-container">
+        <div class="welcome-header">
+            <h1>Welcome to Dreamex Lab</h1>
+            <p>We're glad to have you here!</p>
+        </div>
+        
+        <div class="user-profile">
+            <div id="userProfileAvatar">
+                <!-- User avatar will be dynamically inserted here -->
+                <div class="user-initial-lg" id="userInitialLg">?</div>
+            </div>
+            <h2 class="user-name" id="welcomeUserName">Welcome back</h2>
+            <p class="user-email" id="welcomeUserEmail"></p>
+            <p id="lastLoginInfo">Last login: </p>
+        </div>
+        
+        <div class="quick-links">
+            <a href="dashboard.html" class="quick-link">
+                <div class="quick-link-icon">📊</div>
+                <div class="quick-link-title">Dashboard</div>
+                <div class="quick-link-desc">View and manage user data</div>
+            </a>
+            <a href="evnt.html" class="quick-link">
+                <div class="quick-link-icon">🗓️</div>
+                <div class="quick-link-title">Create Event</div>
+                <div class="quick-link-desc">Submit a new event</div>
+            </a>
+            <a href="eventboard.html" class="quick-link">
+                <div class="quick-link-icon">📋</div>
+                <div class="quick-link-title">Event Board</div>
+                <div class="quick-link-desc">Browse all events</div>
+            </a>
+            <a href="account.html" class="quick-link">
+                <div class="quick-link-icon">⚙️</div>
+                <div class="quick-link-title">Account</div>
+                <div class="quick-link-desc">Manage your account settings</div>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.appspot.com",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Check if Firebase is already initialized
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated using AuthManager if available
+            if (window.AuthManager) {
+                AuthManager.requireAuth(['login.html', 'index.html', 'signup.html']);
+                
+                // Update UI based on auth state
+                updateUserDisplay();
+            } else {
+                // Check Firebase auth directly
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        // User is logged in
+                        console.log("User authenticated:", user.email);
+                        updateUIForAuthenticatedUser(user);
+                        loadUserProfile(user);
+                    } else {
+                        // User is not logged in
+                        console.log("User not authenticated, redirecting to login");
+                        window.location.href = "login.html";
+                    }
+                });
+            }
+
+            // Logout handler
+            document.getElementById('logoutButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.AuthManager) {
+                    AuthManager.logout();
+                } else {
+                    auth.signOut().then(() => {
+                        window.location.href = "login.html";
+                    });
+                }
+            });
+        });
+
+        // Function to load user profile data
+        function loadUserProfile(user) {
+            database.ref(`users/${user.uid}`).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val() || {};
+
+                    // Update welcome message with user's name
+                    let userName = "User";
+                    if (userData.firstName) {
+                        userName = userData.firstName;
+                        if (userData.lastName) {
+                            userName += " " + userData.lastName;
+                        }
+                    }
+                    document.getElementById('welcomeUserName').textContent = `Welcome, ${userName}`;
+                    document.getElementById('welcomeUserEmail').textContent = user.email;
+
+                    // Update profile image
+                    if (userData.profileImage) {
+                        const userProfileAvatar = document.getElementById('userProfileAvatar');
+                        userProfileAvatar.innerHTML = `
+                            <img src="${userData.profileImage}" alt="${userName}" class="user-avatar-lg"
+                                onerror="this.style.display='none'; document.getElementById('userInitialLg').style.display='flex';">
+                            <div class="user-initial-lg" id="userInitialLg" style="display: none;">${getInitial(userData, user.email)}</div>
+                        `;
+                    } else {
+                        // Show user initial
+                        document.getElementById('userInitialLg').textContent = getInitial(userData, user.email);
+                    }
+
+                    // Update last login info
+                    if (userData.lastLogin) {
+                        const lastLogin = new Date(userData.lastLogin);
+                        document.getElementById('lastLoginInfo').textContent = 
+                            `Last login: ${lastLogin.toLocaleDateString()} ${lastLogin.toLocaleTimeString()}`;
+                    } else {
+                        document.getElementById('lastLoginInfo').textContent = "First time login";
+                    }
+                })
+                .catch(error => {
+                    console.error("Error loading user profile:", error);
+                });
+        }
+
+        // Function to get user's initial for avatar
+        function getInitial(userData, email) {
+            if (userData.firstName && userData.firstName.length > 0) {
+                return userData.firstName.charAt(0).toUpperCase();
+            }
+            if (email && email.length > 0) {
+                return email.charAt(0).toUpperCase();
+            }
+            return "?";
+        }
+
+        // Function to update user display based on login state
+        function updateUserDisplay() {
+            if (window.AuthManager && AuthManager.isLoggedIn()) {
+                const user = AuthManager.getCurrentUser();
+                if (user) {
+                    updateUIForAuthenticatedUser(user);
+                    loadUserProfile(user);
+                } else {
+                    updateUIForNonAuthenticatedUser();
+                }
+            } else if (auth) {
+                // Check Firebase auth directly
+                const user = auth.currentUser;
+                if (user) {
+                    updateUIForAuthenticatedUser(user);
+                    loadUserProfile(user);
+                } else {
+                    updateUIForNonAuthenticatedUser();
+                }
+            } else {
+                updateUIForNonAuthenticatedUser();
+            }
+        }
+        
+        // Update UI elements based on authentication state
+        function updateUIForAuthenticatedUser(user) {
+            try {
+                // Update user email in dropdown
+                const userEmailElement = document.getElementById('userEmail');
+                if (userEmailElement) userEmailElement.textContent = user.email;
+                
+                // Get user data from Firebase
+                database.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+                    const userData = snapshot.val() || {};
+                    
+                    // Update profile picture if available
+                    if (userData.profileImage) {
+                        const userAvatar = document.getElementById('userAvatar');
+                        const userInitial = document.getElementById('userInitial');
+                        
+                        if (userAvatar && userInitial) {
+                            userAvatar.src = userData.profileImage;
+                            userAvatar.style.display = 'block';
+                            userInitial.style.display = 'none';
+                        }
+                    } else {
+                        // Otherwise display initial
+                        const userInitial = document.getElementById('userInitial');
+                        if (userInitial) {
+                            userInitial.textContent = getInitial(userData, user.email);
+                            userInitial.style.display = 'flex';
+                        }
+                        
+                        // Hide avatar image
+                        const userAvatar = document.getElementById('userAvatar');
+                        if (userAvatar) {
+                            userAvatar.style.display = 'none';
+                        }
+                    }
+                }).catch(error => {
+                    console.error("Error fetching user profile data:", error);
+                });
+                
+                // Show authenticated user links and hide login button
+                document.getElementById('profileLink').style.display = 'block';
+                document.getElementById('accountLink').style.display = 'block';
+                document.getElementById('logoutButton').style.display = 'block';
+                document.getElementById('loginButton').style.display = 'none';
+            } catch (error) {
+                console.warn("Error updating UI for authenticated user:", error);
+            }
+        }
+
+        // Function to revert UI to non-authenticated state
+        function updateUIForNonAuthenticatedUser() {
+            try {
+                // Reset user initial to question mark
+                const userInitial = document.getElementById('userInitial');
+                if (userInitial) {
+                    userInitial.textContent = "?";
+                    userInitial.style.display = 'flex';
+                }
+                
+                // Hide avatar image
+                const userAvatar = document.getElementById('userAvatar');
+                if (userAvatar) {
+                    userAvatar.style.display = 'none';
+                }
+                
+                // Update email display
+                const userEmailElement = document.getElementById('userEmail');
+                if (userEmailElement) userEmailElement.textContent = "Not logged in";
+                
+                // Hide authenticated user links and show login button
+                document.getElementById('profileLink').style.display = 'none';
+                document.getElementById('accountLink').style.display = 'none';
+                document.getElementById('logoutButton').style.display = 'none';
+                document.getElementById('loginButton').style.display = 'block';
+            } catch (error) {
+                console.warn("Error updating UI for non-authenticated user:", error);
+            }
+        }
+    </script>
+</body>
+</html>
+</copilot-edited-file>
