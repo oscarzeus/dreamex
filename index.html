@@ -268,9 +268,13 @@
             100% { transform: rotate(360deg); }
         }
     </style>
+    <!-- Load Firebase SDKs directly in the head -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    
+    <!-- THEN load AuthManager before the main script -->
+    <script src="js/authManager.js"></script>
 </head>
 <body>
 
@@ -344,27 +348,33 @@
             appId: "1:829083030831:web:36a370e62691e560bc3dda"
         };
         
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database();
+        // Clean, direct Firebase initialization
+        let auth;
+        let database;
         
-        // Get return URL from query parameter or use default
+        // Initialize Firebase ONLY once (avoid multiple initializations)
+        if (firebase.apps.length === 0) {
+            firebase.initializeApp(firebaseConfig);
+            console.log("Firebase initialized in login page");
+        } else {
+            console.log("Using existing Firebase initialization");
+        }
+        
+        // Get Firebase services
+        auth = firebase.auth();
+        database = firebase.database();
+        
+        // Explicitly set auth persistence to LOCAL
+        auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+            .then(() => console.log("Firebase persistence set to LOCAL"))
+            .catch(e => console.error("Error setting persistence:", e));
+        
+        // Get URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const returnUrl = urlParams.get('returnUrl') || 'index.html';
+        const redirectParam = urlParams.get('redirect') || '';
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Load authManager.js properly
-            loadAuthScript();
-            
-            // Check if authManager.js loaded correctly after a delay
-            setTimeout(() => {
-                if (typeof EnhancedAuthManager === 'undefined') {
-                    console.warn("AuthManager not loaded. Using standard Firebase authentication.");
-                    // No alert to avoid confusing users
-                }
-            }, 2000);
-            
             const loginForm = document.getElementById('loginForm');
             const googleSignInBtn = document.getElementById('googleSignInBtn');
             const errorAlert = document.getElementById('errorAlert');
@@ -374,7 +384,7 @@
             const continueToSiteBtn = document.getElementById('continueToSiteBtn');
             const switchAccountBtn = document.getElementById('switchAccountBtn');
             
-            // Email/Password Login
+            // SIMPLE, DIRECT LOGIN IMPLEMENTATION
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -399,7 +409,49 @@
                 }
                 
                 if (isValid) {
-                    handleLogin(email, password);
+                    // Show loading indicator immediately
+                    showLoading();
+                    
+                    // DIRECT FIREBASE AUTHENTICATION - simplest approach
+                    console.log(`Attempting Firebase login for: ${email}`);
+                    
+                    auth.signInWithEmailAndPassword(email, password)
+                        .then((userCredential) => {
+                            // Authentication successful
+                            const user = userCredential.user;
+                            console.log('Login successful for:', email);
+                            
+                            // Update user data in database
+                            updateUserData(user);
+                            
+                            // ENHANCED: Set robust auth flags across storage mechanisms
+                            setAuthenticationFlags(user);
+                            
+                            // Show success and redirect
+                            hideLoading();
+                            showSuccess("Login successful! Redirecting...");
+                            
+                            // Determine redirect URL
+                            const redirectTo = redirectParam || returnUrl;
+                            
+                            // Redirect after delay
+                            setTimeout(() => {
+                                window.location.href = redirectTo;
+                            }, 1500);
+                        })
+                        .catch((error) => {
+                            // Authentication failed
+                            console.error("Firebase login error:", error.code, error.message);
+                            hideLoading();
+                            showError(getAuthErrorMessage(error.code));
+                            
+                            // Log failed attempt
+                            logAction('FAILED_LOGIN', {
+                                method: 'email',
+                                error: error.code,
+                                email: email
+                            });
+                        });
                 }
             });
             
@@ -435,6 +487,9 @@
                         
                         // Log successful login
                         logAction('LOGIN', {method: 'google', email: user.email});
+                        
+                        // ENHANCED: Also set robust auth flags
+                        setAuthenticationFlags(user);
                         
                         hideLoading();
                         showSuccess("Login successful! Redirecting...");
@@ -564,118 +619,60 @@
                 // Hide loading overlay in either case
                 hideLoading();
             });
-
-            // Modify the login function to use EnhancedAuthManager with fallback to Firebase Auth
-            function handleLogin(email, password) {
-                showLoading();
-                console.log("Login attempt for:", email);
-                
-                // Get redirect URL from query params if available
-                const urlParams = new URLSearchParams(window.location.search);
-                const redirectPage = urlParams.get('redirect') || returnUrl;
-                
-                // Try to use EnhancedAuthManager if available, otherwise fallback to Firebase Auth
-                if (typeof EnhancedAuthManager !== 'undefined' && EnhancedAuthManager && EnhancedAuthManager.login) {
-                    console.log("Using EnhancedAuthManager for login");
-                    EnhancedAuthManager.login(email, password)
-                        .then(user => {
-                            console.log("Login successful via EnhancedAuthManager");
-                            hideLoading();
-                            showSuccess("Login successful! Redirecting...");
-                            
-                            setTimeout(() => {
-                                window.location.href = redirectPage;
-                            }, 1500);
-                        })
-                        .catch(error => {
-                            hideLoading();
-                            console.error("Login error with EnhancedAuthManager:", error);
-                            showError(error.message || "Login failed. Please check your credentials.");
-                            
-                            // Try Firebase auth as fallback if EnhancedAuthManager fails
-                            console.log("Attempting fallback to Firebase Auth...");
-                            firebaseLogin(email, password, redirectPage);
-                        });
-                } else {
-                    console.log("EnhancedAuthManager not found, using Firebase Auth directly");
-                    firebaseLogin(email, password, redirectPage);
-                }
-            }
-            
-            // Separate function for Firebase authentication
-            function firebaseLogin(email, password, redirectPage) {
-                showLoading();
-                auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        const user = userCredential.user;
-                        console.log("Login successful via Firebase Auth");
-                        
-                        // Save or update user data
-                        const userRef = database.ref('users/' + user.uid);
-                        userRef.once('value').then((snapshot) => {
-                            if (!snapshot.exists()) {
-                                userRef.set({
-                                    email: user.email,
-                                    lastLogin: firebase.database.ServerValue.TIMESTAMP
-                                });
-                            } else {
-                                userRef.update({
-                                    lastLogin: firebase.database.ServerValue.TIMESTAMP
-                                });
-                            }
-                        });
-                        
-                        // Log successful login
-                        logAction('LOGIN', {method: 'email', email: user.email});
-                        
-                        hideLoading();
-                        showSuccess("Login successful! Redirecting...");
-                        
-                        // Redirect after a short delay to show success message
-                        setTimeout(() => {
-                            window.location.href = redirectPage;
-                        }, 1500);
-                    })
-                    .catch((error) => {
-                        console.error("Firebase login error:", error);
-                        logAction('FAILED_LOGIN', {
-                            method: 'email',
-                            error: error.code
-                        });
-                        
-                        hideLoading();
-                        showError(getAuthErrorMessage(error.code));
-                    });
-            }
-            
-            // Function to dynamically load the auth script with error handling
-            function loadAuthScript() {
-                const paths = [
-                    "/js/authManager.js",
-                    "js/authManager.js",
-                    "../js/authManager.js",
-                    "./js/authManager.js"
-                ];
-                
-                let loaded = false;
-                
-                paths.forEach(path => {
-                    if (!loaded) {
-                        const script = document.createElement('script');
-                        script.src = path;
-                        script.async = true;
-                        script.onload = function() {
-                            console.log("AuthManager loaded successfully from:", path);
-                            loaded = true;
-                        };
-                        script.onerror = function() {
-                            console.warn("Failed to load AuthManager from:", path);
-                        };
-                        document.body.appendChild(script);
-                    }
-                });
-            }
         });
+        
+        // ENHANCED: Function to set consistent authentication flags across storage mechanisms
+        function setAuthenticationFlags(user) {
+            // Store in localStorage for cross-page compatibility
+            localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('authTimestamp', Date.now().toString());
+            localStorage.setItem('userId', user.uid);
+            localStorage.setItem('userEmail', user.email);
+            
+            // Also store in sessionStorage as a backup
+            sessionStorage.setItem('isAuthenticated', 'true');
+            sessionStorage.setItem('userId', user.uid);
+            
+            // Set a login cookie (helps with some edge cases)
+            document.cookie = `isAuthenticated=true; path=/; max-age=86400`; // 24 hours
+            document.cookie = `userId=${user.uid}; path=/; max-age=86400`;
+            
+            // Store auth token if available
+            user.getIdToken().then(token => {
+                localStorage.setItem('authToken', token);
+                console.log("Authentication token stored successfully");
+            });
+            
+            console.log("Authentication flags set across storage mechanisms");
+        }
+        
+        // Update user data in database function
+        function updateUserData(user) {
+            if (!user) return;
+            
+            const userRef = database.ref('users/' + user.uid);
+            userRef.once('value').then((snapshot) => {
+                if (!snapshot.exists()) {
+                    // Create new user record
+                    userRef.set({
+                        email: user.email,
+                        displayName: user.displayName || user.email,
+                        photoURL: user.photoURL || null,
+                        role: 'user',
+                        lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } else {
+                    // Update existing user
+                    userRef.update({
+                        lastLogin: firebase.database.ServerValue.TIMESTAMP,
+                        email: user.email
+                    });
+                }
+            }).catch(error => {
+                console.error("Error updating user data:", error);
+            });
+        }
     </script>
 </body>
 </html>
