@@ -374,6 +374,14 @@
         const returnUrl = urlParams.get('returnUrl') || 'index.html';
         const redirectParam = urlParams.get('redirect') || '';
         
+        // Check if this is a login page reload - prevent login loops
+        const isRedirectFromLogin = sessionStorage.getItem('loginRedirectAttempt') === 'true';
+        if (isRedirectFromLogin) {
+            // Clear the redirect attempt flag
+            sessionStorage.removeItem('loginRedirectAttempt');
+            console.warn("Preventing login redirect loop");
+        }
+        
         document.addEventListener('DOMContentLoaded', function() {
             const loginForm = document.getElementById('loginForm');
             const googleSignInBtn = document.getElementById('googleSignInBtn');
@@ -427,17 +435,12 @@
                             // ENHANCED: Set robust auth flags across storage mechanisms
                             setAuthenticationFlags(user);
                             
-                            // Show success and redirect
+                            // Set a flag that we just logged in (for auth state change handler)
+                            sessionStorage.setItem('justLoggedIn', 'true');
+                            
+                            // Show success message - the auth state change handler will do the redirect
                             hideLoading();
                             showSuccess("Login successful! Redirecting...");
-                            
-                            // Determine redirect URL
-                            const redirectTo = redirectParam || returnUrl;
-                            
-                            // Redirect after delay
-                            setTimeout(() => {
-                                window.location.href = redirectTo;
-                            }, 1500);
                         })
                         .catch((error) => {
                             // Authentication failed
@@ -491,13 +494,12 @@
                         // ENHANCED: Also set robust auth flags
                         setAuthenticationFlags(user);
                         
+                        // Set flag for automatic redirect
+                        sessionStorage.setItem('justLoggedIn', 'true');
+                        
+                        // Show success - auth state change will handle redirect
                         hideLoading();
                         showSuccess("Login successful! Redirecting...");
-                        
-                        // Redirect after a short delay to show success message
-                        setTimeout(() => {
-                            window.location.href = returnUrl;
-                        }, 1500);
                     })
                     .catch((error) => {
                         console.error("Google sign-in error:", error);
@@ -596,18 +598,54 @@
                 }
             }
             
-            // Check for already logged in user - show different UI instead of auto-redirecting
+            // Improved auth state change handler with automatic redirect
             auth.onAuthStateChanged(function(user) {
                 if (user) {
-                    console.log("User is already logged in:", user.email);
+                    console.log("User is logged in:", user.email);
                     
-                    // Show "already logged in" UI instead of redirecting
+                    // If the user just logged in (not a page reload), redirect them
+                    const justLoggedIn = sessionStorage.getItem('justLoggedIn') === 'true';
+                    
+                    if (justLoggedIn) {
+                        // Clear the flag
+                        sessionStorage.removeItem('justLoggedIn');
+                        
+                        // Get redirect URL - prioritize redirect param, then returnUrl, then default
+                        const redirectTo = redirectParam || returnUrl || 'index.html';
+                        
+                        console.log(`Auto-redirecting to: ${redirectTo}`);
+                        window.location.href = redirectTo;
+                        return;
+                    } else if (!isRedirectFromLogin) {
+                        // This might be a page reload or direct access to login page while logged in
+                        // Set redirect attempt flag to prevent loops
+                        sessionStorage.setItem('loginRedirectAttempt', 'true');
+                        
+                        // Determine where to redirect
+                        const currentPath = window.location.pathname;
+                        // Only redirect if on the login page
+                        if (currentPath.endsWith('login.html')) {
+                            console.log("Already logged in, redirecting to default page");
+                            
+                            // Get redirect URL - prioritize redirect param, then returnUrl, then default
+                            const redirectTo = redirectParam || returnUrl || 'index.html';
+                            
+                            // Show brief message, then redirect
+                            showSuccess("Already logged in. Redirecting...");
+                            
+                            setTimeout(() => {
+                                window.location.href = redirectTo;
+                            }, 1000);
+                            return;
+                        }
+                    }
+                    
+                    // As a fallback, if no redirect happens, show the "already logged in" UI
                     loginForm.style.display = 'none';
                     document.querySelector('.divider').style.display = 'none';
                     document.querySelector('.social-login').style.display = 'none';
                     alreadyLoggedInContainer.style.display = 'block';
                     
-                    // No automatic redirect - let the user decide
                 } else {
                     // User is not logged in, show the login form
                     loginForm.style.display = 'block';
