@@ -354,7 +354,10 @@
         const returnUrl = urlParams.get('returnUrl') || 'index.html';
         
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if authManager.js loaded correctly
+            // Load authManager.js properly
+            loadAuthScript();
+            
+            // Check if authManager.js loaded correctly after a delay
             setTimeout(() => {
                 if (typeof EnhancedAuthManager === 'undefined') {
                     console.warn("AuthManager not loaded. Using standard Firebase authentication.");
@@ -565,6 +568,7 @@
             // Modify the login function to use EnhancedAuthManager with fallback to Firebase Auth
             function handleLogin(email, password) {
                 showLoading();
+                console.log("Login attempt for:", email);
                 
                 // Get redirect URL from query params if available
                 const urlParams = new URLSearchParams(window.location.search);
@@ -572,9 +576,10 @@
                 
                 // Try to use EnhancedAuthManager if available, otherwise fallback to Firebase Auth
                 if (typeof EnhancedAuthManager !== 'undefined' && EnhancedAuthManager && EnhancedAuthManager.login) {
+                    console.log("Using EnhancedAuthManager for login");
                     EnhancedAuthManager.login(email, password)
                         .then(user => {
-                            console.log("Login successful");
+                            console.log("Login successful via EnhancedAuthManager");
                             hideLoading();
                             showSuccess("Login successful! Redirecting...");
                             
@@ -584,59 +589,93 @@
                         })
                         .catch(error => {
                             hideLoading();
-                            console.error("Login error:", error);
+                            console.error("Login error with EnhancedAuthManager:", error);
                             showError(error.message || "Login failed. Please check your credentials.");
+                            
+                            // Try Firebase auth as fallback if EnhancedAuthManager fails
+                            console.log("Attempting fallback to Firebase Auth...");
+                            firebaseLogin(email, password, redirectPage);
                         });
                 } else {
-                    // Fallback to standard Firebase Auth
-                    console.warn("EnhancedAuthManager not found, using Firebase Auth directly");
-                    
-                    auth.signInWithEmailAndPassword(email, password)
-                        .then((userCredential) => {
-                            const user = userCredential.user;
-                            
-                            // Save or update user data
-                            const userRef = database.ref('users/' + user.uid);
-                            userRef.once('value').then((snapshot) => {
-                                if (!snapshot.exists()) {
-                                    userRef.set({
-                                        email: user.email,
-                                        lastLogin: firebase.database.ServerValue.TIMESTAMP
-                                    });
-                                } else {
-                                    userRef.update({
-                                        lastLogin: firebase.database.ServerValue.TIMESTAMP
-                                    });
-                                }
-                            });
-                            
-                            // Log successful login
-                            logAction('LOGIN', {method: 'email', email: user.email});
-                            
-                            hideLoading();
-                            showSuccess("Login successful! Redirecting...");
-                            
-                            // Redirect after a short delay to show success message
-                            setTimeout(() => {
-                                window.location.href = redirectPage;
-                            }, 1500);
-                        })
-                        .catch((error) => {
-                            console.error("Firebase login error:", error);
-                            logAction('FAILED_LOGIN', {
-                                method: 'email',
-                                error: error.code
-                            });
-                            
-                            hideLoading();
-                            showError(getAuthErrorMessage(error.code));
-                        });
+                    console.log("EnhancedAuthManager not found, using Firebase Auth directly");
+                    firebaseLogin(email, password, redirectPage);
                 }
             }
+            
+            // Separate function for Firebase authentication
+            function firebaseLogin(email, password, redirectPage) {
+                showLoading();
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        const user = userCredential.user;
+                        console.log("Login successful via Firebase Auth");
+                        
+                        // Save or update user data
+                        const userRef = database.ref('users/' + user.uid);
+                        userRef.once('value').then((snapshot) => {
+                            if (!snapshot.exists()) {
+                                userRef.set({
+                                    email: user.email,
+                                    lastLogin: firebase.database.ServerValue.TIMESTAMP
+                                });
+                            } else {
+                                userRef.update({
+                                    lastLogin: firebase.database.ServerValue.TIMESTAMP
+                                });
+                            }
+                        });
+                        
+                        // Log successful login
+                        logAction('LOGIN', {method: 'email', email: user.email});
+                        
+                        hideLoading();
+                        showSuccess("Login successful! Redirecting...");
+                        
+                        // Redirect after a short delay to show success message
+                        setTimeout(() => {
+                            window.location.href = redirectPage;
+                        }, 1500);
+                    })
+                    .catch((error) => {
+                        console.error("Firebase login error:", error);
+                        logAction('FAILED_LOGIN', {
+                            method: 'email',
+                            error: error.code
+                        });
+                        
+                        hideLoading();
+                        showError(getAuthErrorMessage(error.code));
+                    });
+            }
+            
+            // Function to dynamically load the auth script with error handling
+            function loadAuthScript() {
+                const paths = [
+                    "/js/authManager.js",
+                    "js/authManager.js",
+                    "../js/authManager.js",
+                    "./js/authManager.js"
+                ];
+                
+                let loaded = false;
+                
+                paths.forEach(path => {
+                    if (!loaded) {
+                        const script = document.createElement('script');
+                        script.src = path;
+                        script.async = true;
+                        script.onload = function() {
+                            console.log("AuthManager loaded successfully from:", path);
+                            loaded = true;
+                        };
+                        script.onerror = function() {
+                            console.warn("Failed to load AuthManager from:", path);
+                        };
+                        document.body.appendChild(script);
+                    }
+                });
+            }
         });
-
-        // Add script reference for authManager.js
-        document.write('<script src="js/authManager.js"><\/script>');
     </script>
 </body>
 </html>
