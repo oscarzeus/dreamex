@@ -838,13 +838,15 @@
     <header>
         <nav class="menu-bar">
             <ul class="menu-left">
-                <li class=""><a href="index.html">Home</a></li>
+                <li class=""><a href="login.html">Home</a></li>
                 <li><a href="riskassessment.html">Risk Assessment</a></li>
                 <li><a href="dashboard.html">Dashboard</a></li>
                 <li><a href="account.html">Account</a></li>
                 <li><a href="log.html">Log</a></li>
                 <li><a href="evnt.html">Event</a></li>
                 <li><a href="eventboard.html">Event Board</a></li>
+                <li><a href="notifications.html">Notif</a></li>
+                <li><a href="setup.html">Setup</a></li>
             </ul>
             <ul class="menu-right">
                 <!-- User Avatar Button -->
@@ -1752,6 +1754,28 @@
                     });
                 }
                 
+                // Create notification for new events
+                if (!eventId) {
+                    createNotification({
+                        type: 'event_created',
+                        title: 'New Event Created',
+                        message: `A new event "${eventTitle}" has been created`,
+                        eventId: newEventRef.key,
+                        createdBy: currentUser.uid,
+                        severity: severityLevel || 'Normal'
+                    });
+                } else {
+                    // Create notification for updated events
+                    createNotification({
+                        type: 'event_updated',
+                        title: 'Event Updated',
+                        message: `Event "${eventTitle}" has been updated`,
+                        eventId: eventId,
+                        updatedBy: currentUser.uid,
+                        severity: severityLevel || 'Normal'
+                    });
+                }
+                
             }).catch(error => {
                 console.error("Error saving event:", error);
                 hideLoading();
@@ -1763,6 +1787,72 @@
             hideLoading();
             alert(`An error occurred during form submission: ${error.message}`);
         }
+    }
+
+    // Function to create a notification in Firebase
+    function createNotification(notificationData) {
+        if (!database || !auth.currentUser) {
+            console.error("Cannot create notification: Database or user not available");
+            return Promise.reject("Database or user not available");
+        }
+        
+        const currentUser = auth.currentUser;
+        
+        // Add standard fields to notification
+        const notification = {
+            ...notificationData,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            createdBy: currentUser.uid,
+            createdByEmail: currentUser.email,
+            readBy: {}, // Store read status by user ID for better real-time updates
+            targetUsers: [] // Empty array means notification is for all users
+        };
+        
+        // Auto-mark creator's own notifications as read
+        notification.readBy[currentUser.uid] = true;
+        
+        // If it's related to an event with a line manager, add them as target
+        if (notificationData.eventId && 
+            (notificationData.type === 'event_created' || notificationData.type === 'event_updated')) {
+            
+            const lineManagerId = document.getElementById('lineManager').value;
+            const lineManagerEmail = document.getElementById('lineManager')
+                .options[document.getElementById('lineManager').selectedIndex]
+                .getAttribute('data-email');
+                
+            if (lineManagerId && lineManagerId !== currentUser.uid) {
+                notification.targetUsers = [lineManagerId];
+                
+                // If this is a new event, create a special notification for the line manager
+                if (notificationData.type === 'event_created') {
+                    const managerNotification = {
+                        ...notification,
+                        type: 'event_requires_approval',
+                        title: 'New Event Requires Your Approval',
+                        message: `A new event "${notificationData.message.replace('A new event "', '').replace('" has been created', '')}" requires your approval`,
+                        urgency: 'high',
+                        targetUsers: [lineManagerId],
+                        readBy: {} // Reset read status for new notification
+                    };
+                    
+                    // Create a separate notification for manager (don't need to wait for it)
+                    database.ref('notifications').push(managerNotification)
+                        .then(() => console.log("Created approval notification for line manager"))
+                        .catch(error => console.error("Error creating approval notification:", error));
+                }
+            }
+        }
+        
+        // Create the general notification
+        return database.ref('notifications').push(notification)
+            .then((ref) => {
+                console.log("Notification created successfully with ID:", ref.key);
+                return { ...notification, id: ref.key };
+            })
+            .catch(error => {
+                console.error("Error creating notification:", error);
+                return Promise.reject(error);
+            });
     }
 
     // Function to populate form fields with event data for editing
