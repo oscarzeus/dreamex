@@ -854,7 +854,7 @@
 
         .event-filters {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 15px;
             margin-bottom: 20px;
             padding: 20px;
@@ -863,31 +863,21 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
+        .filter-inputs {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
         .filter-group {
             flex: 1;
             min-width: 200px;
         }
 
-        .filter-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #34495e;
-            font-size: 14px;
-        }
-
-        .filter-input {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
         .filter-buttons {
             display: flex;
             gap: 10px;
-            align-items: flex-end;
+            margin-top: 10px;
         }
 
         .event-table-container {
@@ -900,6 +890,7 @@
         .event-table {
             width: 100%;
             border-collapse: collapse;
+            font-size: 12px;
         }
 
         .event-table th,
@@ -914,10 +905,17 @@
             font-weight: 600;
             color: #34495e;
             cursor: pointer;
+            font-size: 13px;
+            padding: 10px 12px;
         }
 
         .event-table th:hover {
             background-color: #eaecef;
+        }
+
+        .event-table td {
+            font-size: 12px;
+            padding: 8px 12px;
         }
 
         .event-table tbody tr:hover {
@@ -1062,6 +1060,324 @@
         .btn-edit:hover {
             background-color: #2980b9;
         }
+
+        /* Enhanced Notification Bell Styles */
+        .notification-bell-container {
+            position: relative;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+
+        .notification-bell {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 40px;
+            width: 40px;
+            transition: transform 0.2s ease;
+            color: #ecf0f1;
+        }
+
+        .notification-bell:hover {
+            transform: scale(1.1);
+        }
+
+        .bell-icon-svg {
+            height: 24px;
+            width: 24px;
+            fill: currentColor;
+        }
+
+        .notification-counter {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            min-width: 18px;
+            height: 18px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 2px;
+            box-sizing: border-box;
+            border: 2px solid #34495e;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(231, 76, 60, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(231, 76, 60, 0);
+            }
+        }
+
+        @keyframes bellShake {
+            0% { transform: rotate(0); }
+            15% { transform: rotate(5deg); }
+            30% { transform: rotate(-5deg); }
+            45% { transform: rotate(4deg); }
+            60% { transform: rotate(-4deg); }
+            75% { transform: rotate(2deg); }
+            85% { transform: rotate(-2deg); }
+            92% { transform: rotate(1deg); }
+            100% { transform: rotate(0); }
+        }
+
+        .notification-bell.has-new {
+            animation: bellShake 2s cubic-bezier(.36,.07,.19,.97) both;
+            animation-iteration-count: 1;
+        }
+
+        .notification-bell.animate {
+            animation: bellShake 1s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 45px;
+            right: -10px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+            width: 350px;
+            max-width: 90vw;
+            z-index: 1001;
+            display: none;
+            max-height: 450px;
+            overflow-y: auto;
+            animation: dropdown-fade-in 0.2s ease-out;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        @keyframes dropdown-fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Triangle pointer for dropdown */
+        .notification-dropdown::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            right: 20px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 10px solid white;
+            filter: drop-shadow(0 -2px 2px rgba(0,0,0,0.1));
+        }
+
+        .notification-bell-container.active .notification-dropdown {
+            display: block;
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+            background: white;
+            border-radius: 12px 12px 0 0;
+            z-index: 5;
+        }
+
+        .notification-header h4 {
+            margin: 0;
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .notification-header-actions button {
+            background: none;
+            border: none;
+            color: #3498db;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .notification-header-actions button:hover {
+            background-color: #f7f9fa;
+            color: #2980b9;
+        }
+
+        .notification-list {
+            max-height: 350px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #bdc3c7 #f5f5f5;
+        }
+
+        .notification-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notification-list::-webkit-scrollbar-track {
+            background: #f5f5f5;
+        }
+
+        .notification-list::-webkit-scrollbar-thumb {
+            background-color: #bdc3c7;
+            border-radius: 6px;
+        }
+
+        .notification-list-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: flex-start;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .notification-list-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-list-item.unread {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+
+        .notification-list-item.unread::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 6px;
+            height: 6px;
+            background-color: #3498db;
+            border-radius: 50%;
+        }
+
+        .notification-icon {
+            margin-right: 15px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            flex-shrink: 0;
+            box-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+            transition: transform 0.2s ease;
+        }
+        
+        .notification-list-item:hover .notification-icon {
+            transform: scale(1.1);
+        }
+
+        .notification-icon.warning {
+            background-color: #f39c12;
+            box-shadow: 0 2px 5px rgba(243, 156, 18, 0.3);
+        }
+
+        .notification-icon.error {
+            background-color: #e74c3c;
+            box-shadow: 0 2px 5px rgba(231, 76, 60, 0.3);
+        }
+
+        .notification-icon.success {
+            background-color: #2ecc71;
+            box-shadow: 0 2px 5px rgba(46, 204, 113, 0.3);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #2c3e50;
+            line-height: 1.3;
+        }
+
+        .notification-message {
+            margin: 0 0 5px 0;
+            font-size: 13px;
+            color: #7f8c8d;
+            line-height: 1.4;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: #95a5a6;
+            font-style: italic;
+        }
+
+        .notification-empty {
+            padding: 40px 15px;
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23ecf0f1" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>');
+            background-position: center 30px;
+            background-repeat: no-repeat;
+            background-size: 60px;
+            padding-top: 100px;
+        }
+
+        /* Mark as read button */
+        .notification-mark-read {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: none;
+            border: none;
+            color: #bdc3c7;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            display: none;
+            transition: all 0.2s ease;
+        }
+        
+        .notification-list-item:hover .notification-mark-read {
+            display: block;
+        }
+        
+        .notification-mark-read:hover {
+            color: #7f8c8d;
+            background-color: rgba(0,0,0,0.05);
+        }
+
+        /* Timestamp column specific styles */
+        .timestamp-column {
+            white-space: nowrap;
+            width: 140px;
+        }
     </style>
     <!-- Add Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -1074,15 +1390,38 @@
     <header>
         <nav class="menu-bar">
             <ul class="menu-left">
-                <li class=""><a href="index.html">Home</a></li>
+                <li class=""><a href="login.html">Home</a></li>
                 <li><a href="riskassessment.html">Risk Assessment</a></li>
                 <li><a href="dashboard.html">Dashboard</a></li>
                 <li><a href="account.html">Account</a></li>
                 <li><a href="log.html">Log</a></li>
                 <li><a href="evnt.html">Event</a></li>
                 <li><a href="eventboard.html">Event Board</a></li>
+                <li><a href="notifications.html">Notif</a></li>
+                <li><a href="setup.html">Setup</a></li>
             </ul>
             <ul class="menu-right">
+                <!-- Add Notification Bell -->
+                <li class="notification-bell-container" id="notificationBellContainer">
+                    <div class="notification-bell" id="notificationBell">
+                        <svg class="bell-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notification-counter" id="notificationCounter" style="display: none;">0</span>
+                    </div>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h4>Notifications</h4>
+                            <div class="notification-header-actions">
+                                <button id="markAllReadBtn">Mark all as read</button>
+                            </div>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="notification-empty">No new notifications</div>
+                        </div>
+                    </div>
+                </li>
+                
                 <!-- User Avatar Button -->
                 <li class="user-avatar-container">
                     <div id="userAvatarContainer">
@@ -1113,40 +1452,42 @@
         </div>
 
         <div class="event-filters">
-            <div class="filter-group">
-                <label for="eventTypeFilter">Event Type</label>
-                <select id="eventTypeFilter" class="filter-input">
-                    <option value="">All Types</option>
-                    <option value="Incident">Incident</option>
-                    <option value="Near Miss">Near Miss</option>
-                    <option value="Unsafe Act">Unsafe Act</option>
-                    <option value="Unsafe Condition">Unsafe Condition</option>
-                    <option value="Environmental Impact">Environmental Impact</option>
-                    <option value="Property Damage">Property Damage</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="severityFilter">Severity</label>
-                <select id="severityFilter" class="filter-input">
-                    <option value="">All Severities</option>
-                    <option value="Minor">Minor</option>
-                    <option value="Moderate">Moderate</option>
-                    <option value="Major">Major</option>
-                    <option value="Critical">Critical</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="statusFilter">Status</label>
-                <select id="statusFilter" class="filter-input">
-                    <option value="">All Statuses</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Approved">Approved</option>
-                    <option value="Rejected">Rejected</option>
-                </select>
-            </div>
-            <div class="filter-group">
-                <label for="searchInput">Search</label>
-                <input type="text" id="searchInput" class="filter-input" placeholder="Search events...">
+            <div class="filter-inputs">
+                <div class="filter-group">
+                    <label for="eventTypeFilter">Event Type</label>
+                    <select id="eventTypeFilter" class="filter-input">
+                        <option value="">All Types</option>
+                        <option value="Incident">Incident</option>
+                        <option value="Near Miss">Near Miss</option>
+                        <option value="Unsafe Act">Unsafe Act</option>
+                        <option value="Unsafe Condition">Unsafe Condition</option>
+                        <option value="Environmental Impact">Environmental Impact</option>
+                        <option value="Property Damage">Property Damage</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="severityFilter">Severity</label>
+                    <select id="severityFilter" class="filter-input">
+                        <option value="">All Severities</option>
+                        <option value="Minor">Minor</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Major">Major</option>
+                        <option value="Critical">Critical</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Status</label>
+                    <select id="statusFilter" class="filter-input">
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="searchInput">Search</label>
+                    <input type="text" id="searchInput" class="filter-input" placeholder="Search events...">
+                </div>
             </div>
             <div class="filter-buttons">
                 <button id="applyFiltersBtn" class="filter-btn">Apply Filters</button>
@@ -1166,6 +1507,7 @@
                         <th data-sort="approvalStatus">Status</th>
                         <th data-sort="reportedByName">Reported By</th>
                         <th data-sort="lineManager">Line Manager</th>
+                        <th data-sort="createdAt" class="timestamp-column">Created At</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -1276,7 +1618,7 @@
     // Initialize Firebase with enhanced domain handling
     let database;
     let auth;
-    
+
     function initializeFirebase() {
         const firebaseConfig = {
             apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
@@ -1317,9 +1659,9 @@
     const EVENTS_PER_PAGE = 10;
     let allEvents = [];
     let currentPage = 1;
-    let sortField = 'eventDateTime';
-    let sortDirection = 'desc';
-    
+    let sortField = 'createdAt';  // Change from 'eventDateTime' to 'createdAt'
+    let sortDirection = 'desc';   // Ensure default is descending
+
     document.addEventListener('DOMContentLoaded', () => {
         console.log("DOM loaded, setting up event board");
         
@@ -1337,7 +1679,6 @@
         // Check authentication state
         auth.onAuthStateChanged(user => {
             clearTimeout(authTimeout);
-            
             if (user) {
                 console.log("User authenticated:", user.email);
                 
@@ -1346,6 +1687,9 @@
                 
                 // Load events from Firebase
                 loadEvents();
+                
+                // Initialize notifications
+                initializeNotifications();
                 
                 // Set up event listeners for filtering, sorting, etc.
                 setupEventListeners();
@@ -1377,7 +1721,6 @@
             database.ref(`users/${user.uid}`).once('value')
                 .then(snapshot => {
                     const userData = snapshot.val() || {};
-                    
                     if (userData.profileImage) {
                         // Show profile image
                         userAvatar.src = userData.profileImage;
@@ -1443,7 +1786,6 @@
     // Function to load events from Firebase - enhanced with better error handling
     function loadEvents() {
         showLoading();
-        
         console.log("Loading events from Firebase...");
         
         const eventsRef = database.ref('events');
@@ -1492,7 +1834,7 @@
                 
                 // Log in console for debugging
                 console.log(`Loaded ${allEvents.length} events from database`);
-            }, 
+            },
             (error) => {
                 // Clear timeout since we got an error response
                 clearTimeout(loadTimeout);
@@ -1523,7 +1865,7 @@
             }
         );
     }
-
+    
     // Function to display events in the table
     function displayEvents(events) {
         const tableBody = document.getElementById('eventTableBody');
@@ -1532,20 +1874,28 @@
         
         // Sort events based on current sort field and direction
         events.sort((a, b) => {
-            let valueA = a[sortField] || '';
-            let valueB = b[sortField] || '';
+            let valueA = a[sortField];
+            let valueB = b[sortField];
             
-            // Handle dates
-            if (sortField === 'eventDateTime') {
-                valueA = new Date(valueA).getTime() || 0;
-                valueB = new Date(valueB).getTime() || 0;
+            // Handle different date fields
+            if (sortField === 'createdAt' || sortField === 'eventDateTime') {
+                valueA = new Date(valueA || 0).getTime();
+                valueB = new Date(valueB || 0).getTime();
             } else {
-                valueA = valueA.toString().toLowerCase();
-                valueB = valueB.toString().toLowerCase();
+                valueA = (valueA || '').toString().toLowerCase();
+                valueB = (valueB || '').toString().toLowerCase();
             }
             
             if (valueA < valueB) return sortDirection === 'asc' ? -1 : 1;
             if (valueA > valueB) return sortDirection === 'asc' ? 1 : -1;
+            
+            // Secondary sort by createdAt if primary values are equal
+            if (valueA === valueB && sortField !== 'createdAt') {
+                const timeA = new Date(a.createdAt || 0).getTime();
+                const timeB = new Date(b.createdAt || 0).getTime();
+                return sortDirection === 'asc' ? timeA - timeB : timeB - timeA;
+            }
+            
             return 0;
         });
         
@@ -1610,12 +1960,10 @@
                 // Create tooltips for buttons
                 const editTooltip = !isLineManager ? 
                     'Only the line manager can edit this event' : '';
-                
                 const approveTooltip = !isLineManager ? 
                     'Only the line manager can approve this event' : 
                     (isAlreadyApproved || isAlreadyRejected ? 
                         'This event has already been processed' : '');
-                
                 const rejectTooltip = !isLineManager ? 
                     'Only the line manager can reject this event' : 
                     (isAlreadyApproved || isAlreadyRejected ? 
@@ -1630,6 +1978,7 @@
                     <td class="${statusClass}">${event.approvalStatus || 'Pending'}</td>
                     <td>${escapeHtml(event.reportedByName || 'Anonymous')}</td>
                     <td>${escapeHtml(lineManagerName)}</td>
+                    <td class="timestamp-column">${formatDateTime(event.createdAt || event.timestamp)}</td>
                     <td>
                         <div class="action-buttons">
                             <button 
@@ -1736,8 +2085,8 @@
         document.getElementById('searchInput').value = '';
         
         currentPage = 1;
-        sortField = 'eventDateTime';
-        sortDirection = 'desc';
+        sortField = 'createdAt';  // Change default sort field
+        sortDirection = 'desc';   // Ensure descending order
         
         displayEvents(allEvents);
     }
@@ -1835,77 +2184,78 @@
                     <strong>Description:</strong>
                     <p>${escapeHtml(event.eventDescription || 'No description provided.')}</p>
                 </div>
-            `;
-            
-            if (event.sequenceOfEvents) {
-                html += `
+            </div>
+        `;
+        
+        if (event.sequenceOfEvents) {
+            html += `
                 <div class="detail-row">
                     <strong>Sequence of Events:</strong>
                     <p>${escapeHtml(event.sequenceOfEvents)}</p>
                 </div>`;
-            }
-            
-            if (event.immediateActions) {
-                html += `
+        }
+        
+        if (event.immediateActions) {
+            html += `
                 <div class="detail-row">
                     <strong>Immediate Actions:</strong>
                     <p>${escapeHtml(event.immediateActions)}</p>
                 </div>`;
-            }
-            
-            // Root cause section
-            if (event.rootCauses || event.immediateCauses) {
-                html += `
+        }
+        
+        // Root cause section
+        if (event.rootCauses || event.immediateCauses) {
+            html += `
                 <div class="detail-section">
                     <h4>Root Cause Analysis</h4>`;
                 
-                if (event.immediateCauses) {
-                    html += `
+            if (event.immediateCauses) {
+                html += `
                     <div class="detail-row">
                         <strong>Immediate Causes:</strong>
                         <p>${escapeHtml(event.immediateCauses)}</p>
                     </div>`;
-                }
+            }
                 
-                if (event.rootCauses) {
-                    html += `
+            if (event.rootCauses) {
+                html += `
                     <div class="detail-row">
                         <strong>Root Causes:</strong>
                         <p>${escapeHtml(event.rootCauses)}</p>
                     </div>`;
-                }
-                
-                html += `</div>`;
             }
-            
-            // Corrective actions section
-            if (event.correctiveActions) {
-                html += `
+                   
+            html += `</div>`;
+        }
+        
+        // Corrective actions section
+        if (event.correctiveActions) {
+            html += `
                 <div class="detail-section">
                     <h4>Corrective & Preventive Actions</h4>
                     <div class="detail-row">
                         <p>${escapeHtml(event.correctiveActions)}</p>
                     </div>`;
                 
-                if (event.personResponsible) {
-                    html += `
+            if (event.personResponsible) {
+                html += `
                     <div class="detail-row">
                         <strong>Person Responsible:</strong>
                         <p>${escapeHtml(event.personResponsible)}</p>
                     </div>`;
-                }
+            }
                 
-                if (event.actionDeadline) {
-                    html += `
+            if (event.actionDeadline) {
+                html += `
                     <div class="detail-row">
                         <strong>Deadline:</strong>
                         <p>${formatDate(event.actionDeadline)}</p>
                     </div>`;
-                }
-                
-                html += `</div>`;
             }
-            
+                   
+            html += `</div>`;
+        }
+        
         html += `</div>`;
         
         // Set content
@@ -2017,6 +2367,9 @@
         
         // Create update data object - only include fields that are being edited
         const updateData = {
+            // ...existing fields...
+            createdAt: originalEvent.createdAt || firebase.database.ServerValue.TIMESTAMP,
+            // ...rest of existing fields...
             eventType,
             eventTitle,
             eventDateTime,
@@ -2024,7 +2377,6 @@
             severityLevel,
             eventDescription,
             immediateActions,
-            
             // Line manager info
             lineManagerId,
             lineManager: lineManagerName,
@@ -2084,7 +2436,7 @@
                         const displayName = user.firstName && user.lastName ? 
                             `${user.firstName} ${user.lastName}` : 
                             user.email || 'Unknown User';
-                            
+                        
                         const option = document.createElement('option');
                         option.value = userId;
                         option.setAttribute('data-email', user.email || '');
@@ -2303,7 +2655,6 @@
     // Function to log events to audit logs
     function logEvent(action, details) {
         const user = auth.currentUser || (window.AuthManager ? AuthManager.getCurrentUser() : null);
-        
         if (!user) return;
         
         const logEntry = {
@@ -2318,6 +2669,334 @@
             .catch(error => {
                 console.error('Error logging event:', error);
             });
+    }
+
+    // Add or update the real-time listeners function:
+    function setupRealtimeEventListeners() {
+        const eventsRef = database.ref('events');
+        // Remove previous listeners to avoid duplicates
+        eventsRef.off('child_added');
+        eventsRef.off('child_changed');
+        eventsRef.off('child_removed');
+        
+        // Listen for a new event added (created events)
+        eventsRef.on('child_added', snapshot => {
+            let newEvent = snapshot.val();
+            newEvent.id = snapshot.key;
+            if (!allEvents.some(e => e.id === newEvent.id)) {
+                allEvents.push(newEvent);
+                displayEvents(filterEventArray(allEvents));
+            }
+        });
+    
+        // Listen for event updates
+        eventsRef.on('child_changed', snapshot => {
+            let updatedEvent = snapshot.val();
+            updatedEvent.id = snapshot.key;
+            const index = allEvents.findIndex(e => e.id === updatedEvent.id);
+            if (index !== -1) {
+                allEvents[index] = updatedEvent;
+                displayEvents(filterEventArray(allEvents));
+            }
+        });
+        
+        // Listen for event removal
+        eventsRef.on('child_removed', snapshot => {
+            const removedId = snapshot.key;
+            allEvents = allEvents.filter(e => e.id !== removedId);
+            displayEvents(filterEventArray(allEvents));
+        });
+    }
+
+    // Modify setupNotificationListener function to handle all notification changes in real-time
+    function setupNotificationListener() {
+        if (!auth.currentUser) {
+            console.log("User not authenticated, can't setup notification listener");
+            return;
+        }
+        const currentUser = auth.currentUser;
+        
+        // First remove any existing listeners
+        database.ref('notifications').off();
+        
+        // Listen for new notifications
+        database.ref('notifications').orderByChild('timestamp').limitToLast(50)
+            .on('child_added', snapshot => {
+                const notification = snapshot.val();
+                notification.id = snapshot.key;
+                
+                // Only show notification if it's for current user or everyone
+                const isForCurrentUser = !notification.targetUsers || 
+                    notification.targetUsers.length === 0 || 
+                    (notification.targetUsers && notification.targetUsers.includes(currentUser.uid));
+                    
+                if (isForCurrentUser) {
+                    // Add to notifications list
+                    prependNotification(notification);
+                    
+                    // Update counter
+                    updateNotificationCounter();
+                    
+                    // Only animate bell for new notifications (less than 30 seconds old)
+                    const isNewNotification = notification.timestamp && 
+                        (Date.now() - notification.timestamp < 30000);
+                    
+                    // Only animate for unread notifications
+                    const isUnread = !notification.readBy || !notification.readBy[currentUser.uid];
+                    
+                    if (isNewNotification && isUnread) {
+                        animateNotificationBell();   
+                    }
+                }
+            });
+        
+        // Listen for changes to existing notifications (e.g., read status)
+        database.ref('notifications').on('child_changed', snapshot => {
+            const notification = snapshot.val();
+            notification.id = snapshot.key;
+            
+            // Update UI for this notification
+            updateNotificationElement(notification);
+            
+            // Update counter
+            updateNotificationCounter();
+        });
+        
+        // Listen for removed notifications
+        database.ref('notifications').on('child_removed', snapshot => {
+            const notificationId = snapshot.key;
+            
+            // Remove from UI
+            const element = document.querySelector(`.notification-list-item[data-id="${notificationId}"]`);
+            if (element) {
+                element.remove();
+            }
+            
+            // Update counter
+            updateNotificationCounter();
+            
+            // Check if list is empty and show empty state if needed
+            const notificationList = document.getElementById('notificationList');
+            if (notificationList && notificationList.children.length === 0) {
+                notificationList.innerHTML = `<div class="notification-empty">No new notifications</div>`;
+            }
+        });
+    }
+
+    // Add function to update an existing notification element
+    function updateNotificationElement(notification) {
+        const element = document.querySelector(`.notification-list-item[data-id="${notification.id}"]`);
+        if (!element) return;
+        
+        const currentUser = auth.currentUser;
+        if (!currentUser) return;
+        
+        // Update read/unread status
+        const isRead = notification.readBy && notification.readBy[currentUser.uid];
+        
+        if (isRead) {
+            element.classList.remove('unread');
+        } else {
+            element.classList.add('unread');
+        }
+        
+        // Update content (in case other fields changed)
+        const contentElement = element.querySelector('.notification-content');
+        if (contentElement) {
+            const titleElement = contentElement.querySelector('.notification-title');
+            const messageElement = contentElement.querySelector('.notification-message');
+            
+            if (titleElement) titleElement.textContent = notification.title || 'Notification';
+            if (messageElement) messageElement.textContent = notification.message || '';
+        }
+    }
+
+    // Update the notification counter to use current data in DOM
+    function updateNotificationCounter() {
+        if (!auth.currentUser) return;
+        
+        const counter = document.getElementById('notificationCounter');
+        if (!counter) return;
+        
+        // Count unread notifications in the DOM
+        const unreadCount = document.querySelectorAll('.notification-list-item.unread').length;
+        
+        // Update counter
+        counter.textContent = unreadCount;
+        
+        // Show/hide counter and update bell status
+        if (unreadCount > 0) {
+            counter.style.display = 'flex';
+            
+            // Add has-new class to bell
+            const bell = document.getElementById('notificationBell');
+            if (bell) {
+                bell.classList.add('has-new');
+            }
+        } else {
+            counter.style.display = 'none';
+            
+            // Remove has-new class from bell
+            const bell = document.getElementById('notificationBell');
+            if (bell) {
+                bell.classList.remove('has-new');
+            }
+        }
+    }
+
+    // Modify createNotificationElement to properly check read status for current user
+    function createNotificationElement(notification) {
+        const element = document.createElement('div');
+        
+        // Determine read status based on current user
+        const currentUser = auth.currentUser;
+        const isRead = currentUser && notification.readBy && notification.readBy[currentUser.uid];
+        
+        element.className = `notification-list-item${isRead ? '' : ' unread'}`;
+        element.dataset.id = notification.id;
+        
+        // ... existing code for creating the notification element ...
+        
+        return element;
+    }
+
+    // Modify markNotificationAsRead to update Firebase and UI more efficiently
+    function markNotificationAsRead(notificationId) {
+        if (!auth.currentUser || !notificationId) return;
+        
+        const currentUser = auth.currentUser;
+        const updates = {};
+        // Update the readBy field for this specific user
+        updates[`notifications/${notificationId}/readBy/${currentUser.uid}`] = true;
+        
+        // Update in Firebase (the child_changed event will update the UI)
+        database.ref().update(updates)
+            .then(() => {
+                console.log(`Marked notification ${notificationId} as read`);
+                
+                // No need to update UI here - child_changed event listener will handle it
+            })
+            .catch(error => {
+                console.error(`Error marking notification as read:`, error);
+            });
+    }
+
+    // Add notification initialization function
+    function initializeNotifications() {
+        // Add event listeners for notification interactions
+        document.getElementById('markAllReadBtn').addEventListener('click', markAllNotificationsAsRead);
+        
+        // Toggle dropdown on bell click
+        const bellContainer = document.getElementById('notificationBellContainer');
+        const bell = document.getElementById('notificationBell');
+        
+        if (bell && bellContainer) {
+            bell.addEventListener('click', function(e) {
+                e.stopPropagation();
+                bellContainer.classList.toggle('active');
+                
+                // If opening the dropdown, mark visible notifications as read
+                if (bellContainer.classList.contains('active')) {
+                    markVisibleNotificationsAsRead();
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!bellContainer.contains(e.target)) {
+                    bellContainer.classList.remove('active');
+                }
+            });
+        }
+        
+        // Load notifications and set up real-time listener
+        loadNotifications();
+        setupNotificationListener();
+    }
+
+    // Add function to load notifications
+    function loadNotifications() {
+        if (!auth.currentUser) {
+            console.log("User not authenticated, can't load notifications");
+            return;
+        }
+        
+        const currentUser = auth.currentUser;
+        
+        // Query notifications from Firebase, ordered by timestamp, limit to most recent 20
+        const notificationsRef = database.ref('notifications')
+            .orderByChild('timestamp')
+            .limitToLast(20);
+        
+        notificationsRef.once('value')
+            .then(snapshot => {
+                const notifications = [];
+                snapshot.forEach(childSnapshot => {
+                    const notification = childSnapshot.val();
+                    notification.id = childSnapshot.key;
+                    
+                    // Include notification if:
+                    // 1. It has no targetUsers (meant for everyone) OR
+                    // 2. Current user is in targetUsers
+                    const isTargetedNotification = notification.targetUsers && 
+                        notification.targetUsers.length > 0 && 
+                        notification.targetUsers.includes(currentUser.uid);
+                        
+                    const isGeneralNotification = !notification.targetUsers || 
+                        notification.targetUsers.length === 0;
+                        
+                    if (isGeneralNotification || isTargetedNotification) {
+                        notifications.push(notification);
+                    }
+                });
+                
+                // Sort by timestamp descending (newest first)
+                notifications.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                
+                // Update UI with notifications
+                updateNotificationUI(notifications);
+            })
+            .catch(error => {
+                console.error("Error loading notifications:", error);
+            });
+    }
+    
+    // Add function to update notification UI
+    function updateNotificationUI(notifications) {
+        const notificationList = document.getElementById('notificationList');
+        if (!notificationList) return;
+        
+        // Clear existing notifications
+        notificationList.innerHTML = '';
+        
+        // If no notifications, show empty state
+        if (!notifications || notifications.length === 0) {
+            notificationList.innerHTML = `<div class="notification-empty">No new notifications</div>`;
+            return;
+        }
+        
+        // Add each notification to the list
+        notifications.forEach(notification => {
+            const notificationElement = createNotificationElement(notification);
+            notificationList.appendChild(notificationElement);
+        });
+        
+        // Update the counter
+        updateNotificationCounter();
+    }
+    
+    // Add function to mark visible notifications as read
+    function markVisibleNotificationsAsRead() {
+        // Wait a moment to ensure the dropdown is fully visible
+        setTimeout(() => {
+            const visibleNotifications = document.querySelectorAll('.notification-dropdown:visible .notification-list-item.unread');
+            visibleNotifications.forEach(element => {
+                const notificationId = element.dataset.id;
+                if (notificationId) {
+                    markNotificationAsRead(notificationId);
+                }
+            });
+        }, 100);
     }
 </script>
 </body>
