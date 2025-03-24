@@ -421,19 +421,31 @@
             background-color: #fff;
             border-radius: 8px;
             width: 90%;
-            max-width: 500px;
-            padding: 30px;
+            max-width: 700px; /* Increased from 500px to 700px for wider modal */
+            padding: 20px; /* Reduced from 30px to 20px for less vertical space */
             box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-            max-height: 90vh;
+            max-height: 80vh; /* Reduced from 90vh to 80vh for lower height */
             overflow-y: auto;
+        }
+        
+        /* Make edit user modal specifically wider */
+        #editUserModal .modal-container {
+            max-width: 750px; /* Even wider for edit modal specifically */
+        }
+        
+        /* Align text to left in form inputs */
+        .modal-form input,
+        .modal-form select,
+        .modal-form textarea {
+            text-align: left;
         }
         
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            margin-bottom: 15px; /* Reduced from 20px to 15px */
+            padding-bottom: 10px; /* Reduced from 15px to 10px */
             border-bottom: 1px solid #eee;
         }
         
@@ -452,7 +464,7 @@
         }
         
         .modal-form .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 15px; /* Reduced from 20px to 15px */
         }
         
         .modal-form label {
@@ -461,6 +473,7 @@
             font-weight: 600;
             color: #34495e;
             font-size: 14px;
+            text-align: left;
         }
         
         .modal-form input,
@@ -481,11 +494,36 @@
         
         .modal-form .form-row {
             display: flex;
-            gap: 15px;
+            gap: 10px; /* Reduced from 15px to 10px */
         }
         
+        /* Add more space between form fields in edit modal */
+        #editUserModal .form-row {
+            gap: 30px; /* Increased gap for more separation between fields */
+            margin-bottom: 10px; /* Add vertical space between rows */
+        }
+        
+        /* Make first name and last name fields have more separation */
+        #editUserModal .form-row:first-of-type {
+            margin-bottom: 10px; /* Extra space after first row */
+        }
+        
+        /* Make email and status fields have more separation from role field */
+        #editUserModal .form-row:nth-of-type(2) {
+            margin-bottom: 20px; /* Extra space after second row */
+        }
+        
+        /* Make form fields have equal widths within rows */
         .modal-form .form-row > div {
-            flex: 1;
+            flex: 1 0 0; /* flex-grow: 1, flex-shrink: 0, flex-basis: 0 */
+            min-width: 0; /* Prevent overflow issues */
+        }
+        
+        /* Ensure inputs maintain equal width */
+        .modal-form .form-row input,
+        .modal-form .form-row select {
+            box-sizing: border-box;
+            width: 100%;
         }
         
         .modal-form .error-message {
@@ -576,18 +614,18 @@
             background-color: #f8f9fa;
             border: 1px solid #e0e0e0;
             border-radius: 4px;
-            padding: 15px;
-            margin-top: 10px;
+            padding: 10px; /* Reduced from 15px to 10px */
+            margin-top: 5px; /* Reduced from 10px to 5px */
             display: grid;
             grid-template-columns: 1fr 1fr;
-            grid-gap: 12px;
+            grid-gap: 8px; /* Reduced from 12px to 8px */
         }
         
         .permission-item {
             display: flex;
             align-items: center;
-            margin-bottom: 8px;
-            padding: 6px 10px;
+            margin-bottom: 5px; /* Reduced from 8px to 5px */
+            padding: 4px 8px; /* Reduced from 6px 10px to 4px 8px */
             background-color: #ffffff;
             border-radius: 4px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.08);
@@ -1357,13 +1395,15 @@
     <header>
         <nav class="menu-bar">
             <ul class="menu-left">
-                <li class=""><a href="index.html">Home</a></li>
+                <li class=""><a href="login.html">Home</a></li>
                 <li><a href="riskassessment.html">Risk Assessment</a></li>
                 <li><a href="dashboard.html">Dashboard</a></li>
                 <li><a href="account.html">Account</a></li>
                 <li><a href="log.html">Log</a></li>
                 <li><a href="evnt.html">Event</a></li>
                 <li><a href="eventboard.html">Event Board</a></li>
+                <li><a href="notifications.html">Notif</a></li>
+                <li><a href="setup.html">Setup</a></li>
             </ul>
             <ul class="menu-right">
                 <!-- Enhanced Notification Bell -->
@@ -1590,22 +1630,21 @@
                         <div class="error-message">Please enter a last name</div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label for="editEmail">Email</label>
-                    <input type="email" id="editEmail" name="email" required>
-                    <div class="error-message">Please enter a valid email address</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="editEmail">Email</label>
+                        <input type="email" id="editEmail" name="email" required>
+                        <div class="error-message">Please enter a valid email address</div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editStatus">Status</label>
+                        <select id="editStatus" name="status">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="editStatus">Status</label>
-                    <select id="editStatus" name="status">
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editProfileImage">Profile Image URL (optional)</label>
-                    <input type="url" id="editProfileImage" name="profileImage">
-                </div>
+                <!-- Removed profile image URL field -->
                 <div class="form-group">
                     <label for="editRole">Role</label>
                     <select id="editRole" name="role">
@@ -1614,18 +1653,15 @@
                         <option value="admin">Administrator</option>
                     </select>
                 </div>
-                
-                <!-- Add permissions display section -->
                 <div class="form-group" id="editPermissionsDisplay">
                     <div class="permissions-header">
                         <div class="permissions-title">User Permissions</div>
                         <button type="button" class="reset-permissions" id="editResetPermissionsBtn">Apply Role Defaults</button>
                     </div>
-                    <div class="permissions-container" id="editPermissionsContainer">
+                    <div class="permissions-container" id="editPermissionsContainer" style="grid-template-columns: repeat(3, 1fr);">
                         <!-- Permissions will be displayed here -->
                     </div>
                 </div>
-                
                 <div class="modal-buttons">
                     <button type="button" class="modal-btn modal-delete" id="deleteUserBtn">Delete User</button>
                     <div class="modal-right-buttons">
@@ -1710,12 +1746,20 @@
                 const pagination = document.getElementById('pagination');
                 const loadingOverlay = document.getElementById('loadingOverlay');
                 
+                // Notification buttons
+                const markAllReadBtn = document.getElementById('markAllReadBtn');
+                const clearAllBtn = document.getElementById('clearAllBtn');
+                
                 // Set up event listeners
                 searchBtn.addEventListener('click', handleSearch);
                 searchInput.addEventListener('keypress', function(e) {
                     if (e.key === 'Enter') handleSearch();
                 });
                 refreshBtn.addEventListener('click', refreshUsers);
+                
+                // Add event listeners for notification buttons
+                markAllReadBtn.addEventListener('click', markNotificationsAsRead);
+                clearAllBtn.addEventListener('click', clearAllNotifications);
                 
                 // Create User Modal Elements
                 const createUserBtn = document.getElementById('createUserBtn');
@@ -2224,6 +2268,26 @@
                         tableHeader.appendChild(roleHeader);
                     }
                     
+                    // Check if current user is an admin
+                    const isAdmin = currentUserRole === 'admin';
+                    
+                    // Add a notification banner at the top of the table if not admin
+                    if (!isAdmin && document.getElementById('nonAdminNotice') === null) {
+                        const notice = document.createElement('div');
+                        notice.id = 'nonAdminNotice';
+                        notice.className = 'restricted-view-banner';
+                        notice.style.display = 'flex';
+                        notice.innerHTML = `
+                            <div class="banner-icon">🔒</div>
+                            <div class="banner-message">
+                                <strong>Read-only view:</strong> Only administrators can edit user profiles.
+                            </div>
+                        `;
+                        userTableBody.parentNode.parentNode.insertBefore(notice, userTableBody.parentNode);
+                    } else if (isAdmin && document.getElementById('nonAdminNotice')) {
+                        document.getElementById('nonAdminNotice').remove();
+                    }
+                    
                     // Render each user
                     usersToShow.forEach(user => {
                         // Format dates
@@ -2255,11 +2319,17 @@
                         // Create table row
                         const row = document.createElement('tr');
                         
-                        // Check if current user has permission to edit this user
-                        let clickable = true;
-                        if (currentUserRole !== 'admin' && user.role === 'admin' && auth.currentUser.uid !== user.id) {
-                            clickable = false;
+                        // Only allow admin users to edit profiles
+                        const clickable = isAdmin;
+                        
+                        if (!clickable) {
                             row.classList.add('restricted-user');
+                            row.title = "Only administrators can edit user profiles";
+                            // Remove pointer cursor for non-admin users
+                            row.style.cursor = 'default';
+                        } else {
+                            // Show pointer cursor for admin users
+                            row.style.cursor = 'pointer';
                         }
                         
                         row.innerHTML = `
@@ -2272,13 +2342,11 @@
                             <td>${roleDisplay}</td>
                         `;
                         
-                        // Make the row clickable to edit user if permissions allow
+                        // Make the row clickable to edit user only for admins
                         if (clickable) {
                             row.addEventListener('click', function() {
                                 openEditUserModal(user);
                             });
-                        } else {
-                            row.title = "You don't have permission to edit administrators";
                         }
                         
                         userTableBody.appendChild(row);
@@ -2300,7 +2368,6 @@
                     document.getElementById('editLastName').value = user.lastName || '';
                     document.getElementById('editEmail').value = user.email || '';
                     document.getElementById('editStatus').value = user.status || 'inactive';
-                    document.getElementById('editProfileImage').value = user.profileImage || '';
                     document.getElementById('editRole').value = user.role || 'user';
                     
                     // Initialize permissions for edit form based on user's saved permissions
@@ -2886,7 +2953,16 @@
                 
                 // Function to show permission denied message
                 function showPermissionDeniedMessage(message) {
-                    alert(message || "Permission denied");
+                    // Show modal alert
+                    alert(message || "Only administrators can edit user profiles");
+                    
+                    // Show a more user-friendly notification
+                    showNotification({
+                        title: 'Admin Permission Required',
+                        message: message || "Only administrators can edit user profiles",
+                        type: 'error',
+                        duration: 5000
+                    });
                 }
                 
                 // Function to render user table - updated with permission checks
@@ -2917,6 +2993,26 @@
                         const roleHeader = document.createElement('th');
                         roleHeader.textContent = 'Role';
                         tableHeader.appendChild(roleHeader);
+                    }
+                    
+                    // Check if current user is an admin
+                    const isAdmin = currentUserRole === 'admin';
+                    
+                    // Add a notification banner at the top of the table if not admin
+                    if (!isAdmin && document.getElementById('nonAdminNotice') === null) {
+                        const notice = document.createElement('div');
+                        notice.id = 'nonAdminNotice';
+                        notice.className = 'restricted-view-banner';
+                        notice.style.display = 'flex';
+                        notice.innerHTML = `
+                            <div class="banner-icon">🔒</div>
+                            <div class="banner-message">
+                                <strong>Read-only view:</strong> Only administrators can edit user profiles.
+                            </div>
+                        `;
+                        userTableBody.parentNode.parentNode.insertBefore(notice, userTableBody.parentNode);
+                    } else if (isAdmin && document.getElementById('nonAdminNotice')) {
+                        document.getElementById('nonAdminNotice').remove();
                     }
                     
                     // Render each user
@@ -2950,21 +3046,17 @@
                         // Create table row
                         const row = document.createElement('tr');
                         
-                        // Check if current user has permission to edit this user
-                        let clickable = true;
-                        const currentUserId = auth.currentUser ? auth.currentUser.uid : null;
+                        // Only allow admin users to edit profiles
+                        const clickable = isAdmin;
                         
-                        // Cannot edit other admin users unless you're an admin with edit permission
-                        if (user.role === 'admin' && currentUserId !== user.id && 
-                            (!canPerformAction('edit_user') || currentUserRole !== 'admin')) {
-                            clickable = false;
+                        if (!clickable) {
                             row.classList.add('restricted-user');
-                        }
-                        
-                        // Cannot edit any users if you don't have edit_users permission (unless it's yourself)
-                        if (!canPerformAction('edit_user') && currentUserId !== user.id) {
-                            clickable = false;
-                            row.classList.add('restricted-user');
+                            row.title = "Only administrators can edit user profiles";
+                            // Remove pointer cursor for non-admin users
+                            row.style.cursor = 'default';
+                        } else {
+                            // Show pointer cursor for admin users
+                            row.style.cursor = 'pointer';
                         }
                         
                         row.innerHTML = `
@@ -2977,16 +3069,11 @@
                             <td>${roleDisplay}</td>
                         `;
                         
-                        // Make the row clickable to edit user if permissions allow
+                        // Make the row clickable to edit user only for admins
                         if (clickable) {
                             row.addEventListener('click', function() {
                                 openEditUserModal(user);
                             });
-                        } else {
-                            const restrictionReason = user.role === 'admin' ? 
-                                "You don't have permission to edit administrators" : 
-                                "You don't have permission to edit other users";
-                            row.title = restrictionReason;
                         }
                         
                         userTableBody.appendChild(row);
@@ -3038,21 +3125,7 @@
                             const eventData = snapshot.val();
                             const eventId = snapshot.key;
                             
-                            // Only notify for new events, not the initial data load
-                            if (eventData.createdAt > lastCheckTime) {
-                                // Create notification object
-                                const notification = {
-                                    title: 'New Event Submitted',
-                                    message: `${eventData.title || 'Unnamed event'} has been submitted by ${eventData.submitter || 'a user'}`,
-                                    type: 'info',
-                                    time: Date.now(),
-                                    read: false,
-                                    eventId: eventId
-                                };
-                                
-                                // Add to notifications in Firebase
-                                addNotification(notification);
-                            }
+                        
                         });
                     
                     // Also check for updated events
