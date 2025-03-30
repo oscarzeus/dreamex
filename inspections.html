@@ -1,0 +1,2730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE Inspections - Dreamex Lab</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Dashboard specific styles */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .dashboard-title h2 {
+            margin: 0;
+            color: #34495e;
+        }
+
+        .dashboard-title p {
+            margin: 5px 0 0;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dashboard-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .refresh-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .dashboard-search {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .dashboard-search input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .dashboard-search button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* User table styles */
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .user-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .user-table tbody tr:hover {
+            background-color: #f5f7fa;
+        }
+
+        .user-avatar-cell {
+            width: 60px;
+        }
+
+        .user-avatar-sm {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .user-initial-sm {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .user-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Pagination styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .pagination-btn {
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-btn:hover {
+            background-color: #f5f5f5;
+        }
+
+        .pagination-btn.active {
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Dashboard stats styles */
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Menu bar styles */
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #34495e;
+            padding: 0 20px;
+        }
+        
+        .menu-bar ul {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .menu-bar ul li {
+            margin: 0 10px;
+        }
+        
+        .menu-bar ul li a {
+            display: block;
+            padding: 15px 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .menu-bar ul li a:hover {
+            color: #f1f3f5;
+        }
+        
+        .menu-bar ul li.current a {
+            color: #fafcfd;
+            font-weight: bold;
+        }
+
+        /* Dropdown styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white !important;
+            color: black !important;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            top: calc(100%);
+            font-size: 6px !important;
+            font-weight: normal;
+            text-align: left;
+        }
+        .dropdown-content a {
+            color: rgb(44, 43, 43) !important;
+            padding: 6px 10px !important;
+            text-decoration: none;  
+            display: block;
+            font-size: 11px !important;
+        }
+        .dropdown-content a:hover {
+            background-color: #e8e8e8;
+            transform: none; 
+        }
+        .dropdown:hover .dropdown-content,
+        .dropdown:focus-within .dropdown-content {
+            display: block;
+        }
+
+        /* User Avatar Styles */
+        .user-avatar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            text-align: left;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* Add class for showing the dropdown */
+        .user-dropdown.show {
+            display: block;
+            animation: dropdown-fade-in 0.2s ease-out;
+        }
+        
+        .user-email {
+            padding: 5px 15px; /* Further reduced from 8px to 5px */
+            border-bottom: 1px solid #eaeaea;
+            color: #34495e;
+            font-weight: 500;
+            background-color: #f8f9fa;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .user-dropdown a {
+            display: block;
+            padding: 2px 15px; /* Further reduced from 4px to 2px */
+            color: #000000;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            line-height: 1.4; /* Added to provide some minimal spacing */
+        }
+        
+        /* Ensure specific dropdown links are black */
+        #profileLink, #accountLink {
+            color: #474646 !important; /* Pure black color with !important to override any other styles */
+        }
+        
+        .user-dropdown a:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-dropdown a:last-child {
+            border-top: 1px solid #eaeaea;
+        }
+        
+        #logoutButton {
+            color: #e74c3c; /* Keep logout button red */
+        }
+        
+        #logoutButton:hover {
+            background-color: #fdeeee;
+            border-left-color: #e74c3c;
+        }
+        
+        #loginButton {
+            color: #000000; /* Changed to black */
+        }
+        
+        #loginButton:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-initial {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        /* Modal styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s linear 0.25s, opacity 0.25s;
+        }
+        
+        .modal-visible {
+            visibility: visible;
+            opacity: 1;
+            transition-delay: 0s;
+        }
+        
+        .modal-container {
+            background-color: #fff;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #34495e;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 22px;
+            color: #7f8c8d;
+        }
+        
+        .modal-form .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .modal-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 14px;
+        }
+        
+        .modal-form input,
+        .modal-form select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .modal-form input:focus,
+        .modal-form select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+        }
+        
+        .modal-form .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .modal-form .form-row > div {
+            flex: 1;
+        }
+        
+        .modal-form .error-message {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .modal-form .has-error input {
+            border-color: #e74c3c;
+        }
+        
+        .modal-form .has-error .error-message {
+            display: block;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+        
+        .modal-cancel {
+            background-color: #f1f2f6;
+            color: #333;
+        }
+        
+        .modal-save {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .modal-save:hover {
+            background-color: #2980b9;
+        }
+        
+        .modal-cancel:hover {
+            background-color: #e8e8e8;
+        }
+        
+        /* Button to create user */
+        .create-user-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        
+        .create-user-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        /* Clickable table rows */
+        .user-table tbody tr {
+            cursor: pointer;
+        }
+
+        .modal-delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .modal-delete:hover {
+            background-color: #c0392b;
+        }
+        
+        .restricted-user {
+            opacity: 0.7;
+            cursor: not-allowed !important;
+        }
+        
+        .dashboard-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Audit log specific styles */
+        .audit-log-container {
+            max-width: 100%; /* Changed from 1200px to full width */
+            margin: 20px; /* Changed from 40px auto to provide uniform margin on all sides */
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: left; /* Ensure all content is left-aligned */
+        }
+        
+        .page-title {
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #34495e;
+            font-size: 28px;
+            text-align: center; /* Keep title centered */
+        }
+        
+        .filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px; /* Increased from 15px */
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+            margin-right: 10px; /* Added margin between filter groups */
+            margin-bottom: 10px; /* Added margin for when filters wrap to new line */
+            padding: 5px; /* Added padding inside each filter group */
+            border-radius: 4px; /* Optional: rounded corners for each filter group */
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+            font-size: 14px;
+        }
+        
+        .filter-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        .filter-btn {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .clear-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .clear-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .audit-table th, .audit-table td {
+            padding: 12px 15px;
+            text-align: left; /* Explicitly set table cells to left alignment */
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .audit-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #34495e;
+        }
+        
+        .audit-table tbody tr:hover {
+            background-color: #f5f7fa;
+        }
+        
+        .empty-state {
+            text-align: center; /* Keep empty state message centered */
+            padding: 40px;
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            color: #333;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+        
+        .pagination button:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .pagination button.active {
+            background-color: #3498db;
+            color: #fff;
+            border-color: #3498db;
+        }
+        
+        .pagination button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .export-btn {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            float: right;
+            margin-bottom: 20px;
+        }
+        
+        .export-btn:hover {
+            background-color: #219653;
+        }
+
+        /* Updated Inspection Form Styles */
+        .event-container {
+            max-width: 100%;
+            margin: 80px 20px 40px 20px;
+            padding: 30px;
+            background: #ffffff;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        .event-container h1 {
+            text-align: left;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            color: #34495e;
+        }
+        form#inspectionForm fieldset {
+            border: 1px solid #dde1e7;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        form#inspectionForm fieldset legend {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            padding: 0 10px;
+            text-align: left;
+        }
+        form#inspectionForm label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+            display: block;
+            text-align: left;
+        }
+        form#inspectionForm input[type="text"],
+        form#inspectionForm input[type="datetime-local"],
+        form#inspectionForm input[type="date"],
+        form#inspectionForm select,
+        form#inspectionForm textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccd0d5;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        form#inspectionForm input:focus,
+        form#inspectionForm select:focus,
+        form#inspectionForm textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        form#inspectionForm .checkbox-group label {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        form#inspectionForm .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+        }
+        form#inspectionForm .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        form#inspectionForm .btn-reset {
+            background: #f8f9fa;
+            color: #34495e;
+            border: 1px solid #ccd0d5;
+        }
+        form#inspectionForm .btn-submit {
+            background: #3498db;
+            color: #fff;
+        }
+        
+        /* Add styles for dynamic form sections */
+        .inspection-type-section {
+            display: none;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+
+        .section-header {
+            color: #3498db;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .section-fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            flex: 1;
+        }
+
+        #otherInspectionField {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f7ff;
+            border-radius: 4px;
+            border-left: 3px solid #3498db;
+        }
+        
+    </style>
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- Include auth.js after Firebase SDKs -->
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li><a href="login.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#">Risk Management</a>
+                    <div class="dropdown-content">
+                        <a href="riskassessment.html">Risk Assessment</a>
+                        <a href="jsaboard.html">Job Safety Analysis</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Safety reporting</a>
+                    <div class="dropdown-content">
+                        <a href="eventboard.html">Event</a>
+                        <a href="inspectionsboard.html">Inspections</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Settings</a>
+                    <div class="dropdown-content">
+                        <a href="account.html">User account</a>
+                        <a href="setup.html">Inspections</a>
+                        <a href="log.html">System audit log</a>
+                    </div>
+                </li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+            </ul>
+            <ul class="menu-right">
+                <!-- User Avatar Button -->
+                <li class="user-avatar-container">
+                    <div id="userAvatarContainer">
+                        <img src="https://via.placeholder.com/32" alt="User" class="user-avatar" id="userAvatar" style="display: none;">
+                        <div id="userInitial" class="user-initial">?</div>
+                    </div>
+                    <div class="user-dropdown">
+                        <div class="user-email" id="userEmail">Not logged in</div>
+                        <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                        <a href="#" id="logoutButton" style="display: none;">Log Out</a>
+                        <a href="login.html" id="loginButton">Log In</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="event-container">
+        <h1 id="formTitle">Create New Inspection</h1>
+        <form id="inspectionForm" enctype="multipart/form-data">
+            <!-- Hidden field for inspection ID when in edit mode -->
+            <input type="hidden" id="inspectionId" name="inspectionId">
+            
+            <fieldset>
+                <legend>1. Inspection Information</legend>
+                <label for="inspectionType">Type of Inspection</label>
+                <select id="inspectionType" name="inspectionType">
+                    <option value="">Select an inspection type</option>
+                    <option value="Workplace Safety Inspections">Workplace Safety Inspections</option>
+                    <option value="Equipment and Machinery Inspections">Equipment and Machinery Inspections</option>
+                    <option value="Environmental Inspections">Environmental Inspections</option>
+                    <option value="Fire and Emergency Preparedness Inspections">Fire and Emergency Preparedness Inspections</option>
+                    <option value="Health and Hygiene Inspections">Health and Hygiene Inspections</option>
+                    <option value="Regulatory and Compliance Inspections">Regulatory and Compliance Inspections</option>
+                    <option value="Incident and Accident Inspections">Incident and Accident Inspections</option>
+                    <option value="Other">Other (specify below)</option>
+                </select>
+                
+                <div id="otherInspectionField" style="display: none;">
+                    <label for="otherInspectionType">Please specify inspection type:</label>
+                    <input type="text" id="otherInspectionType" name="otherInspectionType" placeholder="Enter custom inspection type">
+                </div>
+                
+                <!-- Common fields remain the same -->
+                <div id="commonSection">
+                    <label for="company">Company</label>
+                    <input type="text" id="company" name="company" required placeholder="Enter company name">
+                    
+                    <label for="eventDateTime">Date &amp; Time</label>
+                    <input type="datetime-local" id="eventDateTime" name="eventDateTime" required>
+                    
+                    <label for="location">Location</label>
+                    <select id="location" name="location" required>
+                        <option value="">Select a location</option>
+                        <option value="Other">Other (specify below)</option>
+                    </select>
+                    <div id="otherLocationField" style="display: none;">
+                        <label for="otherLocation">Specify location:</label>
+                        <input type="text" id="otherLocation" name="otherLocation" placeholder="Enter specific location">
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- Type-specific sections -->
+            <div id="workplace-safety-inspections-section" class="inspection-type-section">
+                <h3 class="section-header">Workplace Safety Inspection Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="workplaceSafetySignage">Safety Signs & Markings</label>
+                        <select id="workplaceSafetySignage" name="workplaceSafetySignage" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workspaceOrganization">Workspace Organization</label>
+                        <select id="workspaceOrganization" name="workspaceOrganization" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="equipment-and-machinery-inspections-section" class="inspection-type-section">
+                <h3 class="section-header">Equipment & Machinery Inspection Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="equipmentCalibration">Equipment Calibration</label>
+                        <select id="equipmentCalibration" name="equipmentCalibration" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenanceRecords">Maintenance Records</label>
+                        <select id="maintenanceRecords" name="maintenanceRecords" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Complete">Complete</option>
+                            <option value="Incomplete">Incomplete</option>
+                            <option value="Missing">Missing</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="environmental-inspections-section" class="inspection-type-section">
+                <h3 class="section-header">Environmental Inspection Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="wasteManagement">Waste Management</label>
+                        <select id="wasteManagement" name="wasteManagement" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="chemicalStorage">Chemical Storage</label>
+                        <select id="chemicalStorage" name="chemicalStorage" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="fire-and-emergency-preparedness-inspections-section" class="inspection-type-section">
+                <h3 class="section-header">Fire & Emergency Preparedness Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="emergencyExits">Emergency Exits</label>
+                        <select id="emergencyExits" name="emergencyExits" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fireEquipment">Fire Equipment</label>
+                        <select id="fireEquipment" name="fireEquipment" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="health-and-hygiene-inspections-section" class="inspection-type-section">
+                <h3 class="section-header">Health & Hygiene Inspection Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="airQuality">Air Quality</label>
+                        <select id="airQuality" name="airQuality" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Satisfactory">Satisfactory</option>
+                            <option value="Needs Improvement">Needs Improvement</option>
+                            <option value="Unsatisfactory">Unsatisfactory</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="noiseLevels">Noise Levels</label>
+                        <select id="noiseLevels" name="noiseLevels" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Acceptable">Acceptable</option>
+                            <option value="Elevated">Elevated</option>
+                            <option value="Excessive">Excessive</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="regulatory-and-compliance-inspections-section" class="inspection-type-section">
+                <h3 class="section-header">Regulatory & Compliance Inspection Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="complianceDocuments">Compliance Documents</label>
+                        <select id="complianceDocuments" name="complianceDocuments" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Complete">Complete</option>
+                            <option value="Incomplete">Incomplete</option>
+                            <option value="Missing">Missing</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="regulatoryPermits">Regulatory Permits</label>
+                        <select id="regulatoryPermits" name="regulatoryPermits" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Valid">Valid</option>
+                            <option value="Expired">Expired</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Not Applicable">Not Applicable</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div id="incident-and-accident-inspections-section" class="inspection-type-section">
+                <h3 class="section-header">Incident & Accident Inspection Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="incidentScene">Incident Scene Assessment</label>
+                        <select id="incidentScene" name="incidentScene" class="key-field">
+                            <option value="">Select assessment</option>
+                            <option value="Secure">Secure</option>
+                            <option value="Needs Securing">Needs Securing</option>
+                            <option value="Hazardous">Hazardous</option>
+                            <option value="Cleared">Cleared</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="involvedEquipment">Equipment Involved</label>
+                        <textarea id="involvedEquipment" name="involvedEquipment" class="key-field" placeholder="Describe equipment or tools involved in the incident"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <fieldset>
+                <legend>2. People Involved</legend>
+                <h3>Team Leader</h3>
+                <label for="teamLeaderName">Team Leader Name</label>
+                <select id="teamLeaderName" name="teamLeaderName" required>
+                    <option value="">Select a user</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+                
+                <h3>Line Manager</h3>
+                <label for="lineManager">Line Manager</label>
+                <select id="lineManager" name="lineManager" required>
+                    <option value="">Select a line manager</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+                
+                <h3>Inspection Team</h3>
+                <label for="inspectionTeam">Team Members</label>
+                <textarea id="inspectionTeam" name="inspectionTeam" placeholder="Separate multiple team members with a comma"></textarea>
+            </fieldset>
+            
+            <fieldset>
+                <legend>3. Worksite Conditions</legend>
+                <label for="housekeeping">Housekeeping & Cleanliness</label>
+                <select id="housekeeping" name="housekeeping">
+                    <option value="">Select assessment</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+                
+                <label for="walkways">Walkways & Exits Clear</label>
+                <select id="walkways" name="walkways">
+                    <option value="">Select assessment</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+                
+                <label for="fireSafety">Fire Safety Equipment</label>
+                <select id="fireSafety" name="fireSafety">
+                    <option value="">Select assessment</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+            </fieldset>
+            
+            <fieldset>
+                <legend>4. PPE Compliance</legend>
+                <label for="ppeCompliance">Required PPE Worn</label>
+                <select id="ppeCompliance" name="ppeCompliance">
+                    <option value="">Select assessment</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+                
+                <label for="ppeCondition">Condition of PPE</label>
+                <select id="ppeCondition" name="ppeCondition">
+                    <option value="">Select assessment</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+            </fieldset>
+            
+            <fieldset>
+                <legend>5. Equipment & Machinery</legend>
+                <label for="equipmentStatus">Equipment Functionality</label>
+                <select id="equipmentStatus" name="equipmentStatus">
+                    <option value="">Select assessment</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+                
+                <label for="lockoutTagout">Lockout/Tagout Compliance</label>
+                <select id="lockoutTagout" name="lockoutTagout">
+                    <option value="">Select assessment</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Needs Improvement">Needs Improvement</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                    <option value="Not Applicable">Not Applicable</option>
+                </select>
+                
+                <label for="attachments">Attachments/Photos</label>
+                <input type="file" id="attachments" name="attachments" accept="image/*,application/pdf" multiple>
+            </fieldset>
+            
+            <fieldset>
+                <legend>6. Hazard Identification</legend>
+                <label for="identifiedHazards">Identified Hazards</label>
+                <textarea id="identifiedHazards" name="identifiedHazards" placeholder="Describe any hazards identified during the inspection"></textarea>
+            </fieldset>
+            
+            <fieldset>
+                <legend>7. Corrective & Preventive Actions</legend>
+                <label for="correctiveActions">Proposed corrective actions</label>
+                <textarea id="correctiveActions" name="correctiveActions" placeholder="Describe proposed corrective actions"></textarea>
+                
+                <label for="personResponsible">Person Responsible</label>
+                <select id="personResponsible" name="personResponsible">
+                    <option value="">Select a person responsible</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+                
+                <label for="actionDeadline">Deadline for actions</label>
+                <input type="date" id="actionDeadline" name="actionDeadline">
+            </fieldset>
+            
+            <fieldset>
+                <legend>8. Review and Approval</legend>
+                <label for="supervisorComments">Supervisor Review Comments</label>
+                <textarea id="supervisorComments" name="supervisorComments" placeholder="Enter supervisor comments"></textarea>
+                
+                <label for="approvalStatus">Approval Status</label>
+                <select id="approvalStatus" name="approvalStatus">
+                    <option value="">Select approval status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+                <label for="closureDate">Closure Date</label>
+                <input type="date" id="closureDate" name="closureDate">
+            </fieldset>
+            
+            <div class="form-actions">
+                <button type="reset" class="btn btn-reset">Reset</button>
+                <button type="submit" class="btn btn-submit">Submit Inspection</button>
+            </div>
+        </form>
+    </main>
+
+    <script>
+    // CLEAN FIREBASE INITIALIZATION AND AUTHENTICATION
+    let database;
+    let auth;
+    
+    // Single, reliable Firebase initialization function
+    function initializeFirebase() {
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.appspot.com",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        try {
+            // Check if Firebase is already initialized
+            if (firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+                console.log("Firebase initialized");
+            } else {
+                console.log("Firebase already initialized");
+            }
+            
+            database = firebase.database();
+            auth = firebase.auth();
+            
+            // Set persistence to LOCAL
+            return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => true)
+                .catch(error => {
+                    console.error("Error setting persistence:", error);
+                    return true; // Continue despite error
+                });
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            return Promise.reject(error);
+        }
+    }
+    
+    // Global variables
+    let authInitialized = false;
+    let authCheckTimeout = null;
+    
+    // Initialize Firebase immediately at script load
+    initializeFirebase()
+        .then(() => console.log("Firebase setup complete"))
+        .catch(error => console.error("Firebase setup error:", error));
+    
+    // Enhanced user dropdown loading function
+    function loadUsersForDropdown() {
+        console.log("Loading users for dropdowns...");
+        const teamLeaderDropdown = document.getElementById('teamLeaderName');
+        const lineManagerDropdown = document.getElementById('lineManager');
+        const personResponsibleDropdown = document.getElementById('personResponsible');
+        
+        if (!teamLeaderDropdown || !lineManagerDropdown || !personResponsibleDropdown) {
+            return Promise.reject(new Error("Dropdown elements not found"));
+        }
+        
+        // Show loading state
+        teamLeaderDropdown.innerHTML = '<option value="">Select a team leader</option><option disabled>Loading users...</option>';
+        lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option><option disabled>Loading users...</option>';
+        personResponsibleDropdown.innerHTML = '<option value="">Select a person responsible</option><option disabled>Loading users...</option>';
+        
+        return new Promise((resolve, reject) => {
+            // Add safety timeout
+            const timeoutId = setTimeout(() => {
+                teamLeaderDropdown.innerHTML = '<option value="">Timeout - Click to retry</option>';
+                lineManagerDropdown.innerHTML = '<option value="">Timeout - Click to retry</option>';
+                personResponsibleDropdown.innerHTML = '<option value="">Timeout - Click to retry</option>';
+                addRetryEventListeners();
+                resolve([]);
+            }, 10000);
+            
+            // Check authentication
+            if (!auth.currentUser) {
+                clearTimeout(timeoutId);
+                console.warn("Not authenticated when loading users");
+                teamLeaderDropdown.innerHTML = '<option value="">Please log in</option>';
+                lineManagerDropdown.innerHTML = '<option value="">Please log in</option>';
+                personResponsibleDropdown.innerHTML = '<option value="">Please log in</option>';
+                reject(new Error("Not authenticated"));
+                return;
+            }
+            
+            // Fetch users from database
+            database.ref('users').once('value')
+                .then(snapshot => {
+                    clearTimeout(timeoutId);
+                    
+                    // Reset dropdowns
+                    teamLeaderDropdown.innerHTML = '<option value="">Select a team leader</option>';
+                    lineManagerDropdown.innerHTML = '<option value="">Select a line manager</option>';
+                    personResponsibleDropdown.innerHTML = '<option value="">Select a person responsible</option>';
+                    
+                    const users = snapshot.val();
+                    
+                    if (!users) {
+                        console.warn("No users found");
+                        resolve([]);
+                        return;
+                    }
+                    
+                    // Process and sort users
+                    const userArray = [];
+                    for (const userId in users) {
+                        if (users[userId]) {
+                            const userData = users[userId];
+                            userArray.push({
+                                id: userId,
+                                email: userData.email || 'No Email',
+                                displayName: userData.firstName && userData.lastName ? 
+                                    `${userData.firstName} ${userData.lastName}` : 
+                                    (userData.email || 'Unknown User')
+                            });
+                        }
+                    }
+                    
+                    userArray.sort((a, b) => a.displayName.localeCompare(b.displayName));
+                    
+                    // Add users to dropdowns
+                    userArray.forEach(user => {
+                        const option1 = document.createElement('option');
+                        option1.value = user.id;
+                        option1.textContent = user.displayName;
+                        teamLeaderDropdown.appendChild(option1);
+                        
+                        const option2 = document.createElement('option');
+                        option2.value = user.id;
+                        option2.setAttribute('data-email', user.email);
+                        option2.textContent = user.displayName;
+                        lineManagerDropdown.appendChild(option2);
+                        
+                        const option3 = document.createElement('option');
+                        option3.value = user.id;
+                        option3.setAttribute('data-email', user.email);
+                        option3.textContent = user.displayName;
+                        personResponsibleDropdown.appendChild(option3);
+                    });
+                    
+                    sessionStorage.setItem('lastUserFetch', Date.now().toString());
+                    resolve(userArray);
+                })
+                .catch(error => {
+                    clearTimeout(timeoutId);
+                    console.error("Error fetching users:", error);
+                    teamLeaderDropdown.innerHTML = '<option value="">Error loading users</option>';
+                    lineManagerDropdown.innerHTML = '<option value="">Error loading users</option>';
+                    personResponsibleDropdown.innerHTML = '<option value="">Error loading users</option>';
+                    
+                    const retryOption = document.createElement('option');
+                    retryOption.value = "retry";
+                    retryOption.textContent = "Click to retry";
+                    teamLeaderDropdown.appendChild(retryOption.cloneNode(true));
+                    lineManagerDropdown.appendChild(retryOption.cloneNode(true));
+                    personResponsibleDropdown.appendChild(retryOption);
+                    
+                    addRetryEventListeners();
+                    reject(error);
+                });
+        });
+    }
+    
+    // Helper function to add retry listeners to dropdowns
+    function addRetryEventListeners() {
+        const teamLeaderDropdown = document.getElementById('teamLeaderName');
+        const lineManagerDropdown = document.getElementById('lineManager');
+        const personResponsibleDropdown = document.getElementById('personResponsible');
+        
+        if (teamLeaderDropdown) {
+            teamLeaderDropdown.addEventListener('change', function() {
+                if (this.value === "retry") {
+                    loadUsersForDropdown();
+                    this.value = "";
+                }
+            });
+        }
+        
+        if (lineManagerDropdown) {
+            lineManagerDropdown.addEventListener('change', function() {
+                if (this.value === "retry") {
+                    loadUsersForDropdown();
+                    this.value = "";
+                }
+            });
+        }
+        
+        if (personResponsibleDropdown) {
+            personResponsibleDropdown.addEventListener('change', function() {
+                if (this.value === "retry") {
+                    loadUsersForDropdown();
+                    this.value = "";
+                }
+            });
+        }
+    }
+    
+    // Function to add refresh buttons to the form
+    function addRefreshButtonsToDom() {
+        const teamLeaderLabel = document.querySelector('label[for="teamLeaderName"]');
+        const lineManagerLabel = document.querySelector('label[for="lineManager"]');
+        const personResponsibleLabel = document.querySelector('label[for="personResponsible"]');
+        
+        if (teamLeaderLabel && !teamLeaderLabel.querySelector('button')) {
+            const refreshBtn = createRefreshButton(refreshUserDropdowns);
+            teamLeaderLabel.appendChild(refreshBtn);
+        }
+        
+        if (lineManagerLabel && !lineManagerLabel.querySelector('button')) {
+            const refreshBtn = createRefreshButton(refreshUserDropdowns);
+            lineManagerLabel.appendChild(refreshBtn);
+        }
+        
+        if (personResponsibleLabel && !personResponsibleLabel.querySelector('button')) {
+            const refreshBtn = createRefreshButton(refreshUserDropdowns);
+            personResponsibleLabel.appendChild(refreshBtn);
+        }
+    }
+    
+    // Helper to create refresh button
+    function createRefreshButton(clickHandler) {
+        const refreshBtn = document.createElement('button');
+        refreshBtn.type = 'button';
+        refreshBtn.innerHTML = '↻';
+        refreshBtn.title = 'Refresh user list';
+        refreshBtn.style.marginLeft = '10px';
+        refreshBtn.style.padding = '2px 6px';
+        refreshBtn.style.backgroundColor = '#3498db';
+        refreshBtn.style.color = 'white';
+        refreshBtn.style.border = 'none';
+        refreshBtn.style.borderRadius = '3px';
+        refreshBtn.style.cursor = 'pointer';
+        refreshBtn.onclick = clickHandler;
+        return refreshBtn;
+    }
+    
+    // Function to refresh user dropdowns manually
+    function refreshUserDropdowns(event) {
+        console.log("Refreshing user dropdowns");
+        
+        const refreshBtn = event ? event.target : null;
+        if (refreshBtn) {
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '⌛';
+        }
+        
+        // Save currently selected values
+        const teamLeaderDropdown = document.getElementById('teamLeaderName');
+        const lineManagerDropdown = document.getElementById('lineManager');
+        const personResponsibleDropdown = document.getElementById('personResponsible');
+        const teamLeaderValue = teamLeaderDropdown ? teamLeaderDropdown.value : "";
+        const lineManagerValue = lineManagerDropdown ? lineManagerDropdown.value : "";
+        const personResponsibleValue = personResponsibleDropdown ? personResponsibleDropdown.value : "";
+        
+        loadUsersForDropdown()
+            .then(() => {
+                // Restore selected values if they exist
+                if (teamLeaderValue && teamLeaderDropdown) {
+                    teamLeaderDropdown.value = teamLeaderValue;
+                }
+                
+                if (lineManagerValue && lineManagerDropdown) {
+                    lineManagerDropdown.value = lineManagerValue;
+                }
+                
+                if (personResponsibleValue && personResponsibleDropdown) {
+                    personResponsibleDropdown.value = personResponsibleValue;
+                }
+                
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '✓';
+                    setTimeout(() => {
+                        refreshBtn.innerHTML = '↻';
+                        refreshBtn.disabled = false;
+                    }, 1000);
+                }
+            })
+            .catch(() => {
+                if (refreshBtn) {
+                    refreshBtn.innerHTML = '✗';
+                    setTimeout(() => {
+                        refreshBtn.innerHTML = '↻';
+                        refreshBtn.disabled = false;
+                    }, 1000);
+                }
+            });
+    }
+    
+    // Main DOM content loaded handler - streamlined authentication flow
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("DOM loaded, initializing inspection form");
+        
+        try {
+            showLoading("Checking login status...");
+            
+            // Set authentication timeout
+            authCheckTimeout = setTimeout(() => {
+                console.warn("Auth check timed out");
+                hideLoading();
+                window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+            }, 8000);
+            
+            // Single auth state listener
+            auth.onAuthStateChanged(user => {
+                clearTimeout(authCheckTimeout);
+                
+                if (authInitialized) return;
+                authInitialized = true;
+                
+                if (user) {
+                    // User is logged in
+                    console.log("User authenticated:", user.email);
+                    
+                    // Save token for session persistence
+                    user.getIdToken().then(token => {
+                        localStorage.setItem('authToken', token);
+                    });
+                    
+                    hideLoading();
+                    updateUIForAuthenticatedUser(user);
+                    
+                    // Load user data for dropdowns
+                    showLoading("Loading user data...");
+                    loadUsersForDropdown()
+                        .then(() => {
+                            hideLoading();
+                            checkUrlForEditMode();
+                        })
+                        .catch(error => {
+                            console.error("Error loading users:", error);
+                            hideLoading();
+                            checkUrlForEditMode();
+                        });
+                } else {
+                    // Not logged in, redirect to login
+                    console.log("No user authenticated, redirecting to login");
+                    hideLoading();
+                    window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                }
+            });
+            
+            // Set up form event listeners
+            document.getElementById('inspectionForm').addEventListener('submit', submitInspectionForm);
+            
+            // Logout button handler
+            document.getElementById('logoutButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                auth.signOut().then(() => {
+                    localStorage.removeItem('authToken');
+                    sessionStorage.clear();
+                    window.location.href = "login.html";
+                }).catch(error => {
+                    console.error("Error during logout:", error);
+                });
+            });
+            
+            // Add refresh buttons to dropdowns
+            addRefreshButtonsToDom();
+            
+            // Initialize dropdowns
+            loadLocations();
+            
+            // Set current date and time for the inspection date field
+            const now = new Date();
+            const formattedDateTime = now.toISOString().slice(0, 16); // Format as YYYY-MM-DDThh:mm
+            document.getElementById('eventDateTime').value = formattedDateTime;
+            
+        } catch (error) {
+            console.error("Critical initialization error:", error);
+            hideLoading();
+            if (!authInitialized && auth) {
+                const user = auth.currentUser;
+                if (user) {
+                    updateUIForAuthenticatedUser(user);
+                    loadUsersForDropdown().catch(() => {});
+                }
+            }
+        }
+    });
+    
+    // Check URL for edit mode parameter
+    function checkUrlForEditMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const inspectionId = urlParams.get('edit');
+        
+        if (inspectionId) {
+            loadInspectionForEditing(inspectionId);
+        }
+    }
+    
+    // Function to load inspection for editing with better error handling
+    function loadInspectionForEditing(inspectionId) {
+        showLoading("Loading inspection data...");
+        
+        // Update page title
+        document.getElementById('formTitle').textContent = 'Edit Inspection';
+        
+        // Set the hidden inspection ID field
+        document.getElementById('inspectionId').value = inspectionId;
+        
+        // Fetch inspection data from Firebase
+        const inspectionRef = database.ref(`inspections/${inspectionId}`);
+        let attempts = 0;
+        const maxAttempts = 3;
+        
+        function tryLoadingInspection() {
+            attempts++;
+            console.log(`Attempt ${attempts} to load inspection data`);
+            
+            inspectionRef.once('value')
+                .then(snapshot => {
+                    const inspection = snapshot.val();
+                    if (!inspection) {
+                        throw new Error('Inspection not found');
+                    }
+                    
+                    // First load user data, then populate form
+                    return loadUsersForDropdown()
+                        .then(() => {
+                            // Check if dropdowns have options
+                            const teamLeaderDropdown = document.getElementById('teamLeaderName');
+                            const lineManagerDropdown = document.getElementById('lineManager');
+                            const personResponsibleDropdown = document.getElementById('personResponsible');
+                            
+                            if (teamLeaderDropdown.options.length <= 2 && 
+                                lineManagerDropdown.options.length <= 2 && 
+                                personResponsibleDropdown.options.length <= 2 && 
+                                attempts < maxAttempts) {
+                                
+                                console.warn("Dropdown not properly populated, retrying");
+                                hideLoading();
+                                setTimeout(tryLoadingInspection, 1000);
+                                return;
+                            }
+                            
+                            populateFormWithInspectionData(inspection);
+                            sessionStorage.setItem('lastUserFetch', Date.now().toString());
+                            hideLoading();
+                        });
+                })
+                .catch(error => {
+                    console.error("Error loading inspection for editing:", error);
+                    
+                    if (attempts < maxAttempts) {
+                        console.warn("Retrying after error...");
+                        setTimeout(tryLoadingInspection, 1000);
+                    } else {
+                        alert(`Error loading inspection: ${error.message}`);
+                        window.location.href = 'inspectionsboard.html';
+                        hideLoading();
+                    }
+                });
+        }
+        
+        // Start loading process
+        tryLoadingInspection();
+    }
+    
+    // Clean unified loading functions
+    function showLoading(message = 'Loading...') {
+        const existingOverlay = document.getElementById('loadingOverlay');
+        if (existingOverlay) {
+            existingOverlay.remove();
+        }
+        
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.className = 'loading-overlay';
+        loadingOverlay.id = 'loadingOverlay';
+        loadingOverlay.innerHTML = `
+            <div style="text-align: center;">
+                <div class="loading-spinner"></div>
+                <div style="margin-top: 15px; color: #333; font-size: 14px;">${message}</div>
+            </div>
+        `;
+        document.body.appendChild(loadingOverlay);
+        loadingOverlay.style.display = 'flex';
+    }
+    
+    function hideLoading() {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.remove();
+        }
+    }
+    
+    // Update UI for authenticated user
+    function updateUIForAuthenticatedUser(user) {
+        try {
+            // Update user email in dropdown
+            const userEmailElement = document.getElementById('userEmail');
+            if (userEmailElement) {
+                userEmailElement.textContent = user.email;
+            }
+            
+            // Update profile display
+            database.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+                const userData = snapshot.val() || {};
+                
+                // Update avatar
+                if (userData.profileImage) {
+                    const userAvatar = document.getElementById('userAvatar');
+                    const userInitial = document.getElementById('userInitial');
+                    
+                    if (userAvatar && userInitial) {
+                        userAvatar.src = userData.profileImage;
+                        userAvatar.style.display = 'block';
+                        userInitial.style.display = 'none';
+                    }
+                } else {
+                    const userInitial = document.getElementById('userInitial');
+                    if (userInitial) {
+                        userInitial.textContent = getUserInitial(user);
+                        userInitial.style.display = 'flex';
+                    }
+                    
+                    const userAvatar = document.getElementById('userAvatar');
+                    if (userAvatar) {
+                        userAvatar.style.display = 'none';
+                    }
+                }
+            }).catch(error => {
+                console.error("Error fetching user profile:", error);
+            });
+            
+            // Show authenticated user links and hide login button
+            document.getElementById('profileLink').style.display = 'block';
+            document.getElementById('accountLink').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'none';
+        } catch (error) {
+            console.warn("Error updating UI for authenticated user:", error);
+        }
+    }
+    
+    // Simple function to get initial from user object
+    function getUserInitial(user) {
+        if (!user || !user.email) return '?';
+        return user.email.charAt(0).toUpperCase();
+    }
+
+    // Function to submit the inspection form
+    function submitInspectionForm(e) {
+        e.preventDefault();
+        console.log("Submitting inspection form...");
+        
+        // Show loading overlay
+        showLoading("Saving inspection...");
+        
+        // Verify user is authenticated
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error("User not authenticated when submitting form");
+            hideLoading();
+            alert("You must be logged in to submit inspections");
+            return;
+        }
+        
+        try {
+            // Get form data
+            const form = document.getElementById('inspectionForm');
+            const inspectionId = document.getElementById('inspectionId').value.trim();
+            
+            // Collect form data
+            const inspectionType = document.getElementById('inspectionType').value;
+            const otherInspectionType = document.getElementById('otherInspectionType').value;
+            const company = document.getElementById('company').value;
+            const eventDateTime = document.getElementById('eventDateTime').value;
+            
+            // Get location data - handle both dropdown and Other field
+            const locationSelect = document.getElementById('location');
+            const otherLocationInput = document.getElementById('otherLocation');
+            const location = locationSelect.value === 'Other' ? 
+                (otherLocationInput ? otherLocationInput.value : '') : 
+                locationSelect.value;
+            
+            // Get team leader information
+            const teamLeaderSelect = document.getElementById('teamLeaderName');
+            const teamLeaderId = teamLeaderSelect.value;
+            const teamLeaderName = teamLeaderSelect.options[teamLeaderSelect.selectedIndex].text;
+            
+            // Line manager
+            const lineManagerSelect = document.getElementById('lineManager');
+            const lineManagerId = lineManagerSelect.value;
+            const lineManager = lineManagerSelect.options[lineManagerSelect.selectedIndex].text;
+            const lineManagerEmail = lineManagerSelect.options[lineManagerSelect.selectedIndex].getAttribute('data-email') || '';
+            
+            // Inspection team
+            const inspectionTeam = document.getElementById('inspectionTeam').value;
+            
+            // Worksite conditions
+            const housekeeping = document.getElementById('housekeeping').value;
+            const walkways = document.getElementById('walkways').value;
+            const fireSafety = document.getElementById('fireSafety').value;
+            
+            // PPE
+            const ppeCompliance = document.getElementById('ppeCompliance').value;
+            const ppeCondition = document.getElementById('ppeCondition').value;
+            
+            // Equipment
+            const equipmentStatus = document.getElementById('equipmentStatus').value;
+            const lockoutTagout = document.getElementById('lockoutTagout').value;
+            
+            // Hazards
+            const identifiedHazards = document.getElementById('identifiedHazards').value;
+            
+            // Actions
+            const correctiveActions = document.getElementById('correctiveActions').value;
+            
+            // Get person responsible information from dropdown
+            const personResponsibleSelect = document.getElementById('personResponsible');
+            const personResponsibleId = personResponsibleSelect.value;
+            let personResponsible = '';
+            let personResponsibleEmail = '';
+            
+            if (personResponsibleId) {
+                personResponsible = personResponsibleSelect.options[personResponsibleSelect.selectedIndex].textContent;
+                personResponsibleEmail = personResponsibleSelect.options[personResponsibleSelect.selectedIndex].getAttribute('data-email') || '';
+            }
+            
+            const actionDeadline = document.getElementById('actionDeadline').value;
+            
+            // Review fields
+            const supervisorComments = document.getElementById('supervisorComments').value;
+            let approvalStatus = document.getElementById('approvalStatus').value || 'Pending';
+            const closureDate = document.getElementById('closureDate').value;
+            
+            // Set approval status to pending for new inspections or if not changed
+            if (inspectionId === '' || approvalStatus === '') {
+                approvalStatus = 'Pending';
+            }
+            
+            // Create inspection object
+            const inspectionData = {
+                inspectionType: inspectionType === 'Other' ? otherInspectionType : inspectionType,
+                otherInspectionType: inspectionType === 'Other' ? otherInspectionType : '',
+                company: company,
+                eventDateTime: eventDateTime,
+                location: location,
+                
+                // Team leader & manager info
+                teamLeaderId: teamLeaderId,
+                teamLeaderName: teamLeaderName,
+                lineManagerId: lineManagerId,
+                lineManager: lineManager,
+                lineManagerEmail: lineManagerEmail,
+                inspectionTeam: inspectionTeam,
+                
+                // Worksite conditions
+                housekeeping: housekeeping,
+                walkways: walkways,
+                fireSafety: fireSafety,
+                
+                // PPE
+                ppeCompliance: ppeCompliance,
+                ppeCondition: ppeCondition,
+                
+                // Equipment
+                equipmentStatus: equipmentStatus,
+                lockoutTagout: lockoutTagout,
+                
+                // Hazards
+                identifiedHazards: identifiedHazards,
+                
+                // Actions
+                correctiveActions: correctiveActions,
+                personResponsibleId: personResponsibleId,
+                personResponsible: personResponsible,
+                personResponsibleEmail: personResponsibleEmail,
+                actionDeadline: actionDeadline,
+                
+                // Review
+                supervisorComments: supervisorComments,
+                approvalStatus: approvalStatus,
+                closureDate: closureDate,
+                
+                // Metadata - always updated
+                lastUpdatedBy: currentUser.uid,
+                lastUpdatedByEmail: currentUser.email,
+                lastUpdatedAt: firebase.database.ServerValue.TIMESTAMP,
+                lastUpdatedByName: currentUser.displayName || currentUser.email,
+                
+                // Get type-specific data based on inspection type
+                ...(inspectionType === 'Workplace Safety Inspections' ? {
+                    workplaceSafetySignage: document.getElementById('workplaceSafetySignage')?.value || '',
+                    workspaceOrganization: document.getElementById('workspaceOrganization')?.value || '',
+                } : {}),
+                
+                ...(inspectionType === 'Equipment and Machinery Inspections' ? {
+                    equipmentCalibration: document.getElementById('equipmentCalibration')?.value || '',
+                    maintenanceRecords: document.getElementById('maintenanceRecords')?.value || '',
+                } : {}),
+                
+                ...(inspectionType === 'Environmental Inspections' ? {
+                    wasteManagement: document.getElementById('wasteManagement')?.value || '',
+                    chemicalStorage: document.getElementById('chemicalStorage')?.value || '',
+                } : {}),
+                
+                ...(inspectionType === 'Fire and Emergency Preparedness Inspections' ? {
+                    emergencyExits: document.getElementById('emergencyExits')?.value || '',
+                    fireEquipment: document.getElementById('fireEquipment')?.value || '',
+                } : {}),
+                
+                ...(inspectionType === 'Health and Hygiene Inspections' ? {
+                    airQuality: document.getElementById('airQuality')?.value || '',
+                    noiseLevels: document.getElementById('noiseLevels')?.value || '',
+                } : {}),
+                
+                ...(inspectionType === 'Regulatory and Compliance Inspections' ? {
+                    complianceDocuments: document.getElementById('complianceDocuments')?.value || '',
+                    regulatoryPermits: document.getElementById('regulatoryPermits')?.value || '',
+                } : {}),
+                
+                ...(inspectionType === 'Incident and Accident Inspections' ? {
+                    incidentScene: document.getElementById('incidentScene')?.value || '',
+                    involvedEquipment: document.getElementById('involvedEquipment')?.value || '',
+                } : {})
+            };
+            
+            // For new inspections, add creation metadata
+            if (!inspectionId) {
+                inspectionData.createdBy = currentUser.uid;
+                inspectionData.createdByEmail = currentUser.email;
+                inspectionData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+                inspectionData.createdByName = currentUser.displayName || currentUser.email;
+            }
+
+            // Get reference to Firebase database
+            let savePromise;
+            let newInspectionRef;
+            
+            if (inspectionId) {
+                // Update existing inspection
+                console.log(`Updating existing inspection with ID: ${inspectionId}`);
+                savePromise = database.ref(`inspections/${inspectionId}`).update(inspectionData);
+            } else {
+                // Create new inspection with push() to generate a unique key
+                console.log("Creating new inspection with generated ID");
+                newInspectionRef = database.ref('inspections').push();
+                savePromise = newInspectionRef.set(inspectionData);
+            }
+            
+            // Handle save result
+            savePromise.then(() => {
+                console.log("Inspection saved successfully");
+                
+                // Ensure data is available immediately by writing to local storage as backup
+                if (inspectionId) {
+                    try {
+                        const localInspections = JSON.parse(localStorage.getItem('recentInspections') || '[]');
+                        const updatedInspections = localInspections.map(i => 
+                            i.id === inspectionId ? {...i, ...inspectionData, id: inspectionId} : i
+                        );
+                        localStorage.setItem('recentInspections', JSON.stringify(updatedInspections));
+                    } catch (e) {
+                        console.warn("Could not update local inspection cache", e);
+                    }
+                } else if (newInspectionRef) {
+                    try {
+                        const localInspections = JSON.parse(localStorage.getItem('recentInspections') || '[]');
+                        localInspections.unshift({...inspectionData, id: newInspectionRef.key});
+                        // Keep only recent 50 inspections locally
+                        localStorage.setItem('recentInspections', 
+                            JSON.stringify(localInspections.slice(0, 50))
+                        );
+                    } catch (e) {
+                        console.warn("Could not update local inspection cache", e);
+                    }
+                }
+                
+                // Show success message
+                const successMsg = document.createElement('div');
+                successMsg.className = 'alert alert-success';
+                successMsg.style.display = 'block';
+                successMsg.style.backgroundColor = '#d4edda';
+                successMsg.style.color = '#155724';
+                successMsg.style.padding = '15px';
+                successMsg.style.marginBottom = '20px';
+                successMsg.style.borderRadius = '4px';
+                successMsg.style.border = '1px solid #c3e6cb';
+                
+                if (inspectionId) {
+                    successMsg.textContent = 'Inspection updated successfully!';
+                    
+                    // Set highlight ID in session storage for the board to highlight the updated row
+                    sessionStorage.setItem('highlightInspectionId', inspectionId);
+                } else {
+                    successMsg.textContent = 'New inspection created successfully!';
+                    
+                    // Set highlight ID in session storage for the board to highlight the new row
+                    if (newInspectionRef) {
+                        sessionStorage.setItem('highlightInspectionId', newInspectionRef.key);
+                    }
+                    
+                    // Log the new inspection ID
+                    console.log(`New inspection created with ID: ${newInspectionRef.key}`);
+                }
+                
+                // Add view inspection board link
+                const linkContainer = document.createElement('p');
+                linkContainer.style.marginTop = '10px';
+                const link = document.createElement('a');
+                link.href = 'inspectionsboard.html';
+                link.textContent = 'View Inspections Board';
+                link.style.color = '#155724';
+                link.style.fontWeight = 'bold';
+                linkContainer.appendChild(link);
+                
+                // Add "View Now" button for direct navigation
+                const viewNowBtn = document.createElement('button');
+                viewNowBtn.textContent = 'View Now';
+                viewNowBtn.style.marginLeft = '10px';
+                viewNowBtn.style.padding = '5px 10px';
+                viewNowBtn.style.backgroundColor = '#28a745';
+                viewNowBtn.style.color = 'white';
+                viewNowBtn.style.border = 'none';
+                viewNowBtn.style.borderRadius = '4px';
+                viewNowBtn.style.cursor = 'pointer';
+                viewNowBtn.onclick = () => {
+                    window.location.href = 'inspectionsboard.html';
+                };
+                linkContainer.appendChild(viewNowBtn);
+                
+                successMsg.appendChild(linkContainer);
+                
+                // Add to DOM right after the form
+                const formElement = document.getElementById('inspectionForm');
+                formElement.parentNode.insertBefore(successMsg, formElement.nextSibling);
+                
+                // Hide loading overlay
+                hideLoading();
+                
+                // Dispatch custom event to notify other tabs or windows
+                try {
+                    const updateEvent = new CustomEvent('inspection_updated', {
+                        detail: {
+                            inspectionId: inspectionId || (newInspectionRef ? newInspectionRef.key : null),
+                            type: inspectionId ? 'update' : 'create'
+                        }
+                    });
+                    window.dispatchEvent(updateEvent);
+                } catch (e) {
+                    console.warn("Could not dispatch update event", e);
+                }
+                
+                // Reset form for new inspection creation if this was a new inspection
+                if (!inspectionId) {
+                    setTimeout(() => {
+                        formElement.reset();
+                        
+                        // Set current date and time for the inspection date field
+                        const now = new Date();
+                        const formattedDateTime = now.toISOString().slice(0, 16); // Format as YYYY-MM-DDThh:mm
+                        document.getElementById('eventDateTime').value = formattedDateTime;
+                        
+                        // Reset approval status to default
+                        document.getElementById('approvalStatus').value = '';
+                        
+                        // Remove success message after some time
+                        setTimeout(() => {
+                            successMsg.remove();
+                        }, 5000);
+                    }, 1500);
+                } else {
+                    // For edit mode, redirect back to inspection board after delay
+                    setTimeout(() => {
+                        window.location.href = 'inspectionsboard.html';
+                    }, 2000);
+                }
+                
+                // Log to audit trail if available
+                if (typeof logAction === 'function') {
+                    logAction(inspectionId ? 'INSPECTION_UPDATED' : 'INSPECTION_CREATED', {
+                        inspectionId: inspectionId || newInspectionRef.key,
+                        company: company,
+                        location: location
+                    });
+                }
+                
+                // Create notification for new inspections
+                if (!inspectionId) {
+                    createNotification({
+                        type: 'inspection_created',
+                        title: 'New Inspection Created',
+                        message: `A new inspection at ${location} has been created`,
+                        inspectionId: newInspectionRef.key,
+                        createdBy: currentUser.uid
+                    });
+                } else {
+                    // Create notification for updated inspections
+                    createNotification({
+                        type: 'inspection_updated',
+                        title: 'Inspection Updated',
+                        message: `Inspection at ${location} has been updated`,
+                        inspectionId: inspectionId,
+                        updatedBy: currentUser.uid
+                    });
+                }
+                
+            }).catch(error => {
+                console.error("Error saving inspection:", error);
+                hideLoading();
+                alert(`Error saving inspection: ${error.message}`);
+            });
+            
+        } catch (error) {
+            console.error("Error in form submission:", error);
+            hideLoading();
+            alert(`An error occurred during form submission: ${error.message}`);
+        }
+    }
+
+    // Function to create a notification in Firebase
+    function createNotification(notificationData) {
+        if (!database || !auth.currentUser) {
+            console.error("Cannot create notification: Database or user not available");
+            return Promise.reject("Database or user not available");
+        }
+        
+        const currentUser = auth.currentUser;
+        
+        // Add standard fields to notification
+        const notification = {
+            ...notificationData,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            createdBy: currentUser.uid,
+            createdByEmail: currentUser.email,
+            readBy: {}, // Store read status by user ID for better real-time updates
+            targetUsers: [] // Empty array means notification is for all users
+        };
+        
+        // Auto-mark creator's own notifications as read
+        notification.readBy[currentUser.uid] = true;
+        
+        // If it's related to an inspection with a line manager, add them as target
+        if (notificationData.inspectionId && 
+            (notificationData.type === 'inspection_created' || notificationData.type === 'inspection_updated')) {
+            
+            const lineManagerId = document.getElementById('lineManager').value;
+            const lineManagerEmail = document.getElementById('lineManager')
+                .options[document.getElementById('lineManager').selectedIndex]
+                .getAttribute('data-email');
+                
+            if (lineManagerId && lineManagerId !== currentUser.uid) {
+                notification.targetUsers = [lineManagerId];
+                
+                // If this is a new inspection, create a special notification for the line manager
+                if (notificationData.type === 'inspection_created') {
+                    const managerNotification = {
+                        ...notification,
+                        type: 'inspection_requires_approval',
+                        title: 'New Inspection Requires Your Approval',
+                        message: `A new inspection at ${notificationData.message.replace('A new inspection at ', '').replace(' has been created', '')} requires your approval`,
+                        urgency: 'high',
+                        targetUsers: [lineManagerId],
+                        readBy: {} // Reset read status for new notification
+                    };
+                    
+                    // Create a separate notification for manager (don't need to wait for it)
+                    database.ref('notifications').push(managerNotification)
+                        .then(() => console.log("Created approval notification for line manager"))
+                        .catch(error => console.error("Error creating approval notification:", error));
+                }
+            }
+        }
+        
+        // Create the general notification
+        return database.ref('notifications').push(notification)
+            .then((ref) => {
+                console.log("Notification created successfully with ID:", ref.key);
+                return { ...notification, id: ref.key };
+            })
+            .catch(error => {
+                console.error("Error creating notification:", error);
+                return Promise.reject(error);
+            });
+    }
+
+    // Function to populate form fields with inspection data for editing
+    function populateFormWithInspectionData(inspection) {
+        console.log("Populating form with inspection data:", inspection);
+        
+        // Main inspection details
+        document.getElementById('inspectionType').value = inspection.inspectionType || '';
+        document.getElementById('otherInspectionType').value = inspection.otherInspectionType || '';
+        document.getElementById('company').value = inspection.company || '';
+        document.getElementById('eventDateTime').value = formatDateTimeForInput(inspection.eventDateTime);
+        
+        // Set location - handle both dropdown and Other field
+        const locationSelect = document.getElementById('location');
+        const otherLocationField = document.getElementById('otherLocationField');
+        const otherLocationInput = document.getElementById('otherLocation');
+        
+        if (inspection.location) {
+            // Check if the location exists in the dropdown options
+            let locationExists = false;
+            for (let i = 0; i < locationSelect.options.length; i++) {
+                if (locationSelect.options[i].value === inspection.location) {
+                    locationSelect.value = inspection.location;
+                    locationExists = true;
+                    break;
+                }
+            }
+            
+            // If location doesn't exist in dropdown, set to "Other" and fill the other field
+            if (!locationExists) {
+                locationSelect.value = 'Other';
+                if (otherLocationInput) otherLocationInput.value = inspection.location;
+                if (otherLocationField) otherLocationField.style.display = 'block';
+            }
+        } else {
+            locationSelect.value = '';
+        }
+        
+        // Set team leader info
+        if (inspection.teamLeaderId) {
+            document.getElementById('teamLeaderName').value = inspection.teamLeaderId;
+        }
+        
+        // Set line manager info
+        if (inspection.lineManagerId) {
+            document.getElementById('lineManager').value = inspection.lineManagerId;
+        }
+        
+        // Set inspection team
+        document.getElementById('inspectionTeam').value = inspection.inspectionTeam || '';
+        
+        // Set worksite condition fields
+        document.getElementById('housekeeping').value = inspection.housekeeping || '';
+        document.getElementById('walkways').value = inspection.walkways || '';
+        document.getElementById('fireSafety').value = inspection.fireSafety || '';
+        
+        // Set PPE fields
+        document.getElementById('ppeCompliance').value = inspection.ppeCompliance || '';
+        document.getElementById('ppeCondition').value = inspection.ppeCondition || '';
+        
+        // Set equipment fields
+        document.getElementById('equipmentStatus').value = inspection.equipmentStatus || '';
+        document.getElementById('lockoutTagout').value = inspection.lockoutTagout || '';
+        
+        // Set hazards
+        document.getElementById('identifiedHazards').value = inspection.identifiedHazards || '';
+        
+        // Set corrective actions fields
+        document.getElementById('correctiveActions').value = inspection.correctiveActions || '';
+        
+        // Set person responsible if available
+        const personResponsibleSelect = document.getElementById('personResponsible');
+        if (inspection.personResponsibleId && personResponsibleSelect) {
+            // Check if the option exists, if not create it
+            if (!personResponsibleSelect.querySelector(`option[value="${inspection.personResponsibleId}"]`)) {
+                const option = document.createElement('option');
+                option.value = inspection.personResponsibleId;
+                option.textContent = inspection.personResponsible || 'Unknown User';
+                option.setAttribute('data-email', inspection.personResponsibleEmail || '');
+                personResponsibleSelect.appendChild(option);
+            }
+            personResponsibleSelect.value = inspection.personResponsibleId;
+        } else if (inspection.personResponsible && !inspection.personResponsibleId) {
+            // Legacy data might have only the name as a string - add it as a custom option
+            const option = document.createElement('option');
+            option.value = 'legacy';
+            option.textContent = inspection.personResponsible;
+            personResponsibleSelect.appendChild(option);
+            personResponsibleSelect.value = 'legacy';
+        } else {
+            personResponsibleSelect.value = '';
+        }
+        
+        document.getElementById('actionDeadline').value = formatDateForInput(inspection.actionDeadline);
+        
+        // Set review fields
+        document.getElementById('supervisorComments').value = inspection.supervisorComments || '';
+        document.getElementById('approvalStatus').value = inspection.approvalStatus || 'Pending';
+        document.getElementById('closureDate').value = formatDateForInput(inspection.closureDate);
+        
+        // Set inspection type and update form sections
+        if (document.getElementById('inspectionType')) {
+            document.getElementById('inspectionType').value = inspection.inspectionType || '';
+            updateFormSections(); // Update visible sections based on type
+        }
+        
+        // Populate type-specific fields
+        switch (inspection.inspectionType) {
+            case 'Workplace Safety Inspections':
+                if (document.getElementById('workplaceSafetySignage'))
+                    document.getElementById('workplaceSafetySignage').value = inspection.workplaceSafetySignage || '';
+                if (document.getElementById('workspaceOrganization'))
+                    document.getElementById('workspaceOrganization').value = inspection.workspaceOrganization || '';
+                break;
+                
+            case 'Equipment and Machinery Inspections':
+                if (document.getElementById('equipmentCalibration'))
+                    document.getElementById('equipmentCalibration').value = inspection.equipmentCalibration || '';
+                if (document.getElementById('maintenanceRecords'))
+                    document.getElementById('maintenanceRecords').value = inspection.maintenanceRecords || '';
+                break;
+                
+            case 'Environmental Inspections':
+                if (document.getElementById('wasteManagement'))
+                    document.getElementById('wasteManagement').value = inspection.wasteManagement || '';
+                if (document.getElementById('chemicalStorage'))
+                    document.getElementById('chemicalStorage').value = inspection.chemicalStorage || '';
+                break;
+                
+            case 'Fire and Emergency Preparedness Inspections':
+                if (document.getElementById('emergencyExits'))
+                    document.getElementById('emergencyExits').value = inspection.emergencyExits || '';
+                if (document.getElementById('fireEquipment'))
+                    document.getElementById('fireEquipment').value = inspection.fireEquipment || '';
+                break;
+                
+            case 'Health and Hygiene Inspections':
+                if (document.getElementById('airQuality'))
+                    document.getElementById('airQuality').value = inspection.airQuality || '';
+                if (document.getElementById('noiseLevels'))
+                    document.getElementById('noiseLevels').value = inspection.noiseLevels || '';
+                break;
+                
+            case 'Regulatory and Compliance Inspections':
+                if (document.getElementById('complianceDocuments'))
+                    document.getElementById('complianceDocuments').value = inspection.complianceDocuments || '';
+                if (document.getElementById('regulatoryPermits'))
+                    document.getElementById('regulatoryPermits').value = inspection.regulatoryPermits || '';
+                break;
+                
+            case 'Incident and Accident Inspections':
+                if (document.getElementById('incidentScene'))
+                    document.getElementById('incidentScene').value = inspection.incidentScene || '';
+                if (document.getElementById('involvedEquipment'))
+                    document.getElementById('involvedEquipment').value = inspection.involvedEquipment || '';
+                break;
+        }
+        
+        console.log("Form populated successfully");
+    }
+
+    // Helper function to format datetime string for datetime-local input
+    function formatDateTimeForInput(dateTimeStr) {
+        if (!dateTimeStr) return '';
+        try {
+            const date = new Date(dateTimeStr);
+            if (isNaN(date.getTime())) return '';
+            
+            // Format as YYYY-MM-DDThh:mm
+            return date.toISOString().slice(0, 16);
+        } catch (e) {
+            console.warn("Error formatting datetime:", e);
+            return '';
+        }
+    }
+
+    // Helper function to format date string for date input
+    function formatDateForInput(dateStr) {
+        if (!dateStr) return '';
+        try {
+            const date = new Date(dateStr);
+            if (isNaN(date.getTime())) return '';
+            
+            // Format as YYYY-MM-DD
+            return date.toISOString().slice(0, 10);
+        } catch (e) {
+            console.warn("Error formatting date:", e);
+            return '';
+        }
+    }
+
+    // Function to log actions to audit log
+    function logAction(action, details = {}) {
+        if (!database || !auth.currentUser) return;
+        
+        const logEntry = {
+            action: action,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            userId: auth.currentUser.uid,
+            userEmail: auth.currentUser.email,
+            details: details
+        };
+        
+        database.ref('auditLogs').push(logEntry)
+            .catch(error => console.error("Error logging action:", error));
+    }
+    
+    // Function to load locations from Firebase
+    function loadLocations() {
+        console.log("Loading locations from Firebase");
+        const locationSelect = document.getElementById('location');
+        
+        if (!locationSelect) {
+            console.error("Location select element not found");
+            return;
+        }
+        
+        // Keep the default options - empty and 'Other'
+        const defaultOptions = ['', 'Other'];
+        
+        // Store existing options to avoid clearing them unnecessarily
+        const existingOptions = Array.from(locationSelect.options).map(opt => opt.value);
+        
+        // First, ensure default options exist
+        if (!existingOptions.includes('')) {
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'Select a location';
+            locationSelect.appendChild(emptyOption);
+        }
+        
+        if (!existingOptions.includes('Other')) {
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.textContent = 'Other (specify below)';
+            locationSelect.appendChild(otherOption);
+        }
+        
+        // Create a reference to locations in Firebase
+        const locationsRef = database.ref('setupOptions/locations');
+        
+        // Listen for changes in locations
+        locationsRef.on('value', snapshot => {
+            try {
+                console.log("Received locations from Firebase");
+                const locations = snapshot.val() || {};
+                
+                // Sort locations by name
+                const sortedLocations = Object.entries(locations)
+                    .map(([id, data]) => ({id, ...data}))
+                    .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                
+                // Store current selection
+                const currentSelection = locationSelect.value;
+                
+                // Clear non-default options
+                Array.from(locationSelect.options).forEach(option => {
+                    if (!defaultOptions.includes(option.value)) {
+                        locationSelect.remove(option.index);
+                    }
+                });
+                
+                // Add dynamic options from Firebase
+                sortedLocations.forEach(location => {
+                    if (!location.name) return; // Skip if no name
+                    
+                    const option = document.createElement('option');
+                    option.value = location.name;
+                    option.textContent = location.name;
+                    
+                    // Find the "Other" option to insert before it
+                    let otherOption;
+                    for (let i = 0; i < locationSelect.options.length; i++) {
+                        if (locationSelect.options[i].value === 'Other') {
+                            otherOption = locationSelect.options[i];
+                            break;
+                        }
+                    }
+                    
+                    if (otherOption) {
+                        locationSelect.insertBefore(option, otherOption);
+                    } else {
+                        locationSelect.appendChild(option);
+                    }
+                });
+                
+                // Restore previous selection if possible
+                if (currentSelection && Array.from(locationSelect.options).some(opt => opt.value === currentSelection)) {
+                    locationSelect.value = currentSelection;
+                }
+                
+                console.log(`Loaded ${sortedLocations.length} locations`);
+            } catch (error) {
+                console.error("Error processing locations:", error);
+            }
+        }, error => {
+            console.error("Error loading locations:", error);
+        });
+        
+        // Set up event listener for location dropdown
+        locationSelect.addEventListener('change', function() {
+            const otherLocationField = document.getElementById('otherLocationField');
+            if (otherLocationField) {
+                otherLocationField.style.display = this.value === 'Other' ? 'block' : 'none';
+            }
+        });
+        
+        // Also listen for last update timestamp to force refresh
+        database.ref('setupOptions/locationsLastUpdate').on('value', snapshot => {
+            console.log("Locations timestamp updated, data should refresh");
+        });
+    }
+
+    // Add event listener to the inspection type dropdown
+    document.addEventListener("DOMContentLoaded", () => {
+        // ...existing code...
+        
+        // Add inspection type change handler
+        const inspectionTypeSelect = document.getElementById('inspectionType');
+        if (inspectionTypeSelect) {
+            inspectionTypeSelect.addEventListener('change', updateFormSections);
+            
+            // Initialize form sections once DOM is loaded
+            setTimeout(() => {
+                // Allow time for other DOM setup to complete
+                updateFormSections();
+            }, 500);
+        }
+        
+        // Add click handler for user avatar dropdown
+        const userAvatarContainer = document.getElementById('userAvatarContainer');
+        const userDropdown = document.querySelector('.user-dropdown');
+        
+        if (userAvatarContainer && userDropdown) {
+            // Toggle dropdown when clicking the avatar
+            userAvatarContainer.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent event from bubbling up
+                userDropdown.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking anywhere else
+            document.addEventListener('click', function(e) {
+                if (userDropdown.classList.contains('show')) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+            
+            // Prevent clicks inside dropdown from closing it
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+    });
+
+    // Function to show/hide form sections based on inspection type
+    function updateFormSections() {
+        const inspectionType = document.getElementById('inspectionType').value;
+        
+        // Hide all type-specific sections first
+        const allSections = document.querySelectorAll('.inspection-type-section');
+        allSections.forEach(section => {
+            section.style.display = 'none';
+            
+            // Make fields not required when section is hidden
+            const requiredFields = section.querySelectorAll('[required]');
+            requiredFields.forEach(field => {
+                field.removeAttribute('required');
+            });
+        });
+        
+        // Show common sections
+        document.getElementById('commonSection').style.display = 'block';
+        
+        // Show the relevant section based on inspection type
+        if (inspectionType) {
+            const sectionId = inspectionType.replace(/\s+/g, '-').toLowerCase() + '-section';
+            const typeSection = document.getElementById(sectionId);
+            
+            if (typeSection) {
+                typeSection.style.display = 'block';
+                
+                // Make key fields required when section is visible
+                const keyFields = typeSection.querySelectorAll('.key-field');
+                keyFields.forEach(field => {
+                    field.setAttribute('required', 'required');
+                });
+            }
+            
+            // For the Other type
+            if (inspectionType === 'Other') {
+                document.getElementById('otherInspectionField').style.display = 'block';
+            } else {
+                document.getElementById('otherInspectionField').style.display = 'none';
+            }
+        }
+        
+        // Update form layout and validation
+        adjustFormLayout();
+    }
+
+    // Function to adjust form layout after sections are shown/hidden
+    function adjustFormLayout() {
+        // Add animation to newly visible sections
+        const visibleSections = document.querySelectorAll('.inspection-type-section[style*="block"]');
+        visibleSections.forEach(section => {
+            section.classList.add('section-fade-in');
+            setTimeout(() => {
+                section.classList.remove('section-fade-in');
+            }, 500);
+        });
+    }
+    </script>
+</body>
+</html>

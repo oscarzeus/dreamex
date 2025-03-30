@@ -1,0 +1,1743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications - Dreamex Lab</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Dashboard specific styles */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .dashboard-title h2 {
+            margin: 0;
+            color: #34495e;
+        }
+
+        .dashboard-title p {
+            margin: 5px 0 0;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .dashboard-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .refresh-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .refresh-btn:hover {
+            background-color: #2980b9;
+        }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Menu bar styles */
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #34495e;
+            padding: 0 20px;
+        }
+        
+        .menu-bar ul {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .menu-bar ul li {
+            margin: 0 10px;
+        }
+        
+        .menu-bar ul li a {
+            display: block;
+            padding: 15px 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .menu-bar ul li a:hover {
+            color: #f1f3f5;
+        }
+        
+        .menu-bar ul li.current a {
+            color: #fafcfd;
+            font-weight: bold;
+        }
+
+        /* Dropdown styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white !important;
+            color: black !important;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            top: calc(100%);
+            font-size: 6px !important;
+            font-weight: normal;
+            text-align: left;
+        }
+        .dropdown-content a {
+            color: rgb(44, 43, 43) !important;
+            padding: 6px 10px !important;
+            text-decoration: none;  
+            display: block;
+            font-size: 11px !important;
+        }
+        .dropdown-content a:hover {
+            background-color: #e8e8e8;
+            transform: none; 
+        }
+        .dropdown:hover .dropdown-content,
+        .dropdown:focus-within .dropdown-content {
+            display: block;
+        }
+
+        /* User Avatar Styles */
+        .user-avatar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            text-align: left;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* Add class for showing the dropdown */
+        .user-dropdown.show {
+            display: block;
+            animation: dropdown-fade-in 0.2s ease-out;
+        }
+        
+        .user-email {
+            padding: 5px 15px; /* Further reduced from 8px to 5px */
+            border-bottom: 1px solid #eaeaea;
+            color: #34495e;
+            font-weight: 500;
+            background-color: #f8f9fa;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .user-dropdown a {
+            display: block;
+            padding: 2px 15px; /* Further reduced from 4px to 2px */
+            color: #000000;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            line-height: 1.4; /* Added to provide some minimal spacing */
+        }
+        
+        /* Ensure specific dropdown links are black */
+        #profileLink, #accountLink {
+            color: #474646 !important; /* Pure black color with !important to override any other styles */
+        }
+        
+        .user-dropdown a:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-dropdown a:last-child {
+            border-top: 1px solid #eaeaea;
+        }
+        
+        #logoutButton {
+            color: #e74c3c; /* Keep logout button red */
+        }
+        
+        #logoutButton:hover {
+            background-color: #fdeeee;
+            border-left-color: #e74c3c;
+        }
+        
+        #loginButton {
+            color: #000000; /* Changed to black */
+        }
+        
+        #loginButton:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-initial {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Notifications Page Specific Styles */
+        .notifications-container {
+            max-width: 100%;
+            margin: 80px 20px 40px 20px;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .notifications-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .notifications-title h2 {
+            margin: 0;
+            color: #34495e;
+        }
+
+        .notifications-title p {
+            margin: 5px 0 0;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .notifications-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .notifications-btn {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .mark-all-read-btn {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .mark-all-read-btn:hover {
+            background-color: #2980b9;
+        }
+
+        .clear-all-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+
+        .clear-all-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .notifications-filters {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 14px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background-color: #f8f9fa;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover, .filter-btn.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .notification-list {
+            margin-top: 20px;
+        }
+
+        .notification-item {
+            display: flex;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s ease;
+        }
+
+        .notification-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .notification-item.unread {
+            background-color: rgba(52, 152, 219, 0.05);
+            position: relative;
+        }
+
+        .notification-item.unread:before {
+            content: '';
+            display: block;
+            width: 6px;
+            height: 6px;
+            background-color: #3498db;
+            border-radius: 50%;
+            position: absolute;
+            left: 5px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .notification-icon {
+            margin-right: 15px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .notification-icon.info {
+            background-color: #3498db;
+        }
+
+        .notification-icon.warning {
+            background-color: #f39c12;
+        }
+
+        .notification-icon.error {
+            background-color: #e74c3c;
+        }
+
+        .notification-icon.success {
+            background-color: #2ecc71;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-weight: 600;
+            color: #34495e;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: #95a5a6;
+        }
+
+        .notification-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+            padding-left: 15px;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #7f8c8d;
+            font-size: 16px;
+            transition: color 0.2s ease;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .notification-btn:hover {
+            color: #34495e;
+            background-color: #f1f2f6;
+        }
+
+        .notifications-empty {
+            text-align: center;
+            padding: 80px 0;
+            color: #7f8c8d;
+        }
+
+        .notifications-empty-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        .notification-pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .notification-pagination button {
+            margin: 0 5px;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .notification-pagination button.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .notification-pagination button:hover:not(.active) {
+            background-color: #f5f5f5;
+        }
+
+        .notification-confirmation {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #34495e;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            transform: translateY(100px);
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        .notification-confirmation.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification-confirmation .undo-btn {
+            margin-left: 10px;
+            background: none;
+            border: none;
+            color: #3498db;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Enhanced Setup Page Styles */
+        .setup-container {
+            max-width: 1200px;
+            margin: 80px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .setup-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;  /* Add this to contain the button */
+        }
+
+        .setup-section h3 {
+            color: #2c3e50;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .option-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .option-item {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .option-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .btn-add {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 0;  /* Add this to align left */
+            display: block;  /* Add this to make it block level */
+        }
+
+        .btn-add:hover {
+            background-color: #27ae60;
+            transform: translateY(-1px);
+        }
+
+        /* Enhanced Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            width: 90%;
+            max-width: 500px;
+            margin: 50px auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li><a href="login.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#">Risk Management</a>
+                    <div class="dropdown-content">
+                        <a href="riskassessment.html">Risk Assessment</a>
+                        <a href="jsaboard.html">Job Safety Analysis</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Safety reporting</a>
+                    <div class="dropdown-content">
+                        <a href="eventboard.html">Event</a>
+                        <a href="inspectionsboard.html">Inspections</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Settings</a>
+                    <div class="dropdown-content">
+                        <a href="account.html">User account</a>
+                        <a href="setup.html">Inspections</a>
+                        <a href="log.html">System audit log</a>
+                    </div>
+                </li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+            </ul>
+            <ul class="menu-right">
+                <!-- User Avatar Button -->
+                <li class="user-avatar-container">
+                    <div id="userAvatarContainer">
+                        <img src="https://via.placeholder.com/32" alt="User" class="user-avatar" id="userAvatar" style="display: none;">
+                        <div id="userInitial" class="user-initial">?</div>
+                    </div>
+                    <div class="user-dropdown">
+                        <div class="user-email" id="userEmail">Not logged in</div>
+                        <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                        <a href="#" id="logoutButton" style="display: none;">Log Out</a>
+                        <a href="login.html" id="loginButton">Log In</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <main class="setup-container">
+        <div class="setup-header">
+            <div class="setup-title">
+                <h2>Site Setup</h2>
+                <p>Manage dropdown options across the site</p>
+            </div>
+        </div>
+
+        <!-- Event Types Section -->
+        <div class="setup-section" id="eventTypesSection">
+            <h3>Event Types</h3>
+            <div class="option-list" id="eventTypesList"></div>
+            <button class="btn-add" onclick="showAddModal('eventTypes')">Add New Event Type</button>
+        </div>
+        
+        <!-- Event Titles Section -->
+        <div class="setup-section" id="eventTitlesSection">
+            <h3>Event Titles</h3>
+            <div class="option-list" id="eventTitlesList"></div>
+            <button class="btn-add" onclick="showAddModal('eventTitles')">Add New Event Title</button>
+        </div>
+
+        <!-- Locations Section -->
+        <div class="setup-section" id="locationsSection">
+            <h3>Locations</h3>
+            <div class="option-list" id="locationsList"></div>
+            <button class="btn-add" onclick="showAddModal('locations')">Add New Location</button>
+        </div>
+
+        <!-- Severity Levels Section -->
+        <div class="setup-section" id="severitySection">
+            <h3>Severity Levels</h3>
+            <div class="option-list" id="severityList"></div>
+            <button class="btn-add" onclick="showAddModal('severity')">Add New Severity Level</button>
+        </div>
+
+        <!-- Status Types Section -->
+        <div class="setup-section" id="statusSection">
+            <h3>Status Types</h3>
+            <div class="option-list" id="statusList"></div>
+            <button class="btn-add" onclick="showAddModal('status')">Add New Status Type</button>
+        </div>
+
+        <!-- Companies Section -->
+        <div class="setup-section" id="companiesSection">
+            <h3>Companies</h3>
+            <div class="option-list" id="companiesList"></div>
+            <button class="btn-add" onclick="showAddModal('companies')">Add New Company</button>
+        </div>
+
+        <!-- Departments Section -->
+        <div class="setup-section" id="departmentsSection">
+            <h3>Departments</h3>
+            <div class="option-list" id="departmentsList"></div>
+            <button class="btn-add" onclick="showAddModal('departments')">Add New Department</button>
+        </div>
+
+        <!-- After the Departments Section, add Root Causes Section -->
+        <div class="setup-section" id="rootCausesSection">
+            <h3>Root Causes</h3>
+            <div class="option-list" id="rootCausesList"></div>
+            <button class="btn-add" onclick="showAddModal('rootCauses')">Add New Root Cause</button>
+        </div>
+    </main>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal" id="optionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add New Option</h3>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="optionForm">
+                    <input type="hidden" id="optionCategory">
+                    <input type="hidden" id="optionId">
+                    <div class="form-group">
+                        <label for="optionName">Name:</label>
+                        <input type="text" id="optionName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="optionDescription">Description (optional):</label>
+                        <input type="text" id="optionDescription">
+                    </div>
+                    <div class="form-buttons">
+                        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn-save">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="confirmation-modal" id="deleteConfirmModal">
+        <div class="modal-content">
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete this option? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeDeleteConfirmModal()">Cancel</button>
+                <button class="btn-delete" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification-confirmation" id="notificationConfirmation">
+        Notification deleted.
+        <button class="undo-btn" id="undoBtn">Undo</button>
+    </div>
+
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.appspot.com",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        // Global variables
+        let allNotifications = [];
+        let currentFilter = 'all';
+        const notificationsPerPage = 10;
+        let currentPage = 1;
+        let lastDeletedNotification = null;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check authentication
+            const authTimeout = setTimeout(() => {
+                console.warn("Auth check timed out");
+                hideLoading();
+                window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+            }, 10000);
+            
+            auth.onAuthStateChanged(user => {
+                clearTimeout(authTimeout);
+                
+                if (user) {
+                    console.log("User authenticated:", user.email);
+                    
+                    // Update UI for authenticated user
+                    updateUserDisplay(user);
+                    
+                    // Load notifications
+                    loadNotifications();
+                    
+                    // Set up event listeners
+                    setupEventListeners();
+                } else {
+                    console.log("Not authenticated, redirecting to login page");
+                    hideLoading();
+                    window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                }
+            });
+        });
+        
+        // Function to load notifications from Firebase
+        function loadNotifications() {
+            showLoading();
+            
+            const user = auth.currentUser;
+            if (!user) {
+                hideLoading();
+                return;
+            }
+            
+            // Reference to user's notifications
+            const notificationsRef = database.ref(`userNotifications/${user.uid}`);
+            
+            // Get notifications ordered by time (newest first)
+            notificationsRef.orderByChild('time').once('value')
+                .then(snapshot => {
+                    allNotifications = [];
+                    
+                    // Process notifications
+                    snapshot.forEach(childSnapshot => {
+                        const notification = childSnapshot.val();
+                        notification.id = childSnapshot.key;
+                        allNotifications.push(notification);
+                    });
+                    
+                    // Sort by time (newest first)
+                    allNotifications.sort((a, b) => b.time - a.time);
+                    
+                    // Update UI
+                    filterAndDisplayNotifications();
+                    hideLoading();
+                })
+                .catch(error => {
+                    console.error("Error loading notifications:", error);
+                    hideLoading();
+                    showEmptyState("Failed to load notifications. Please try again later.");
+                });
+        }
+        
+        // Function to filter and display notifications
+        function filterAndDisplayNotifications() {
+            const filteredNotifications = allNotifications.filter(notification => {
+                if (currentFilter === 'all') return true;
+                if (currentFilter === 'unread') return !notification.read;
+                if (currentFilter === 'event') return notification.type === 'event' || notification.category === 'event';
+                if (currentFilter === 'system') return notification.type === 'system' || notification.category === 'system';
+                return true;
+            });
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(filteredNotifications.length / notificationsPerPage);
+            const startIndex = (currentPage - 1) * notificationsPerPage;
+            const endIndex = startIndex + notificationsPerPage;
+            const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
+            
+            // Display notifications
+            displayNotifications(paginatedNotifications);
+            
+            // Update pagination
+            updatePagination(currentPage, totalPages);
+        }
+        
+        // Function to display notifications
+        function displayNotifications(notifications) {
+            const notificationList = document.getElementById('notificationList');
+            const emptyNotifications = document.getElementById('emptyNotifications');
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '';
+                emptyNotifications.style.display = 'block';
+                return;
+            }
+            
+            notificationList.innerHTML = '';
+            emptyNotifications.style.display = 'none';
+            
+            notifications.forEach(notification => {
+                const notificationItem = document.createElement('div');
+                notificationItem.className = `notification-item${notification.read ? '' : ' unread'}`;
+                notificationItem.dataset.id = notification.id;
+                
+                // Determine icon and class based on notification type
+                let iconClass = 'info';
+                let iconContent = 'ℹ️';
+                
+                if (notification.type === 'warning' || notification.category === 'warning') {
+                    iconClass = 'warning';
+                    iconContent = '⚠️';
+                } else if (notification.type === 'error' || notification.category === 'error') {
+                    iconClass = 'error';
+                    iconContent = '❌';
+                } else if (notification.type === 'success' || notification.category === 'success') {
+                    iconClass = 'success';
+                    iconContent = '✅';
+                } else if (notification.type === 'event' || notification.category === 'event') {
+                    iconClass = 'info';
+                    iconContent = '📅';
+                }
+                
+                // Format time
+                const notificationTime = new Date(notification.time);
+                const timeAgo = getTimeAgo(notificationTime);
+                
+                notificationItem.innerHTML = `
+                    <div class="notification-icon ${iconClass}">${iconContent}</div>
+                    <div class="notification-content">
+                        <div class="notification-title">${escapeHtml(notification.title || 'Notification')}</div>
+                        <div class="notification-message">${escapeHtml(notification.message || '')}</div>
+                        <div class="notification-time">${timeAgo}</div>
+                    </div>
+                    <div class="notification-actions">
+                        <button class="notification-btn mark-read-btn" title="${notification.read ? 'Mark as unread' : 'Mark as read'}">
+                            ${notification.read ? '📩' : '✉️'}
+                        </button>
+                        <button class="notification-btn delete-btn" title="Delete">🗑️</button>
+                    </div>
+                `;
+                
+                // Add event listeners to buttons
+                const markReadBtn = notificationItem.querySelector('.mark-read-btn');
+                markReadBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleNotificationRead(notification.id, notification.read);
+                });
+                
+                const deleteBtn = notificationItem.querySelector('.delete-btn');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteNotification(notification.id, notification);
+                });
+                
+                // Add event listener for whole notification
+                notificationItem.addEventListener('click', () => {
+                    // Mark as read when clicked
+                    if (!notification.read) {
+                        toggleNotificationRead(notification.id, false);
+                    }
+                    
+                    // Navigate to related content if available
+                    if (notification.eventId) {
+                        window.location.href = `evnt.html?edit=${notification.eventId}`;
+                    }
+                });
+                
+                notificationList.appendChild(notificationItem);
+            });
+        }
+        
+        // Function to update pagination
+        function updatePagination(currentPage, totalPages) {
+            const paginationContainer = document.getElementById('notificationPagination');
+            
+            // Clear previous pagination
+            paginationContainer.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                paginationContainer.style.display = 'none';
+                return;
+            }
+            
+            paginationContainer.style.display = 'flex';
+            
+            // Add previous button
+            const prevButton = document.createElement('button');
+            prevButton.textContent = '« Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    filterAndDisplayNotifications();
+                }
+            });
+            paginationContainer.appendChild(prevButton);
+            
+            // Add page buttons
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.toggle('active', i === currentPage);
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    filterAndDisplayNotifications();
+                });
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            // Add next button
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next »';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    filterAndDisplayNotifications();
+                }
+            });
+            paginationContainer.appendChild(nextButton);
+        }
+        
+        // Function to toggle notification read status
+        function toggleNotificationRead(notificationId, isRead) {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const notificationRef = database.ref(`userNotifications/${user.uid}/${notificationId}`);
+            notificationRef.update({ read: !isRead })
+                .then(() => {
+                    // Update local array
+                    const notification = allNotifications.find(n => n.id === notificationId);
+                    if (notification) {
+                        notification.read = !isRead;
+                    }
+                    
+                    // Update UI
+                    filterAndDisplayNotifications();
+                    
+                    // Show confirmation
+                    showConfirmation(`Notification marked as ${!isRead ? 'read' : 'unread'}`);
+                })
+                .catch(error => {
+                    console.error("Error toggling notification read status:", error);
+                });
+        }
+        
+        // Function to delete notification
+        function deleteNotification(notificationId, notificationData) {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            // Store in case we need to restore
+            lastDeletedNotification = {
+                id: notificationId,
+                data: notificationData
+            };
+            
+            // Remove from local array
+            allNotifications = allNotifications.filter(n => n.id !== notificationId);
+            
+            // Update UI
+            filterAndDisplayNotifications();
+            
+            // Show confirmation with undo option
+            showConfirmation('Notification deleted', true);
+            
+            // Actually delete after a delay (to allow undo)
+            setTimeout(() => {
+                // Check if this notification was restored
+                if (lastDeletedNotification && lastDeletedNotification.id === notificationId) {
+                    const notificationRef = database.ref(`userNotifications/${user.uid}/${notificationId}`);
+                    notificationRef.remove()
+                        .catch(error => {
+                            console.error("Error deleting notification:", error);
+                        });
+                    
+                    // Reset last deleted
+                    lastDeletedNotification = null;
+                }
+            }, 5000);
+        }
+        
+        // Function to restore last deleted notification
+        function restoreLastDeletedNotification() {
+            if (!lastDeletedNotification) return;
+            
+            // Add back to local array
+            allNotifications.push(lastDeletedNotification.data);
+            
+            // Sort by time
+            allNotifications.sort((a, b) => b.time - a.time);
+            
+            // Update UI
+            filterAndDisplayNotifications();
+            
+            // Show confirmation
+            showConfirmation('Notification restored');
+            
+            // Reset last deleted
+            lastDeletedNotification = null;
+        }
+        
+        // Function to mark all notifications as read
+        function markAllAsRead() {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            // Show loading
+            showLoading();
+            
+            // Get reference to user's notifications
+            const notificationsRef = database.ref(`userNotifications/${user.uid}`);
+            
+            // Get unread notifications
+            notificationsRef.orderByChild('read').equalTo(false).once('value')
+                .then(snapshot => {
+                    const updates = {};
+                    
+                    // Create update object for all unread notifications
+                    snapshot.forEach(childSnapshot => {
+                        updates[childSnapshot.key + '/read'] = true;
+                    });
+                    
+                    // Update all at once
+                    return notificationsRef.update(updates);
+                })
+                .then(() => {
+                    // Update local array
+                    allNotifications.forEach(notification => {
+                        notification.read = true;
+                    });
+                    
+                    // Update UI
+                    filterAndDisplayNotifications();
+                    hideLoading();
+                    
+                    // Show confirmation
+                    showConfirmation('All notifications marked as read');
+                })
+                .catch(error => {
+                    console.error("Error marking all as read:", error);
+                    hideLoading();
+                });
+        }
+        
+        // Function to clear all notifications
+        function clearAllNotifications() {
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            if (!confirm('Are you sure you want to delete all notifications? This action cannot be undone.')) {
+                return;
+            }
+            
+            // Show loading
+            showLoading();
+            
+            // Get reference to user's notifications
+            const notificationsRef = database.ref(`userNotifications/${user.uid}`);
+            
+            notificationsRef.remove()
+                .then(() => {
+                    // Clear local array
+                    allNotifications = [];
+                    
+                    // Update UI
+                    filterAndDisplayNotifications();
+                    hideLoading();
+                    
+                    // Show confirmation
+                    showConfirmation('All notifications cleared');
+                })
+                .catch(error => {
+                    console.error("Error clearing notifications:", error);
+                    hideLoading();
+                });
+        }
+        
+        // Function to show empty state
+        function showEmptyState(message = "You don't have any notifications yet.") {
+            const notificationList = document.getElementById('notificationList');
+            const emptyNotifications = document.getElementById('emptyNotifications');
+            notificationList.innerHTML = '';
+            emptyNotifications.style.display = 'block';
+            emptyNotifications.querySelector('p').textContent = message;
+        }
+        
+        // Function to show confirmation message
+        function showConfirmation(message, showUndo = false) {
+            const confirmationElement = document.getElementById('notificationConfirmation');
+            confirmationElement.textContent = message;
+            
+            if (showUndo) {
+                const undoBtn = document.createElement('button');
+                undoBtn.className = 'undo-btn';
+                undoBtn.textContent = 'Undo';
+                undoBtn.addEventListener('click', restoreLastDeletedNotification);
+                confirmationElement.appendChild(undoBtn);
+            }
+            
+            confirmationElement.classList.add('show');
+            
+            // Hide after delay
+            setTimeout(() => {
+                confirmationElement.classList.remove('show');
+            }, 5000);
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Mark all as read button
+            document.getElementById('markAllReadBtn').addEventListener('click', markAllAsRead);
+            
+            // Clear all button
+            document.getElementById('clearAllBtn').addEventListener('click', clearAllNotifications);
+            
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    currentFilter = this.dataset.filter;
+                    filterAndDisplayNotifications();
+                    
+                    // Update active state
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+        }
+        
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+        
+        // Helper function to get time ago
+        function getTimeAgo(date) {
+            const now = new Date();
+            const seconds = Math.floor((now - date) / 1000);
+            let interval = Math.floor(seconds / 31536000);
+            
+            if (interval > 1) {
+                return interval + " years ago";
+            }
+            interval = Math.floor(seconds / 2592000);
+            if (interval > 1) {
+                return interval + " months ago";
+            }
+            interval = Math.floor(seconds / 86400);
+            if (interval > 1) {
+                return interval + " days ago";
+            }
+            interval = Math.floor(seconds / 3600);
+            if (interval > 1) {
+                return interval + " hours ago";
+            }
+            interval = Math.floor(seconds / 60);
+            if (interval > 1) {
+                return interval + " minutes ago";
+            }
+            return Math.floor(seconds) + " seconds ago";
+        }
+        
+        // Initialize option lists
+        document.addEventListener('DOMContentLoaded', () => {
+            const categories = ['eventTypes', 'eventTitles', 'locations', 'severity', 'status', 'companies', 'departments'];
+            categories.forEach(category => loadOptions(category));
+        });
+
+        function loadOptions(category) {
+            const listElement = document.getElementById(`${category}List`);
+            database.ref(`setupOptions/${category}`).on('value', snapshot => {
+                listElement.innerHTML = '';
+                const options = snapshot.val() || {};
+                
+                Object.entries(options).forEach(([key, value]) => {
+                    const optionItem = document.createElement('div');
+                    optionItem.className = 'option-item';
+                    optionItem.innerHTML = `
+                        <span>${value.name}</span>
+                        <div>
+                            <button class="btn-edit" onclick="editOption('${category}', '${key}', '${value.name}')">Edit</button>
+                            <button class="btn-delete" onclick="deleteOption('${category}', '${key}')">Delete</button>
+                        </div>
+                    `;
+                    listElement.appendChild(optionItem);
+                });
+            });
+        }
+
+        function showAddModal(category) {
+            const modal = document.getElementById('optionModal');
+            document.getElementById('modalTitle').textContent = `Add New ${category.replace(/([A-Z])/g, ' $1').trim()}`;
+            document.getElementById('optionCategory').value = category;
+            document.getElementById('optionId').value = '';
+            document.getElementById('optionName').value = '';
+            document.getElementById('optionDescription').value = '';
+            modal.style.display = 'block';
+        }
+
+        function editOption(category, id, name) {
+            const modal = document.getElementById('optionModal');
+            document.getElementById('modalTitle').textContent = `Edit ${category.replace(/([A-Z])/g, ' $1').trim()}`;
+            document.getElementById('optionCategory').value = category;
+            document.getElementById('optionId').value = id;
+            document.getElementById('optionName').value = name;
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('optionModal').style.display = 'none';
+        }
+
+        document.getElementById('optionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const category = document.getElementById('optionCategory').value;
+            const id = document.getElementById('optionId').value;
+            const name = document.getElementById('optionName').value;
+            const description = document.getElementById('optionDescription').value;
+
+            const data = {
+                name,
+                description,
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            const ref = database.ref(`setupOptions/${category}`);
+
+            if (id) {
+                // Update existing option
+                ref.child(id).update(data)
+                    .then(() => closeModal())
+                    .catch(error => console.error('Error updating option:', error));
+            } else {
+                // Add new option
+                ref.push({
+                    ...data,
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                })
+                    .then(() => closeModal())
+                    .catch(error => console.error('Error adding option:', error));
+            }
+        });
+
+        function deleteOption(category, id) {
+            if (confirm('Are you sure you want to delete this option?')) {
+                database.ref(`setupOptions/${category}/${id}`).remove()
+                    .catch(error => console.error('Error deleting option:', error));
+            }
+        }
+
+        // Update the user display function
+        function updateUserDisplay(user) {
+            if (!user) return;
+
+            // Update user email in dropdown
+            document.getElementById('userEmail').textContent = user.email;
+            
+            // Show authenticated menu items
+            document.getElementById('profileLink').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'none';
+            
+            // Update avatar/initial
+            const userInitial = document.getElementById('userInitial');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            // Get user data from Firebase
+            database.ref(`users/${user.uid}`).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val() || {};
+                    if (userData.profileImage) {
+                        userAvatar.src = userData.profileImage;
+                        userAvatar.style.display = 'block';
+                        userInitial.style.display = 'none';
+                    } else {
+                        const initial = getUserInitial(user);
+                        userInitial.textContent = initial;
+                        userInitial.style.display = 'flex';
+                        userAvatar.style.display = 'none';
+                    }
+                });
+        }
+
+        function getUserInitial(user) {
+            if (!user || !user.email) return '?';
+            return user.email.charAt(0).toUpperCase();
+        }
+
+        // Initialize when document loads
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check authentication
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    console.log("User authenticated:", user.email);
+                    updateUserDisplay(user);
+                    loadAllOptions();
+                } else {
+                    window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                }
+            });
+        });
+
+        // Define missing functions for loading/progress indicators
+        function showLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+            }
+        }
+
+        function hideLoading() {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+
+        // Fix form styles
+        const styleEl = document.createElement('style');
+        styleEl.textContent = `
+            .form-group {
+                margin-bottom: 15px;
+            }
+            
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: 600;
+            }
+            
+            .form-group input {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+            
+            .form-buttons {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                margin-top: 20px;
+            }
+            
+            .btn-save {
+                background-color: #2ecc71;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                border: none;
+            }
+            
+            .btn-cancel {
+                background-color: #f1f2f6;
+                color: #333;
+                padding: 8px 16px;
+                border-radius: 4px;
+                cursor: pointer;
+                border: none;
+            }
+            
+            .modal-buttons {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+            }
+        `;
+        document.head.appendChild(styleEl);
+
+        // Replace loadAllOptions with proper function
+        function loadAllOptions() {
+            console.log("Loading all options");
+            const categories = ['eventTypes', 'eventTitles', 'locations', 'severity', 'status', 'companies', 'departments', 'rootCauses'];
+            categories.forEach(category => loadOptions(category));
+        }
+
+        // Improved form submission handler
+        (function() {
+            // Flag to track if we've already attached the event listener
+            let formHandlerAttached = false;
+            
+            // Function to attach the form submission handler
+            function attachFormSubmitHandler() {
+                // Check if handler already attached to avoid duplicates
+                if (formHandlerAttached) {
+                    console.log("Form handler already attached, skipping");
+                    return;
+                }
+                
+                const form = document.getElementById('optionForm');
+                if (!form) {
+                    console.error("Form element not found");
+                    return;
+                }
+                
+                // Remove any existing handlers to be safe
+                const newForm = form.cloneNode(true);
+                form.parentNode.replaceChild(newForm, form);
+                
+                // Attach the handler
+                newForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    console.log("Form submission handler triggered");
+                    
+                    // Get form data
+                    const category = document.getElementById('optionCategory').value;
+                    const id = document.getElementById('optionId').value;
+                    const name = document.getElementById('optionName').value.trim();
+                    const description = document.getElementById('optionDescription').value.trim();
+                    
+                    // Validate input
+                    if (!name) {
+                        alert("Please enter a name for the option");
+                        return;
+                    }
+                    
+                    console.log(`Saving ${category} option: ${name}`);
+                    
+                    // Show loading indicator
+                    showLoading();
+                    
+                    // Data to be saved
+                    const data = {
+                        name,
+                        description,
+                        updatedAt: firebase.database.ServerValue.TIMESTAMP
+                    };
+                    
+                    // Reference to the shared setupOptions location
+                    const ref = database.ref(`setupOptions/${category}`);
+                    
+                    try {
+                        if (id) {
+                            // Update existing option
+                            ref.child(id).update(data)
+                                .then(() => {
+                                    console.log(`Updated ${category}: ${name}`);
+                                    closeModal();
+                                    showConfirmation(`${category} updated successfully`);
+                                    
+                                    // If this was an event type, trigger update in evnt.html
+                                    if (category === 'eventTypes') {
+                                        triggerEventTypeUpdate(name);
+                                    } else if (category === 'eventTitles') {
+                                        triggerEventTitleUpdate(name);
+                                    } else if (category === 'locations') {
+                                        triggerLocationUpdate(name);
+                                    } else if (category === 'rootCauses') {
+                                        triggerRootCauseUpdate(name);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error(`Error updating ${category}:`, error);
+                                    alert(`Failed to update ${category}. Please try again.`);
+                                })
+                                .finally(() => hideLoading());
+                        } else {
+                            // Add new option
+                            ref.push({
+                                ...data,
+                                createdAt: firebase.database.ServerValue.TIMESTAMP
+                            })
+                                .then(() => {
+                                    console.log(`Added new ${category}: ${name}`);
+                                    closeModal();
+                                    showConfirmation(`New ${category} added successfully`);
+                                    
+                                    // If this was an event type, trigger update in evnt.html
+                                    if (category === 'eventTypes') {
+                                        triggerEventTypeUpdate(name);
+                                    } else if (category === 'eventTitles') {
+                                        triggerEventTitleUpdate(name);
+                                    } else if (category === 'locations') {
+                                        triggerLocationUpdate(name);
+                                    } else if (category === 'rootCauses') {
+                                        triggerRootCauseUpdate(name);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error(`Error adding ${category}:`, error);
+                                    alert(`Failed to add ${category}. Please try again.`);
+                                })
+                                .finally(() => hideLoading());
+                        }
+                    } catch (error) {
+                        console.error("Form submission error:", error);
+                        hideLoading();
+                        alert("An error occurred while saving. Please try again.");
+                    }
+                });
+                
+                formHandlerAttached = true;
+                console.log("Form submission handler attached");
+            }
+            
+            // Attach form handler on DOM content loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                // Wait a moment to ensure the form element is available
+                setTimeout(attachFormSubmitHandler, 500);
+            });
+            
+            // Also expose it as a function so it can be called manually if needed
+            window.attachFormSubmitHandler = attachFormSubmitHandler;
+        })();
+
+        // Function to trigger event type updates - properly implemented
+        function triggerEventTypeUpdate(name) {
+            console.log(`Triggering update for event type: ${name}`);
+            
+            // Update the last modified timestamp for event types
+            database.ref('setupOptions/eventTypesLastUpdate').set(firebase.database.ServerValue.TIMESTAMP)
+                .then(() => console.log("Event types timestamp updated successfully"))
+                .catch(error => console.error('Error updating timestamp:', error));
+        }
+
+        // Add this function to handle event title updates
+        function triggerEventTitleUpdate(name) {
+            console.log(`Triggering update for event title: ${name}`);
+            
+            // Update the last modified timestamp for event titles
+            database.ref('setupOptions/eventTitlesLastUpdate').set(firebase.database.ServerValue.TIMESTAMP)
+                .then(() => console.log("Event titles timestamp updated successfully"))
+                .catch(error => console.error('Error updating event titles timestamp:', error));
+        }
+
+        // Add this function to handle location updates
+        function triggerLocationUpdate(name) {
+            console.log(`Triggering update for location: ${name}`);
+            
+            // Update the last modified timestamp for locations
+            database.ref('setupOptions/locationsLastUpdate').set(firebase.database.ServerValue.TIMESTAMP)
+                .then(() => console.log("Locations timestamp updated successfully"))
+                .catch(error => console.error('Error updating locations timestamp:', error));
+        }
+
+        // Add this function to handle root causes updates
+        function triggerRootCauseUpdate(name) {
+            console.log(`Triggering update for root cause: ${name}`);
+            
+            // Update the last modified timestamp for root causes
+            database.ref('setupOptions/rootCausesLastUpdate').set(firebase.database.ServerValue.TIMESTAMP)
+                .then(() => console.log("Root causes timestamp updated successfully"))
+                .catch(error => console.error('Error updating root causes timestamp:', error));
+        }
+
+        // Function to show confirmation message - improved implementation
+        function showConfirmation(message) {
+            const confirmationEl = document.getElementById('notificationConfirmation');
+            if (!confirmationEl) {
+                console.error("Confirmation element not found");
+                return;
+            }
+            
+            confirmationEl.textContent = message;
+            confirmationEl.classList.add('show');
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                confirmationEl.classList.remove('show');
+            }, 3000);
+        }
+    </script>
+
+    <!-- Add avatar dropdown functionality -->
+    <script>
+        // Setup avatar dropdown functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const userAvatarContainer = document.getElementById('userAvatarContainer');
+            const userDropdown = document.querySelector('.user-dropdown');
+            
+            if (userAvatarContainer && userDropdown) {
+                // Toggle dropdown when clicking the avatar
+                userAvatarContainer.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent event from bubbling up
+                    userDropdown.classList.toggle('show');
+                });
+                
+                // Close dropdown when clicking anywhere else
+                document.addEventListener('click', function(e) {
+                    if (userDropdown.classList.contains('show')) {
+                        userDropdown.classList.remove('show');
+                    }
+                });
+                
+                // Prevent clicks inside dropdown from closing it
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            }
+        });
+    </script>
+</body>
+</html>

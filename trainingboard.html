@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Request Board - Dreamex Lab</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Main container styles */
+        .board-container {
+            max-width: 1600px;
+            margin: 80px auto 30px;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .board-title h2 {
+            margin: 0;
+            color: #34495e;
+        }
+
+        .board-title p {
+            margin: 5px 0 0;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .board-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        /* Filter section */
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #34495e;
+        }
+
+        .filter-control {
+            width: 100%;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        .filter-buttons {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+
+        /* Request table */
+        .requests-table-container {
+            overflow-x: auto;
+        }
+
+        .requests-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .requests-table th,
+        .requests-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .requests-table th {
+            background-color: #f8f9fa;
+            color: #34495e;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .requests-table tr:hover {
+            background-color: #f1f9ff;
+        }
+
+        .requests-table tr.selected {
+            background-color: #e8f4fd;
+        }
+
+        /* Status indicator */
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .status-draft {
+            background-color: #f8f9fa;
+            color: #495057;
+            border: 1px dashed #ced4da;
+        }
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-completed {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            min-width: auto;
+            height: 32px;
+            padding: 0 12px;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .btn-icon {
+            width: 32px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* No requests message */
+        .no-requests {
+            text-align: center;
+            padding: 40px 0;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Modal styles for request details */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1050;
+            display: none;
+        }
+
+        .modal-dialog {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            margin: 0;
+            font-size: 20px;
+            color: #34495e;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #7f8c8d;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Details section */
+        .detail-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .detail-section:last-child {
+            border-bottom: none;
+        }
+
+        .detail-section h3 {
+            margin-top: 0;
+            color: #34495e;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .detail-label {
+            flex: 0 0 200px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .detail-value {
+            flex: 1;
+        }
+
+        /* Participants list */
+        .participants-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .participants-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .participants-list li:last-child {
+            border-bottom: none;
+        }
+
+        /* Approval workflow section */
+        .approval-workflow {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .approval-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .step-indicator {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .step-indicator.completed {
+            background-color: #2ecc71;
+        }
+
+        .step-indicator.current {
+            background-color: #3498db;
+        }
+
+        .step-indicator.pending {
+            background-color: #95a5a6;
+        }
+
+        .step-indicator.rejected {
+            background-color: #e74c3c;
+        }
+
+
+        .notification-bell-container {
+            position: relative;
+        }
+
+        .notification-bell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            position: relative;
+        }
+
+        .bell-icon-svg {
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: #555;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .notification-counter {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background-color: #e74c3c;
+            color: white;
+            font-size: 10px;
+            min-width: 16px;
+            height: 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .notification-dropdown {
+            position: fixed;
+            background-color: white;
+            width: 320px;
+            max-height: calc(100vh - 60px);
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+        .notification-bell:hover + .notification-dropdown,
+        .notification-dropdown:hover {
+            display: block;
+        }
+
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #34495e;
+            padding: 0 20px;
+        }
+        
+        .menu-bar ul {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .menu-bar ul li {
+            margin: 0 10px;
+        }
+        
+        .menu-bar ul li a {
+            display: block;
+            padding: 15px 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .menu-bar ul li a:hover {
+            color: #f1f3f5;
+        }
+        
+        .menu-bar ul li.current a {
+            color: #fafcfd;
+            font-weight: bold;
+        }
+
+        /* Dropdown styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white !important;
+            color: black !important;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            top: calc(100%);
+            font-size: 6px !important;
+            font-weight: normal;
+            text-align: left;
+        }
+        .dropdown-content a {
+            color: rgb(44, 43, 43) !important;
+            padding: 6px 10px !important;
+            text-decoration: none;  
+            display: block;
+            font-size: 11px !important;
+        }
+        .dropdown-content a:hover {
+            background-color: #e8e8e8;
+            transform: none; 
+        }
+        .dropdown:hover .dropdown-content,
+        .dropdown:focus-within .dropdown-content {
+            display: block;
+        }
+
+        /* User Avatar Styles */
+        .user-avatar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            text-align: left;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* Add class for showing the dropdown */
+        .user-dropdown.show {
+            display: block;
+            animation: dropdown-fade-in 0.2s ease-out;
+        }
+        
+        /* Add missing animation definition */
+        @keyframes dropdown-fade-in {
+            0% { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-email {
+            padding: 5px 15px; /* Further reduced from 8px to 5px */
+            border-bottom: 1px solid #eaeaea;
+            color: #34495e;
+            font-weight: 500;
+            background-color: #f8f9fa;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .user-dropdown a {
+            display: block;
+            padding: 2px 15px; /* Further reduced from 4px to 2px */
+            color: #000000;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            line-height: 1.4; /* Added to provide some minimal spacing */
+        }
+        
+        /* Ensure specific dropdown links are black */
+        #profileLink, #accountLink {
+            color: #474646 !important; /* Pure black color with !important to override any other styles */
+        }
+        
+        .user-dropdown a:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-dropdown a:last-child {
+            border-top: 1px solid #eaeaea;
+        }
+        
+        #logoutButton {
+            color: #e74c3c; /* Keep logout button red */
+        }
+        
+        #logoutButton:hover {
+            background-color: #fdeeee;
+            border-left-color: #e74c3c;
+        }
+        
+        #loginButton {
+            color: #000000; /* Changed to black */
+        }
+        
+        #loginButton:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-initial {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Ensure consistent alignment */
+        table th {
+            text-align: left !important;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            text-align: left !important;
+        }
+
+        /* Improve left alignment for all title elements */
+        h1, h2, h3, h4, h5, h6, 
+        .section-title, 
+        .board-title h2, 
+        .board-title p, 
+        .modal-title,
+        .detail-section h3 {
+            text-align: left !important;
+        }
+        
+        /* Ensure specific elements are also left-aligned */
+        .detail-label,
+        .detail-value,
+        .notification-header h4,
+        .filter-group label,
+        .status-indicator,
+        .requests-table th,
+        .requests-table td {
+            text-align: left !important;
+        }
+        
+        /* Status indicators should maintain centered text */
+        .status-indicator {
+            text-align: center !important;
+        }
+        
+        /* Remove any center alignment that might be applied elsewhere */
+        .board-header,
+        .filter-section,
+        .modal-header {
+            text-align: left !important;
+        }
+    </style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- Include auth.js after Firebase SDKs -->
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li><a href="login.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#">Risk Management</a>
+                    <div class="dropdown-content">
+                        <a href="riskassessment.html">Risk Assessment</a>
+                        <a href="jsaboard.html">Job Safety Analysis</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Safety reporting</a>
+                    <div class="dropdown-content">
+                        <a href="eventboard.html">Event</a>
+                        <a href="inspectionsboard.html">Inspections</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Settings</a>
+                    <div class="dropdown-content">
+                        <a href="account.html">User account</a>
+                        <a href="setup.html">Inspections</a>
+                        <a href="log.html">System audit log</a>
+                    </div>
+                </li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+            </ul>
+            <ul class="menu-right">
+                <!-- Add Notification Bell -->
+                <li class="notification-bell-container" id="notificationBellContainer">
+                    <div class="notification-bell" id="notificationBell">
+                        <svg class="bell-icon-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"></path>
+                        </svg>
+                        <span class="notification-counter" id="notificationCounter" style="display: none;">0</span>
+                    </div>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <div class="notification-header">
+                            <h4>Notifications</h4>
+                            <div class="notification-header-actions">
+                                <button id="markAllReadBtn">Mark all as read</button>
+                            </div>
+                        </div>
+                        <div class="notification-list" id="notificationList">
+                            <div class="notification-empty">No new notifications</div>
+                        </div>
+                    </div>
+                </li>
+                
+                <!-- User Avatar Button -->
+                <li class="user-avatar-container">
+                    <div id="userAvatarContainer">
+                        <img src="https://via.placeholder.com/32" alt="User" class="user-avatar" id="userAvatar" style="display: none;">
+                        <div id="userInitial" class="user-initial">?</div>
+                    </div>
+                    <div class="user-dropdown">
+                        <div class="user-email" id="userEmail">Not logged in</div>
+                        <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                        <a href="#" id="logoutButton" style="display: none;">Log Out</a>
+                        <a href="login.html" id="loginButton">Log In</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="board-container">
+        <div class="board-header">
+            <div class="board-title">
+                <h2>Training Request Board</h2>
+                <p>View and manage all training requests</p>
+            </div>
+            <div class="board-actions">
+                <a href="trainingrequest.html" class="btn btn-success">New Training Request</a>
+            </div>
+        </div>
+
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus" class="filter-control">
+                    <option value="">All Statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="pending">Pending Approval</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterType">Training Type</label>
+                <select id="filterType" class="filter-control">
+                    <option value="">All Types</option>
+                    <option value="health-safety">Health & Safety</option>
+                    <option value="technical">Technical Skills</option>
+                    <option value="soft-skills">Soft Skills</option>
+                    <option value="compliance">Compliance</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filterDepartment">Department</label>
+                <input type="text" id="filterDepartment" class="filter-control" placeholder="Filter by department">
+            </div>
+            <div class="filter-buttons">
+                <button id="applyFilters" class="btn">Apply Filters</button>
+                <button id="clearFilters" class="btn">Clear</button>
+            </div>
+        </div>
+
+        <div class="requests-table-container">
+            <table class="requests-table" id="requestsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Department</th>
+                        <th>Requested By</th>
+                        <th>Preferred Date</th>
+                        <th>Participants</th>
+                        <th>Budget</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requestsTableBody">
+                    <!-- Requests will be loaded dynamically -->
+                    <tr>
+                        <td colspan="10" class="no-requests">Loading training requests...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Request Details Modal -->
+    <div id="requestDetailsModal" class="modal-backdrop">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Training Request Details</h3>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body" id="requestDetails">
+                <!-- Details will be loaded dynamically -->
+            </div>
+            <div class="modal-footer" id="modalFooter">
+                <!-- Action buttons will be generated based on user permissions and request status -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Firebase
+        let database;
+        let auth;
+        let currentUser;
+        let requests = []; // Store all fetched requests
+        let filteredRequests = []; // Store filtered requests
+
+        function initializeFirebase() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+                authDomain: "users-8be65.firebaseapp.com",
+                databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+                projectId: "users-8be65",
+                storageBucket: "users-8be65.appspot.com",
+                messagingSenderId: "829083030831",
+                appId: "1:829083030831:web:36a370e62691e560bc3dda"
+            };
+            
+            // Check if Firebase is already initialized
+            if (firebase.apps.length === 0) {
+                console.log("Initializing Firebase");
+                firebase.initializeApp(firebaseConfig);
+            } else {
+                console.log("Firebase already initialized");
+            }
+            
+            database = firebase.database();
+            auth = firebase.auth();
+            
+            // Force browser to persist auth state
+            return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => console.log("Firebase persistence set to LOCAL"))
+                .catch(error => console.error("Firebase persistence error:", error));
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("DOM loaded, initializing training board");
+            
+            // Initialize Firebase
+            initializeFirebase().then(() => {
+                // Check authentication state
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        console.log("User authenticated:", user.email);
+                        currentUser = user;
+                        updateUserDisplay(user);
+                        
+                        // Load training requests
+                        loadTrainingRequests();
+                        
+                        // Set up event listeners
+                        setupEventListeners();
+                    } else {
+                        console.log("Not authenticated, redirecting to login page");
+                        window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                    }
+                });
+            }).catch(error => {
+                console.error("Firebase initialization failed:", error);
+                showError("Failed to initialize Firebase. Please try again later.");
+            });
+        });
+
+        // Helper function to update user display in UI
+        function updateUserDisplay(user) {
+            // Update user email in dropdown
+            document.getElementById('userEmail').textContent = user.email || "Not logged in";
+            
+            // Show logout button and hide login button
+            document.getElementById('profileLink').style.display = 'block';
+            document.getElementById('accountLink').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'none';
+            
+            // Update user avatar/initial
+            const userInitial = document.getElementById('userInitial');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            // Get user data from Firebase
+            database.ref(`users/${user.uid}`).once('value')
+                .then(snapshot => {
+                    const userData = snapshot.val() || {};
+                    if (userData.profileImage) {
+                        // Show profile image
+                        userAvatar.src = userData.profileImage;
+                        userAvatar.style.display = 'block';
+                        userInitial.style.display = 'none';
+                    } else {
+                        // Show initial
+                        userInitial.textContent = getUserInitial(user);
+                        userInitial.style.display = 'flex';
+                        userAvatar.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error("Error fetching user data:", error);
+                });
+        }
+
+        function getUserInitial(user) {
+            if (!user || !user.email) return '?';
+            return user.email.charAt(0).toUpperCase();
+        }
+
+        // Load training requests from Firebase
+        function loadTrainingRequests() {
+            const tableBody = document.getElementById('requestsTableBody');
+            tableBody.innerHTML = '<tr><td colspan="10" class="no-requests">Loading training requests...</td></tr>';
+            
+            // Listen for training requests in real-time
+            database.ref('trainingRequests').on('value', snapshot => {
+                requests = [];
+                
+                if (snapshot.exists()) {
+                    snapshot.forEach(childSnapshot => {
+                        const request = childSnapshot.val();
+                        request.id = childSnapshot.key;
+                        requests.push(request);
+                    });
+                    
+                    // Apply any active filters
+                    applyFilters();
+                } else {
+                    // No requests found
+                    tableBody.innerHTML = '<tr><td colspan="10" class="no-requests">No training requests found</td></tr>';
+                }
+            }, error => {
+                console.error("Error loading training requests:", error);
+                tableBody.innerHTML = '<tr><td colspan="10" class="no-requests">Error loading training requests. Please try again.</td></tr>';
+            });
+        }
+
+        // Display requests in the table
+        function displayRequests(requestsToDisplay) {
+            const tableBody = document.getElementById('requestsTableBody');
+            tableBody.innerHTML = '';
+            
+            if (requestsToDisplay.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="10" class="no-requests">No training requests match your filters</td></tr>';
+                return;
+            }
+            
+            // Sort requests by creation date (newest first)
+            requestsToDisplay.sort((a, b) => {
+                const dateA = new Date(a.createdAt || 0);
+                const dateB = new Date(b.createdAt || 0);
+                return dateB - dateA;
+            });
+            
+            requestsToDisplay.forEach(request => {
+                const tr = document.createElement('tr');
+                tr.dataset.id = request.id;
+                
+                // Format date for display
+                const preferredDate = request.preferredDate ? new Date(request.preferredDate).toLocaleDateString() : 'Not specified';
+                
+                // Format participants count
+                const participantsCount = request.participants && Array.isArray(request.participants) ? request.participants.length : 0;
+                
+                // Format budget
+                const budget = request.budget ? `$${request.budget}` : 'Not specified';
+                
+                // Map training type to human-readable name
+                let trainingTypeText = 'Unknown';
+                switch (request.trainingType) {
+                    case 'health-safety': trainingTypeText = 'Health & Safety'; break;
+                    case 'technical': trainingTypeText = 'Technical Skills'; break;
+                    case 'soft-skills': trainingTypeText = 'Soft Skills'; break;
+                    case 'compliance': trainingTypeText = 'Compliance'; break;
+                }
+                
+                tr.innerHTML = `
+                    <td>${request.id.substring(0, 8)}...</td>
+                    <td>${request.trainingTitle || 'Untitled'}</td>
+                    <td>${trainingTypeText}</td>
+                    <td>${request.department || 'Not specified'}</td>
+                    <td>${request.requestorName || 'Unknown'}</td>
+                    <td>${preferredDate}</td>
+                    <td>${participantsCount}</td>
+                    <td>${budget}</td>
+                    <td><span class="status-indicator status-${request.status || 'draft'}">${capitalize(request.status) || 'Draft'}</span></td>
+                    <td class="action-buttons">
+                        <button class="btn btn-action view-request" data-id="${request.id}">View</button>
+                        ${request.createdBy === currentUser.uid || isUserAdmin() ? `
+                            <button class="btn btn-action btn-danger delete-request" data-id="${request.id}">Delete</button>
+                        ` : ''}
+                    </td>
+                `;
+                
+                tableBody.appendChild(tr);
+                
+                // Add event listener for viewing request details
+                tr.querySelector('.view-request').addEventListener('click', () => showRequestDetails(request.id));
+                
+                // Add event listener for deleting request if available
+                const deleteBtn = tr.querySelector('.delete-request');
+                if (deleteBtn) {
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        confirmDeleteRequest(request.id, request.trainingTitle || 'Untitled');
+                    });
+                }
+            });
+        }
+
+        // Apply filters to the requests
+        function applyFilters() {
+            const statusFilter = document.getElementById('filterStatus').value;
+            const typeFilter = document.getElementById('filterType').value;
+            const departmentFilter = document.getElementById('filterDepartment').value.toLowerCase();
+            
+            // Apply filters
+            filteredRequests = requests.filter(request => {
+                // Status filter
+                if (statusFilter && request.status !== statusFilter) {
+                    return false;
+                }
+                
+                // Type filter
+                if (typeFilter && request.trainingType !== typeFilter) {
+                    return false;
+                }
+                
+                // Department filter (partial match)
+                if (departmentFilter && (!request.department || !request.department.toLowerCase().includes(departmentFilter))) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // Display filtered requests
+            displayRequests(filteredRequests);
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Filter events
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            
+            document.getElementById('clearFilters').addEventListener('click', () => {
+                document.getElementById('filterStatus').value = '';
+                document.getElementById('filterType').value = '';
+                document.getElementById('filterDepartment').value = '';
+                applyFilters();
+            });
+            
+            // Modal close button
+            document.getElementById('modalClose').addEventListener('click', () => {
+                document.getElementById('requestDetailsModal').style.display = 'none';
+            });
+            
+            // Close modal when clicking outside
+            document.getElementById('requestDetailsModal').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('requestDetailsModal')) {
+                    document.getElementById('requestDetailsModal').style.display = 'none';
+                }
+            });
+            
+            // Logout button
+            document.getElementById('logoutButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                auth.signOut().then(() => {
+                    window.location.href = "login.html";
+                }).catch(error => {
+                    console.error("Error during logout:", error);
+                });
+            });
+        }
+
+        // Show request details in modal
+        function showRequestDetails(requestId) {
+            // Find the request in the array
+            const request = requests.find(r => r.id === requestId);
+            
+            if (!request) {
+                alert('Request not found');
+                return;
+            }
+            
+            // Set modal title
+            document.getElementById('modalTitle').textContent = request.trainingTitle || 'Training Request Details';
+            
+            // Populate modal body
+            const detailsContainer = document.getElementById('requestDetails');
+            
+            // Format date for display
+            const preferredDate = request.preferredDate ? new Date(request.preferredDate).toLocaleDateString() : 'Not specified';
+            
+            // Format creation date
+            const creationDate = request.createdAt ? new Date(request.createdAt).toLocaleString() : 'Unknown';
+            
+            // Map training type to human-readable name
+            let trainingTypeText = 'Unknown';
+            switch (request.trainingType) {
+                case 'health-safety': trainingTypeText = 'Health & Safety'; break;
+                case 'technical': trainingTypeText = 'Technical Skills'; break;
+                case 'soft-skills': trainingTypeText = 'Soft Skills'; break;
+                case 'compliance': trainingTypeText = 'Compliance'; break;
+            }
+            
+            // Build participants list HTML
+            let participantsHtml = '<ul class="participants-list">';
+            if (request.participants && Array.isArray(request.participants) && request.participants.length > 0) {
+                request.participants.forEach(p => {
+                    participantsHtml += `<li>${p.name || 'No name'} ${p.email ? `(${p.email})` : ''}</li>`;
+                });
+            } else {
+                participantsHtml += '<li>No participants listed</li>';
+            }
+            participantsHtml += '</ul>';
+            
+            // Generate HTML for specific training details based on type
+            let trainingSpecificHtml = '';
+            if (request.trainingSpecific) {
+                const specific = request.trainingSpecific;
+                
+                switch (request.trainingType) {
+                    case 'health-safety':
+                        trainingSpecificHtml = `
+                            <div class="detail-section">
+                                <h3>Health & Safety Training Details</h3>
+                                <div class="detail-row">
+                                    <div class="detail-label">Certification Required:</div>
+                                    <div class="detail-value">${specific.certificationRequired || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Certification Level:</div>
+                                    <div class="detail-value">${specific.certificationLevel || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Training Areas:</div>
+                                    <div class="detail-value">${formatArrayOrString(specific.areas) || 'None selected'}</div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'technical':
+                        trainingSpecificHtml = `
+                            <div class="detail-section">
+                                <h3>Technical Training Details</h3>
+                                <div class="detail-row">
+                                    <div class="detail-label">Current Skill Level:</div>
+                                    <div class="detail-value">${specific.skillLevel || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Preferred Provider:</div>
+                                    <div class="detail-value">${specific.trainingProvider || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Software/Hardware Details:</div>
+                                    <div class="detail-value">${specific.softwareHardware || 'Not specified'}</div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'soft-skills':
+                        trainingSpecificHtml = `
+                            <div class="detail-section">
+                                <h3>Soft Skills Training Details</h3>
+                                <div class="detail-row">
+                                    <div class="detail-label">Delivery Format:</div>
+                                    <div class="detail-value">${specific.deliveryFormat || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Assessment Required:</div>
+                                    <div class="detail-value">${specific.assessmentRequired || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Focus Areas:</div>
+                                    <div class="detail-value">${formatArrayOrString(specific.focusAreas) || 'None selected'}</div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                        
+                    case 'compliance':
+                        const expiryDate = specific.expiryDate ? new Date(specific.expiryDate).toLocaleDateString() : 'Not specified';
+                        trainingSpecificHtml = `
+                            <div class="detail-section">
+                                <h3>Compliance Training Details</h3>
+                                <div class="detail-row">
+                                    <div class="detail-label">Compliance Type:</div>
+                                    <div class="detail-value">${specific.complianceType || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Urgency Level:</div>
+                                    <div class="detail-value">${specific.urgencyLevel || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Regulation Reference:</div>
+                                    <div class="detail-value">${specific.regulationReference || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-row">
+                                    <div class="detail-label">Current Certification Expiry:</div>
+                                    <div class="detail-value">${expiryDate}</div>
+                                </div>
+                            </div>
+                        `;
+                        break;
+                }
+            }
+
+            // Build the full HTML content
+            detailsContainer.innerHTML = `
+                <div class="detail-section">
+                    <h3>Basic Information</h3>
+                    <div class="detail-row">
+                        <div class="detail-label">Request ID:</div>
+                        <div class="detail-value">${request.id}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Status:</div>
+                        <div class="detail-value"><span class="status-indicator status-${request.status || 'draft'}">${capitalize(request.status) || 'Draft'}</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Created On:</div>
+                        <div class="detail-value">${creationDate}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Training Type:</div>
+                        <div class="detail-value">${trainingTypeText}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Training Details</h3>
+                    <div class="detail-row">
+                        <div class="detail-label">Title:</div>
+                        <div class="detail-value">${request.trainingTitle || 'Untitled'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Department:</div>
+                        <div class="detail-value">${request.department || 'Not specified'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Description:</div>
+                        <div class="detail-value">${request.trainingDescription || 'Not provided'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Business Justification:</div>
+                        <div class="detail-value">${request.trainingJustification || 'Not provided'}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Schedule & Logistics</h3>
+                    <div class="detail-row">
+                        <div class="detail-label">Preferred Start Date:</div>
+                        <div class="detail-value">${preferredDate}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Duration (Days):</div>
+                        <div class="detail-value">${request.duration || 'Not specified'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Location:</div>
+                        <div class="detail-value">${formatLocation(request.location)}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Budget:</div>
+                        <div class="detail-value">$${request.budget || 'Not specified'}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Participants</h3>
+                    <div class="detail-row">
+                        <div class="detail-label">Number of Participants:</div>
+                        <div class="detail-value">${request.numberOfParticipants || 'Not specified'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Target Audience:</div>
+                        <div class="detail-value">${request.targetAudience || 'Not specified'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Participant List:</div>
+                        <div class="detail-value">${participantsHtml}</div>
+                    </div>
+                </div>
+                
+                ${trainingSpecificHtml}
+                
+                <div class="detail-section">
+                    <h3>Request Authorization</h3>
+                    <div class="detail-row">
+                        <div class="detail-label">Requestor:</div>
+                        <div class="detail-value">${request.requestorName || 'Not specified'} (${request.requestorPosition || 'Position not specified'})</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Manager:</div>
+                        <div class="detail-value">${request.managerName || 'Not specified'} (${request.managerEmail || 'Email not specified'})</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Additional Comments:</div>
+                        <div class="detail-value">${request.additionalComments || 'None'}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Set up action buttons in modal footer based on permissions and request status
+            const footerContainer = document.getElementById('modalFooter');
+            footerContainer.innerHTML = '';
+            
+            if (request.createdBy === currentUser.uid || isUserAdmin()) {
+                // Owner can edit if it's a draft or rejected
+                if (request.status === 'draft' || request.status === 'rejected') {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'btn';
+                    editBtn.textContent = 'Edit Request';
+                    editBtn.addEventListener('click', () => {
+                        window.location.href = `trainingrequest.html?edit=${request.id}`;
+                    });
+                    footerContainer.appendChild(editBtn);
+                }
+            }
+            
+            // Managers/admins can approve or reject pending requests
+            if (isUserManager() || isUserAdmin()) {
+                if (request.status === 'pending') {
+                    const approveBtn = document.createElement('button');
+                    approveBtn.className = 'btn btn-success';
+                    approveBtn.textContent = 'Approve';
+                    approveBtn.addEventListener('click', () => {
+                        updateRequestStatus(request.id, 'approved');
+                    });
+                    footerContainer.appendChild(approveBtn);
+                    
+                    const rejectBtn = document.createElement('button');
+                    rejectBtn.className = 'btn btn-danger';
+                    rejectBtn.textContent = 'Reject';
+                    rejectBtn.addEventListener('click', () => {
+                        const reason = prompt('Please provide a reason for rejection:');
+                        if (reason !== null) { // Not canceled
+                            updateRequestStatus(request.id, 'rejected', reason);
+                        }
+                    });
+                    footerContainer.appendChild(rejectBtn);
+                }
+                
+                // Can mark approved requests as completed
+                if (request.status === 'approved') {
+                    const completeBtn = document.createElement('button');
+                    completeBtn.className = 'btn btn-success';
+                    completeBtn.textContent = 'Mark as Completed';
+                    completeBtn.addEventListener('click', () => {
+                        updateRequestStatus(request.id, 'completed');
+                    });
+                    footerContainer.appendChild(completeBtn);
+                }
+            }
+            
+            // Close button always available
+            const closeBtn = document.createElement('button');
+            closeBtn.className = 'btn';
+            closeBtn.textContent = 'Close';
+            closeBtn.addEventListener('click', () => {
+                document.getElementById('requestDetailsModal').style.display = 'none';
+            });
+            footerContainer.appendChild(closeBtn);
+            
+            // Show the modal
+            document.getElementById('requestDetailsModal').style.display = 'flex';
+        }
+
+        // Update the status of a request
+        function updateRequestStatus(requestId, newStatus, reason = null) {
+            const updates = {
+                status: newStatus,
+                lastUpdatedAt: new Date().toISOString(),
+                updatedBy: currentUser.uid,
+                updatedByEmail: currentUser.email
+            };
+            
+            if (reason) {
+                updates.rejectionReason = reason;
+            }
+            
+            database.ref(`trainingRequests/${requestId}`).update(updates)
+                .then(() => {
+                    alert(`Training request ${newStatus} successfully`);
+                    document.getElementById('requestDetailsModal').style.display = 'none';
+                })
+                .catch(error => {
+                    console.error(`Error updating request status to ${newStatus}:`, error);
+                    alert(`Failed to update request status: ${error.message}`);
+                });
+        }
+
+        // Confirm and delete a request
+        function confirmDeleteRequest(requestId, title) {
+            if (confirm(`Are you sure you want to delete the training request "${title}"? This action cannot be undone.`)) {
+                database.ref(`trainingRequests/${requestId}`).remove()
+                    .then(() => {
+                        alert('Training request deleted successfully');
+                    })
+                    .catch(error => {
+                        console.error('Error deleting request:', error);
+                        alert(`Failed to delete request: ${error.message}`);
+                    });
+            }
+        }
+
+        // Helper function to check if user is admin (simplified - you should implement proper role checks)
+        function isUserAdmin() {
+            // For demonstration, we'll check if the email ends with "admin" (you should use proper role management)
+            return currentUser && currentUser.email && currentUser.email.endsWith('admin@example.com');
+        }
+
+        // Helper function to check if user is a manager
+        function isUserManager() {
+            // For demonstration, we'll check if the email contains "manager" (you should use proper role management)
+            return currentUser && currentUser.email && 
+                  (currentUser.email.includes('manager') || currentUser.email.includes('admin'));
+        }
+
+        // Helper function to capitalize first letter of string
+        function capitalize(str) {
+            if (!str) return '';
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        // Helper function to format array or string for display
+        function formatArrayOrString(value) {
+            if (!value) return '';
+            
+            if (Array.isArray(value)) {
+                return value.join(', ');
+            }
+            
+            return value;
+        }
+
+        // Helper function to format location for display
+        function formatLocation(location) {
+            if (!location) return 'Not specified';
+            
+            switch(location) {
+                case 'onsite': return 'Onsite';
+                case 'offsite': return 'Offsite';
+                case 'virtual': return 'Virtual/Online';
+                default: return location;
+            }
+        }
+
+        // Helper function to show error message
+        function showError(message) {
+            alert(message);
+        }
+
+        // Add this at the beginning of your script section
+        document.addEventListener('DOMContentLoaded', () => {
+            // Setup user dropdown toggle functionality (click-based)
+            const userAvatarContainer = document.getElementById('userAvatarContainer');
+            const userDropdown = document.querySelector('.user-dropdown');
+            
+            if (userAvatarContainer && userDropdown) {
+                // Toggle dropdown when clicking the avatar
+                userAvatarContainer.addEventListener('click', function(e) {
+                    e.stopPropagation(); // Prevent event from bubbling up
+                    userDropdown.classList.toggle('show');
+                    console.log('Avatar clicked, dropdown visible:', userDropdown.classList.contains('show'));
+                });
+                
+                // Close dropdown when clicking anywhere else
+                document.addEventListener('click', function(e) {
+                    if (userDropdown.classList.contains('show')) {
+                        userDropdown.classList.remove('show');
+                        console.log('Document clicked, closing dropdown');
+                    }
+                });
+                
+                // Prevent clicks inside dropdown from closing it
+                userDropdown.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    console.log('Click inside dropdown, preventing propagation');
+                });
+            } else {
+                console.error('User avatar or dropdown elements not found:', 
+                              'userAvatarContainer:', userAvatarContainer, 
+                              'userDropdown:', userDropdown);
+            }
+            
+            // Position the user dropdown correctly (keep this for visual positioning)
+            const avatarContainer = document.querySelector('.user-avatar-container');
+            
+            // Position the dropdown when hovering over avatar
+            window.addEventListener('resize', positionDropdown);
+            
+            function positionDropdown() {
+                const rect = avatarContainer.getBoundingClientRect();
+                userDropdown.style.top = rect.bottom + 5 + 'px';
+                userDropdown.style.right = (window.innerWidth - rect.right) + 'px';
+            }
+        });
+
+        // ...existing code...
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            // Position the dropdowns when hovering
+            const avatarContainer = document.querySelector('.user-avatar-container');
+            const userDropdown = document.querySelector('.user-dropdown');
+            const notificationBell = document.getElementById('notificationBell');
+            const notificationDropdown = document.getElementById('notificationDropdown');
+            
+            // Setup position calculation functions
+            avatarContainer.addEventListener('mouseenter', positionUserDropdown);
+            if (notificationBell) {
+                notificationBell.addEventListener('mouseenter', positionNotificationDropdown);
+            }
+            
+            window.addEventListener('resize', function() {
+                positionUserDropdown();
+                if (notificationBell) positionNotificationDropdown();
+            });
+            
+            function positionUserDropdown() {
+                if (!userDropdown || !avatarContainer) return;
+                
+                const rect = avatarContainer.getBoundingClientRect();
+                
+                // First position at the default location
+                userDropdown.style.top = (rect.bottom + 5) + 'px';
+                userDropdown.style.right = (window.innerWidth - rect.right) + 'px';
+                
+                // After positioning, check if it goes off-screen
+                setTimeout(() => {
+                    const dropdownRect = userDropdown.getBoundingClientRect();
+                    
+                    // Check if dropdown extends beyond the viewport
+                    if (dropdownRect.right > window.innerWidth) {
+                        // Adjust position to fit within viewport
+                        userDropdown.style.right = '5px';
+                    }
+                    
+                    if (dropdownRect.bottom > window.innerHeight) {
+                        // Adjust height to fit within viewport or position above
+                        if (rect.top > dropdownRect.height + 10) {
+                            // There's enough space above, position there
+                            userDropdown.style.top = 'auto';
+                            userDropdown.style.bottom = (window.innerHeight - rect.top + 5) + 'px';
+                        } else {
+                            // Not enough space above, reduce height to fit
+                            const newHeight = window.innerHeight - dropdownRect.top - 10;
+                            userDropdown.style.maxHeight = newHeight + 'px';
+                        }
+                    }
+                }, 0);
+            }
+            
+            function positionNotificationDropdown() {
+                if (!notificationDropdown || !notificationBell) return;
+                
+                const rect = notificationBell.getBoundingClientRect();
+                
+                // First position at the default location
+                notificationDropdown.style.top = (rect.bottom + 5) + 'px';
+                notificationDropdown.style.right = (window.innerWidth - rect.right - 15) + 'px';
+                
+                // After positioning, check if it goes off-screen
+                setTimeout(() => {
+                    const dropdownRect = notificationDropdown.getBoundingClientRect();
+                    
+                    // Check if dropdown extends beyond the viewport
+                    if (dropdownRect.right > window.innerWidth) {
+                        // Adjust position to fit within viewport
+                        notificationDropdown.style.right = '5px';
+                    }
+                    
+                    if (dropdownRect.bottom > window.innerHeight) {
+                        // Adjust height to fit within viewport
+                        const newHeight = window.innerHeight - dropdownRect.top - 10;
+                        notificationDropdown.style.maxHeight = newHeight + 'px';
+                    }
+                }, 0);
+            }
+            
+            // ...existing code...
+        });
+        
+        // ...existing code...
+    </script>
+</body>
+</html>

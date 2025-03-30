@@ -1,0 +1,1529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Safety Analysis - Dreamex Lab</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Dashboard specific styles */
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 30px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Menu bar styles */
+        .menu-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #34495e;
+            padding: 0 20px;
+        }
+        
+        .menu-bar ul {
+            display: flex;
+            align-items: center;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .menu-bar ul li {
+            margin: 0 10px;
+        }
+        
+        .menu-bar ul li a {
+            display: block;
+            padding: 15px 10px;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .menu-bar ul li a:hover {
+            color: #f1f3f5;
+        }
+        
+        .menu-bar ul li.current a {
+            color: #fafcfd;
+            font-weight: bold;
+        }
+
+        /* Dropdown styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white !important;
+            color: black !important;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1;
+            top: calc(100%);
+            font-size: 6px !important;
+            font-weight: normal;
+            text-align: left;
+        }
+        .dropdown-content a {
+            color: rgb(44, 43, 43) !important;
+            padding: 6px 10px !important;
+            text-decoration: none;  
+            display: block;
+            font-size: 11px !important;
+        }
+        .dropdown-content a:hover {
+            background-color: #e8e8e8;
+            transform: none; 
+        }
+        .dropdown:hover .dropdown-content,
+        .dropdown:focus-within .dropdown-content {
+            display: block;
+        }
+
+        /* User Avatar Styles */
+        .user-avatar-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-right: 20px;
+            cursor: pointer;
+        }
+        
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .user-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 0;
+            min-width: 200px;
+            display: none;
+            z-index: 1000;
+            text-align: left;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.08);
+        }
+
+        /* Add class for showing the dropdown */
+        .user-dropdown.show {
+            display: block;
+            animation: dropdown-fade-in 0.2s ease-out;
+        }
+        
+        .user-email {
+            padding: 5px 15px; /* Further reduced from 8px to 5px */
+            border-bottom: 1px solid #eaeaea;
+            color: #34495e;
+            font-weight: 500;
+            background-color: #f8f9fa;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .user-dropdown a {
+            display: block;
+            padding: 2px 15px; /* Further reduced from 4px to 2px */
+            color: #000000;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            font-size: 13px; /* Reduced from 14px to 13px */
+            line-height: 1.4; /* Added to provide some minimal spacing */
+        }
+        
+        /* Ensure specific dropdown links are black */
+        #profileLink, #accountLink {
+            color: #474646 !important; /* Pure black color with !important to override any other styles */
+        }
+        
+        .user-dropdown a:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-dropdown a:last-child {
+            border-top: 1px solid #eaeaea;
+        }
+        
+        #logoutButton {
+            color: #e74c3c; /* Keep logout button red */
+        }
+        
+        #logoutButton:hover {
+            background-color: #fdeeee;
+            border-left-color: #e74c3c;
+        }
+        
+        #loginButton {
+            color: #000000; /* Changed to black */
+        }
+        
+        #loginButton:hover {
+            background-color: #f1f8fe;
+            border-left-color: #3498db;
+            color: #3498db;
+        }
+        
+        .user-initial {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3498db;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Loading indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* JSA Form Styles */
+        .jsa-container {
+            max-width: 100%;
+            margin: 80px 20px 40px 20px;
+            padding: 30px;
+            background: #ffffff;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        
+        .jsa-container h1 {
+            text-align: left;
+            margin-bottom: 30px;
+            font-size: 2rem;
+            color: #34495e;
+        }
+        
+        form#jsaForm fieldset {
+            border: 1px solid #dde1e7;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        form#jsaForm fieldset legend {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            padding: 0 10px;
+            text-align: left;
+        }
+        
+        form#jsaForm label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #34495e;
+            display: block;
+            text-align: left;
+        }
+        
+        form#jsaForm input[type="text"],
+        form#jsaForm input[type="datetime-local"],
+        form#jsaForm input[type="date"],
+        form#jsaForm select,
+        form#jsaForm textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccd0d5;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s;
+        }
+        
+        form#jsaForm input:focus,
+        form#jsaForm select:focus,
+        form#jsaForm textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        form#jsaForm .checkbox-group label {
+            display: inline-block;
+            margin-right: 20px;
+        }
+        
+        form#jsaForm .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        form#jsaForm .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        form#jsaForm .btn-reset {
+            background: #f8f9fa;
+            color: #34495e;
+            border: 1px solid #ccd0d5;
+        }
+        
+        form#jsaForm .btn-submit {
+            background: #3498db;
+            color: #fff;
+        }
+
+        /* Job Steps Section */
+        .job-step {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .job-step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .job-step-title {
+            font-weight: bold;
+            font-size: 16px;
+            color: #34495e;
+        }
+        
+        .job-step-actions button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            color: #7f8c8d;
+            transition: color 0.2s;
+        }
+        
+        .job-step-actions button:hover {
+            color: #e74c3c;
+        }
+
+        .hazard-control-pair {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        
+        .hazard-control-pair:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .add-button {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .add-button:hover {
+            background-color: #27ae60;
+        }
+        
+        .remove-button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .remove-button:hover {
+            background-color: #c0392b;
+        }
+
+        /* PPE Checkbox Styles */
+        .ppe-checkboxes {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .ppe-checkbox {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .ppe-checkbox input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .ppe-checkbox label {
+            margin-bottom: 0;
+            font-weight: normal;
+        }
+
+        /* Animation for adding elements */
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Success message */
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+    <!-- Add Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <!-- Include auth.js after Firebase SDKs -->
+    <script src="js/auth.js"></script>
+</head>
+<body>
+    <header>
+        <nav class="menu-bar">
+            <ul class="menu-left">
+                <li><a href="login.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#">Risk Management</a>
+                    <div class="dropdown-content">
+                        <a href="riskassessment.html">Risk Assessment</a>
+                        <a href="jsaboard.html">Job Safety Analysis</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Safety reporting</a>
+                    <div class="dropdown-content">
+                        <a href="eventboard.html">Event</a>
+                        <a href="inspectionsboard.html">Inspections</a>
+                    </div>
+                </li>
+                <li class="dropdown">
+                    <a href="#">Settings</a>
+                    <div class="dropdown-content">
+                        <a href="account.html">User account</a>
+                        <a href="setup.html">Inspections</a>
+                        <a href="log.html">System audit log</a>
+                    </div>
+                </li>
+                <li><a href="dashboard.html">Dashboard</a></li>
+            </ul>
+            <ul class="menu-right">
+                <li class="user-avatar-container">
+                    <div id="userAvatarContainer">
+                        <img src="https://via.placeholder.com/32" alt="User" class="user-avatar" id="userAvatar" style="display: none;">
+                        <div id="userInitial" class="user-initial">?</div>
+                    </div>
+                    <div class="user-dropdown">
+                        <div class="user-email" id="userEmail">Not logged in</div>
+                        <a href="profile.html" id="profileLink" style="display: none;">My Profile</a>
+                        <!-- Account Settings link removed -->
+                        <a href="#" id="logoutButton" style="display: none;">Log Out</a>
+                        <a href="login.html" id="loginButton">Log In</a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="jsa-container">
+        <h1 id="formTitle">Job Safety Analysis (JSA) Form</h1>
+        
+        <div id="successMessage" class="success-message">
+            Your JSA has been successfully submitted and is pending approval.
+        </div>
+        
+        <form id="jsaForm">
+            <!-- Hidden field for JSA ID when in edit mode -->
+            <input type="hidden" id="jsaId" name="jsaId">
+            
+            <fieldset>
+                <legend>1. Job Information</legend>
+                
+                <label for="jobTitle">Job Title</label>
+                <input type="text" id="jobTitle" name="jobTitle" required placeholder="Enter the job title">
+                
+                <label for="jobLocation">Location</label>
+                <select id="jobLocation" name="jobLocation" required>
+                    <option value="">Select a location</option>
+                    <option value="Other">Other (specify below)</option>
+                </select>
+                <div id="otherLocationField" style="display: none;">
+                    <label for="otherLocation">Specify location:</label>
+                    <input type="text" id="otherLocation" name="otherLocation" placeholder="Enter specific location">
+                </div>
+                
+                <label for="jobDescription">Job Description</label>
+                <textarea id="jobDescription" name="jobDescription" rows="4" required placeholder="Describe the job/task to be performed"></textarea>
+                
+                <label for="startDate">Start Date</label>
+                <input type="date" id="startDate" name="startDate" required>
+                <label for="endDate">End Date (if applicable)</label>
+                <input type="date" id="endDate" name="endDate">
+            </fieldset>
+            
+            <fieldset>
+                <legend>2. Team Information</legend>
+                
+                <label for="supervisor">Supervisor/Manager</label>
+                <select id="supervisor" name="supervisor" required>
+                    <option value="">Select a supervisor</option>
+                    <!-- Options will be populated dynamically -->
+                </select>
+                
+                <label for="workersInvolved">Workers Involved</label>
+                <textarea id="workersInvolved" name="workersInvolved" rows="3" placeholder="List names of workers involved in this job"></textarea>
+            </fieldset>
+            
+            <fieldset>
+                <legend>3. Job Steps, Hazards, and Controls</legend>
+                <p>Break down the job into sequential steps. For each step, identify the potential hazards and control measures.</p>
+                
+                <div id="jobStepsContainer">
+                    <!-- Job steps will be added here dynamically -->
+                </div>
+                
+                <div style="margin-top: 15px;">
+                    <button type="button" id="addJobStepBtn" class="add-button">+ Add Job Step</button>
+                </div>
+            </fieldset>
+            
+            <fieldset>
+                <legend>4. Required Personal Protective Equipment (PPE)</legend>
+                
+                <div class="ppe-checkboxes">
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeHardHat" name="ppe" value="Hard Hat">
+                        <label for="ppeHardHat">Hard Hat</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeSafetyGlasses" name="ppe" value="Safety Glasses">
+                        <label for="ppeSafetyGlasses">Safety Glasses</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeGloves" name="ppe" value="Gloves">
+                        <label for="ppeGloves">Gloves</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeSafetyBoots" name="ppe" value="Safety Boots">
+                        <label for="ppeSafetyBoots">Safety Boots</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeHearingProtection" name="ppe" value="Hearing Protection">
+                        <label for="ppeHearingProtection">Hearing Protection</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeRespirator" name="ppe" value="Respirator">
+                        <label for="ppeRespirator">Respirator</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeFaceShield" name="ppe" value="Face Shield">
+                        <label for="ppeFaceShield">Face Shield</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeFallProtection" name="ppe" value="Fall Protection">
+                        <label for="ppeFallProtection">Fall Protection</label>
+                    </div>
+                    
+                    <div class="ppe-checkbox">
+                        <input type="checkbox" id="ppeHighVis" name="ppe" value="High-Visibility Clothing">
+                        <label for="ppeHighVis">High-Visibility Clothing</label>
+                    </div>
+                </div>
+                
+                <label for="additionalPpe">Additional PPE Requirements</label>
+                <textarea id="additionalPpe" name="additionalPpe" rows="2" placeholder="List any additional PPE requirements not covered above"></textarea>
+            </fieldset>
+            
+            <fieldset>
+                <legend>5. Additional Safety Considerations</legend>
+                
+                <label for="permits">Required Permits/Certifications</label>
+                <textarea id="permits" name="permits" rows="2" placeholder="List any required permits or certifications for this job"></textarea>
+                
+                <label for="specialTools">Special Equipment/Tools</label>
+                <textarea id="specialTools" name="specialTools" rows="2" placeholder="List any special equipment or tools required"></textarea>
+                
+                <label for="emergencyProcedures">Emergency Procedures</label>
+                <textarea id="emergencyProcedures" name="emergencyProcedures" rows="3" placeholder="Describe emergency procedures specific to this job"></textarea>
+            </fieldset>
+            
+            <div class="form-actions">
+                <button type="button" class="btn btn-reset" id="resetFormBtn">Reset</button>
+                <button type="submit" class="btn btn-submit">Submit JSA for Approval</button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script>
+    // Initialize Firebase
+    let database;
+    let auth;
+    let jobStepCounter = 0;
+    
+    // Single, reliable Firebase initialization function
+    function initializeFirebase() {
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.appspot.com",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        try {
+            // Check if Firebase is already initialized
+            if (firebase.apps.length === 0) {
+                firebase.initializeApp(firebaseConfig);
+                console.log("Firebase initialized");
+            } else {
+                console.log("Firebase already initialized");
+            }
+            
+            database = firebase.database();
+            auth = firebase.auth();
+            
+            // Set persistence to LOCAL
+            return auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
+                .then(() => true)
+                .catch(error => {
+                    console.error("Error setting persistence:", error);
+                    return true; // Continue despite error
+                });
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            return Promise.reject(error);
+        }
+    }
+    
+    // Initialize Firebase immediately at script load
+    initializeFirebase()
+        .then(() => console.log("Firebase setup complete"))
+        .catch(error => console.error("Firebase setup error:", error));
+    
+    // Show loading overlay
+    function showLoading(message = 'Loading...') {
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        loadingOverlay.innerHTML = `
+            <div style="text-align: center;">
+                <div class="loading-spinner"></div>
+                <div style="margin-top: 15px; color: #333; font-size: 14px;">${message}</div>
+            </div>
+        `;
+        loadingOverlay.style.display = 'flex';
+    }
+    
+    // Hide loading overlay
+    function hideLoading() {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+    
+    // Main DOM content loaded handler
+    document.addEventListener("DOMContentLoaded", () => {
+        console.log("DOM loaded, initializing JSA form");
+        
+        try {
+            showLoading("Checking login status...");
+            
+            // Set authentication timeout
+            const authCheckTimeout = setTimeout(() => {
+                console.warn("Auth check timed out");
+                hideLoading();
+                window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+            }, 8000);
+            
+            // Single auth state listener
+            auth.onAuthStateChanged(user => {
+                clearTimeout(authCheckTimeout);
+                
+                if (user) {
+                    // User is logged in
+                    console.log("User authenticated:", user.email);
+                    
+                    // Update UI for authenticated user
+                    updateUIForAuthenticatedUser(user);
+                    
+                    // Load user data for dropdowns
+                    showLoading("Loading user data...");
+                    loadUsersForDropdown()
+                        .then(() => {
+                            hideLoading();
+                            checkUrlForEditMode();
+                            
+                            // Load locations
+                            loadLocations();
+                            
+                            // Add initial job step
+                            addJobStep();
+                        })
+                        .catch(error => {
+                            hideLoading();
+                            console.error("Error loading users:", error);
+                        });
+                } else {
+                    // Not logged in, redirect to login
+                    console.log("No user authenticated, redirecting to login");
+                    hideLoading();
+                    window.location.href = "login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                }
+            });
+            
+            // Set up form event listeners
+            document.getElementById('jsaForm').addEventListener('submit', submitJsaForm);
+            document.getElementById('resetFormBtn').addEventListener('click', resetForm);
+            document.getElementById('addJobStepBtn').addEventListener('click', addJobStep);
+            
+            // Logout button handler
+            document.getElementById('logoutButton').addEventListener('click', function(e) {
+                e.preventDefault();
+                auth.signOut().then(() => {
+                    localStorage.removeItem('authToken');
+                    sessionStorage.clear();
+                    window.location.href = "login.html";
+                }).catch(error => {
+                    console.error("Error during logout:", error);
+                });
+            });
+            
+            // Location dropdown change handler
+            document.getElementById('jobLocation').addEventListener('change', function() {
+                const otherLocationField = document.getElementById('otherLocationField');
+                otherLocationField.style.display = this.value === 'Other' ? 'block' : 'none';
+            });
+        } catch (error) {
+            console.error("Critical initialization error:", error);
+            hideLoading();
+        }
+    });
+    
+    // Function to update UI for authenticated user
+    function updateUIForAuthenticatedUser(user) {
+        try {
+            // Update user email in dropdown
+            const userEmailElement = document.getElementById('userEmail');
+            if (userEmailElement) {
+                userEmailElement.textContent = user.email;
+            }
+            
+            // Update profile display
+            database.ref(`users/${user.uid}`).once('value').then((snapshot) => {
+                const userData = snapshot.val() || {};
+                
+                // Update avatar
+                if (userData.profileImage) {
+                    const userAvatar = document.getElementById('userAvatar');
+                    const userInitial = document.getElementById('userInitial');
+                    
+                    if (userAvatar && userInitial) {
+                        userAvatar.src = userData.profileImage;
+                        userAvatar.style.display = 'block';
+                        userInitial.style.display = 'none';
+                    }
+                } else {
+                    const userInitial = document.getElementById('userInitial');
+                    if (userInitial) {
+                        userInitial.textContent = getUserInitial(user);
+                        userInitial.style.display = 'flex';
+                    }
+                    
+                    const userAvatar = document.getElementById('userAvatar');
+                    if (userAvatar) {
+                        userAvatar.style.display = 'none';
+                    }
+                }
+            }).catch(error => {
+                console.error("Error fetching user profile:", error);
+            });
+            
+            // Show authenticated user links and hide login button
+            document.getElementById('profileLink').style.display = 'block';
+            document.getElementById('accountLink').style.display = 'block';
+            document.getElementById('logoutButton').style.display = 'block';
+            document.getElementById('loginButton').style.display = 'none';
+        } catch (error) {
+            console.warn("Error updating UI for authenticated user:", error);
+        }
+    }
+    
+    // Simple function to get initial from user object
+    function getUserInitial(user) {
+        if (!user || !user.email) return '?';
+        return user.email.charAt(0).toUpperCase();
+    }
+    
+    // Function to load users for dropdown
+    function loadUsersForDropdown() {
+        console.log("Loading users for dropdowns...");
+        const supervisorDropdown = document.getElementById('supervisor');
+        
+        if (!supervisorDropdown) {
+            return Promise.reject(new Error("Dropdown elements not found"));
+        }
+        
+        // Show loading state
+        supervisorDropdown.innerHTML = '<option value="">Select a supervisor</option><option disabled>Loading users...</option>';
+        
+        return new Promise((resolve, reject) => {
+            // Check authentication
+            if (!auth.currentUser) {
+                console.warn("Not authenticated when loading users");
+                supervisorDropdown.innerHTML = '<option value="">Please log in</option>';
+                reject(new Error("Not authenticated"));
+                return;
+            }
+            
+            // Fetch users from database
+            database.ref('users').once('value')
+                .then(snapshot => {
+                    // Reset dropdown
+                    supervisorDropdown.innerHTML = '<option value="">Select a supervisor</option>';
+                    
+                    const users = snapshot.val();
+                    
+                    if (!users) {
+                        console.warn("No users found");
+                        resolve([]);
+                        return;
+                    }
+                    
+                    // Process and sort users
+                    const userArray = [];
+                    for (const userId in users) {
+                        if (users[userId]) {
+                            userArray.push({
+                                id: userId,
+                                email: users[userId].email || '',
+                                displayName: users[userId].displayName || users[userId].email || 'Unknown User',
+                                role: users[userId].role || 'user'
+                            });
+                        }
+                    }
+                    
+                    userArray.sort((a, b) => a.displayName.localeCompare(b.displayName));
+                    
+                    // Add users to dropdowns
+                    userArray.forEach(user => {
+                        const option = document.createElement('option');
+                        option.value = user.id;
+                        option.setAttribute('data-email', user.email);
+                        option.textContent = user.displayName;
+                        supervisorDropdown.appendChild(option);
+                    });
+                    
+                    sessionStorage.setItem('lastUserFetch', Date.now().toString());
+                    resolve(userArray);
+                })
+                .catch(error => {
+                    console.error("Error fetching users:", error);
+                    supervisorDropdown.innerHTML = '<option value="">Error loading users</option>';
+                    
+                    const retryOption = document.createElement('option');
+                    retryOption.value = "retry";
+                    retryOption.textContent = "Click to retry";
+                    supervisorDropdown.appendChild(retryOption);
+                    
+                    reject(error);
+                });
+        });
+    }
+    
+    // Function to load locations from Firebase
+    function loadLocations() {
+        console.log("Loading locations from Firebase");
+        const locationSelect = document.getElementById('jobLocation');
+        
+        if (!locationSelect) {
+            console.error("Location select element not found");
+            return;
+        }
+        
+        // Keep the default options - empty and 'Other'
+        const defaultOptions = ['', 'Other'];
+        
+        // First, ensure default options exist
+        if (!locationSelect.querySelector('option[value=""]')) {
+            const emptyOption = document.createElement('option');
+            emptyOption.value = '';
+            emptyOption.textContent = 'Select a location';
+            locationSelect.appendChild(emptyOption);
+        }
+        
+        if (!locationSelect.querySelector('option[value="Other"]')) {
+            const otherOption = document.createElement('option');
+            otherOption.value = 'Other';
+            otherOption.textContent = 'Other (specify below)';
+            locationSelect.appendChild(otherOption);
+        }
+        
+        // Create a reference to locations in Firebase
+        const locationsRef = database.ref('setupOptions/locations');
+        
+        // Listen for changes in locations
+        locationsRef.once('value')
+            .then(snapshot => {
+                try {
+                    console.log("Received locations from Firebase");
+                    const locations = snapshot.val() || {};
+                    
+                    // Sort locations by name
+                    const sortedLocations = Object.entries(locations)
+                        .map(([id, data]) => ({id, ...data}))
+                        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+                    
+                    // Store current selection
+                    const currentSelection = locationSelect.value;
+                    
+                    // Clear non-default options
+                    Array.from(locationSelect.options).forEach(option => {
+                        if (!defaultOptions.includes(option.value)) {
+                            locationSelect.removeChild(option);
+                        }
+                    });
+                    
+                    // Add dynamic options from Firebase
+                    sortedLocations.forEach(location => {
+                        if (!location.name) return; // Skip if no name
+                        
+                        const option = document.createElement('option');
+                        option.value = location.name;
+                        option.textContent = location.name;
+                        
+                        // Find the "Other" option to insert before it
+                        let otherOption;
+                        for (let i = 0; i < locationSelect.options.length; i++) {
+                            if (locationSelect.options[i].value === 'Other') {
+                                otherOption = locationSelect.options[i];
+                                break;
+                            }
+                        }
+                        
+                        if (otherOption) {
+                            locationSelect.insertBefore(option, otherOption);
+                        } else {
+                            locationSelect.appendChild(option);
+                        }
+                    });
+                    
+                    // Restore previous selection if possible
+                    if (currentSelection && Array.from(locationSelect.options).some(opt => opt.value === currentSelection)) {
+                        locationSelect.value = currentSelection;
+                    }
+                    
+                    console.log(`Loaded ${sortedLocations.length} locations`);
+                } catch (error) {
+                    console.error("Error processing locations:", error);
+                }
+            })
+            .catch(error => {
+                console.error("Error loading locations:", error);
+            });
+    }
+    
+    // Function to add a new job step
+    function addJobStep() {
+        jobStepCounter++;
+        const jobStepsContainer = document.getElementById('jobStepsContainer');
+        
+        const stepDiv = document.createElement('div');
+        stepDiv.className = 'job-step fade-in';
+        stepDiv.dataset.stepId = jobStepCounter;
+        
+        stepDiv.innerHTML = `
+            <div class="job-step-header">
+                <div class="job-step-title">Step ${jobStepCounter}</div>
+                <div class="job-step-actions">
+                    <button type="button" class="remove-button" onclick="removeJobStep(${jobStepCounter})">Remove Step</button>
+                </div>
+            </div>
+            
+            <label for="stepDescription-${jobStepCounter}">Step Description</label>
+            <textarea id="stepDescription-${jobStepCounter}" name="stepDescription-${jobStepCounter}" rows="2" required placeholder="Describe this step in the job process"></textarea>
+            
+            <div class="hazard-controls-container" id="hazardControls-${jobStepCounter}">
+                <!-- Hazard-control pairs will be added here dynamically -->
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <button type="button" class="add-button" onclick="addHazardControlPair(${jobStepCounter})">+ Add Hazard & Control</button>
+            </div>
+        `;
+        
+        jobStepsContainer.appendChild(stepDiv);
+        
+        // Add first hazard-control pair for this step
+        addHazardControlPair(jobStepCounter);
+    }
+    
+    // Function to remove a job step
+    function removeJobStep(stepId) {
+        const stepElement = document.querySelector(`.job-step[data-step-id="${stepId}"]`);
+        if (stepElement) {
+            // Animate removal
+            stepElement.style.opacity = '0';
+            stepElement.style.transform = 'translateY(10px)';
+            stepElement.style.transition = 'opacity 0.3s, transform 0.3s';
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                stepElement.remove();
+                
+                // Renumber steps
+                const steps = document.querySelectorAll('.job-step');
+                steps.forEach((step, index) => {
+                    const stepNumber = index + 1;
+                    step.querySelector('.job-step-title').textContent = `Step ${stepNumber}`;
+                });
+            }, 300);
+        }
+    }
+    
+    // Function to add a hazard-control pair
+    function addHazardControlPair(stepId) {
+        const hazardControlsContainer = document.getElementById(`hazardControls-${stepId}`);
+        const pairCount = hazardControlsContainer.querySelectorAll('.hazard-control-pair').length + 1;
+        
+        const pairDiv = document.createElement('div');
+        pairDiv.className = 'hazard-control-pair fade-in';
+        pairDiv.dataset.pairId = `${stepId}-${pairCount}`;
+        
+        pairDiv.innerHTML = `
+            <div>
+                <label for="hazard-${stepId}-${pairCount}">Potential Hazard</label>
+                <textarea id="hazard-${stepId}-${pairCount}" name="hazard-${stepId}-${pairCount}" rows="2" required placeholder="Describe the potential hazard"></textarea>
+            </div>
+            
+            <div>
+                <label for="control-${stepId}-${pairCount}">Control Measure</label>
+                <textarea id="control-${stepId}-${pairCount}" name="control-${stepId}-${pairCount}" rows="2" required placeholder="Describe the control measure to mitigate this hazard"></textarea>
+                <button type="button" class="remove-button" onclick="removeHazardControlPair('${stepId}-${pairCount}')" style="margin-top: 5px; padding: 5px 10px; font-size: 12px;">Remove</button>
+            </div>
+        `;
+        
+        hazardControlsContainer.appendChild(pairDiv);
+    }
+    
+    // Function to remove a hazard-control pair
+    function removeHazardControlPair(pairId) {
+        const pairElement = document.querySelector(`.hazard-control-pair[data-pair-id="${pairId}"]`);
+        if (pairElement) {
+            // Animate removal
+            pairElement.style.opacity = '0';
+            pairElement.style.transform = 'translateY(10px)';
+            pairElement.style.transition = 'opacity 0.3s, transform 0.3s';
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                pairElement.remove();
+            }, 300);
+        }
+    }
+    
+    // Function to submit the JSA form
+    function submitJsaForm(e) {
+        e.preventDefault();
+        console.log("Submitting JSA form...");
+        
+        // Show loading overlay
+        showLoading("Saving JSA...");
+        
+        // Verify user is authenticated
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error("User not authenticated when submitting form");
+            hideLoading();
+            alert("You must be logged in to submit a JSA");
+            return;
+        }
+        
+        try {
+            // Get form data
+            const form = document.getElementById('jsaForm');
+            const jsaId = document.getElementById('jsaId').value.trim();
+            
+            // Get job information
+            const jobTitle = document.getElementById('jobTitle').value;
+            const jobLocation = document.getElementById('jobLocation').value;
+            const otherLocation = document.getElementById('otherLocation').value;
+            const location = jobLocation === 'Other' ? otherLocation : jobLocation;
+            const jobDescription = document.getElementById('jobDescription').value;
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            
+            // Get team information
+            const supervisorSelect = document.getElementById('supervisor');
+            const supervisorId = supervisorSelect.value;
+            const supervisorName = supervisorSelect.options[supervisorSelect.selectedIndex].text;
+            const supervisorEmail = supervisorSelect.options[supervisorSelect.selectedIndex].getAttribute('data-email') || '';
+            const workersInvolved = document.getElementById('workersInvolved').value;
+            
+            // Collect job steps, hazards, and controls
+            const jobSteps = [];
+            const stepElements = document.querySelectorAll('.job-step');
+            
+            stepElements.forEach((stepElement, index) => {
+                const stepId = stepElement.dataset.stepId;
+                const stepDescription = document.getElementById(`stepDescription-${stepId}`).value;
+                
+                const hazardsAndControls = [];
+                const hazardControlPairs = stepElement.querySelectorAll('.hazard-control-pair');
+                
+                hazardControlPairs.forEach((pair) => {
+                    const pairId = pair.dataset.pairId;
+                    const [stepIdPart, pairNumber] = pairId.split('-');
+                    
+                    const hazard = document.getElementById(`hazard-${pairId}`).value;
+                    const control = document.getElementById(`control-${pairId}`).value;
+                    
+                    hazardsAndControls.push({
+                        hazard: hazard,
+                        control: control
+                    });
+                });
+                
+                jobSteps.push({
+                    stepNumber: index + 1,
+                    description: stepDescription,
+                    hazardsAndControls: hazardsAndControls
+                });
+            });
+            
+            // Collect PPE requirements
+            const ppeCheckboxes = document.querySelectorAll('input[name="ppe"]:checked');
+            const selectedPpe = Array.from(ppeCheckboxes).map(checkbox => checkbox.value);
+            const additionalPpe = document.getElementById('additionalPpe').value;
+            
+            // Collect additional safety information
+            const permits = document.getElementById('permits').value;
+            const specialTools = document.getElementById('specialTools').value;
+            const emergencyProcedures = document.getElementById('emergencyProcedures').value;
+            
+            // Create JSA object
+            const jsaData = {
+                // Job information
+                jobTitle: jobTitle,
+                location: location,
+                jobDescription: jobDescription,
+                startDate: startDate,
+                endDate: endDate || null,
+                
+                // Team information
+                supervisorId: supervisorId,
+                supervisorName: supervisorName,
+                supervisorEmail: supervisorEmail,
+                workersInvolved: workersInvolved,
+                
+                // Job steps, hazards, and controls
+                jobSteps: jobSteps,
+                
+                // PPE requirements
+                ppe: selectedPpe,
+                additionalPpe: additionalPpe,
+                
+                // Additional safety information
+                permits: permits,
+                specialTools: specialTools,
+                emergencyProcedures: emergencyProcedures,
+                
+                // Status information
+                status: 'Pending',
+                
+                // Metadata - always updated
+                lastUpdatedBy: currentUser.uid,
+                lastUpdatedByEmail: currentUser.email,
+                lastUpdatedAt: firebase.database.ServerValue.TIMESTAMP,
+                lastUpdatedByName: currentUser.displayName || currentUser.email
+            };
+            
+            // For new JSAs, add creation metadata
+            if (!jsaId) {
+                jsaData.createdBy = currentUser.uid;
+                jsaData.createdByEmail = currentUser.email;
+                jsaData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+                jsaData.createdByName = currentUser.displayName || currentUser.email;
+            }
+            
+            // Get reference to Firebase database
+            let savePromise;
+            let newJsaRef;
+            
+            if (jsaId) {
+                // Update existing JSA
+                console.log(`Updating existing JSA with ID: ${jsaId}`);
+                savePromise = database.ref(`jsas/${jsaId}`).update(jsaData);
+            } else {
+                // Create new JSA with push() to generate a unique key
+                console.log("Creating new JSA with generated ID");
+                newJsaRef = database.ref('jsas').push();
+                savePromise = newJsaRef.set(jsaData);
+            }
+            
+            // Handle save result
+            savePromise.then(() => {
+                console.log("JSA saved successfully");
+                
+                // Ensure data is available immediately by writing to local storage as backup
+                if (jsaId) {
+                    try {
+                        const localJsas = JSON.parse(localStorage.getItem('recentJsas') || '[]');
+                        const updatedJsas = localJsas.map(j => 
+                            j.id === jsaId ? {...j, ...jsaData, id: jsaId} : j
+                        );
+                        localStorage.setItem('recentJsas', JSON.stringify(updatedJsas));
+                    } catch (e) {
+                        console.warn("Could not update local JSA cache", e);
+                    }
+                } else if (newJsaRef) {
+                    try {
+                        const localJsas = JSON.parse(localStorage.getItem('recentJsas') || '[]');
+                        localJsas.unshift({...jsaData, id: newJsaRef.key});
+                        // Keep only recent 50 JSAs locally
+                        localStorage.setItem('recentJsas', 
+                            JSON.stringify(localJsas.slice(0, 50))
+                        );
+                    } catch (e) {
+                        console.warn("Could not update local JSA cache", e);
+                    }
+                }
+                
+                // Hide loading overlay
+                hideLoading();
+                
+                // Show success message
+                const successMessage = document.getElementById('successMessage');
+                successMessage.style.display = 'block';
+                successMessage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+                // Create notification for the supervisor
+                createNotification({
+                    type: 'jsa_submitted',
+                    title: 'New JSA Requires Your Approval',
+                    message: `A new Job Safety Analysis for "${jobTitle}" requires your approval`,
+                    jsaId: jsaId || newJsaRef.key,
+                    targetUsers: [supervisorId],
+                    urgency: 'medium'
+                });
+                
+                // Reset form after submission
+                setTimeout(() => {
+                    resetForm();
+                    
+                    // Hide success message after a delay
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 5000);
+                }, 2000);
+                
+            }).catch(error => {
+                console.error("Error saving JSA:", error);
+                hideLoading();
+                alert(`Error saving JSA: ${error.message}`);
+            });
+            
+        } catch (error) {
+            console.error("Error in form submission:", error);
+            hideLoading();
+            alert(`An error occurred during form submission: ${error.message}`);
+        }
+    }
+    
+    // Function to create a notification in Firebase
+    function createNotification(notificationData) {
+        if (!database || !auth.currentUser) {
+            console.error("Cannot create notification: Database or user not available");
+            return Promise.reject("Database or user not available");
+        }
+        
+        const currentUser = auth.currentUser;
+        
+        // Add standard fields to notification
+        const notification = {
+            ...notificationData,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            createdBy: currentUser.uid,
+            createdByEmail: currentUser.email,
+            readBy: {}, // Store read status by user ID
+        };
+        
+        // Auto-mark creator's own notifications as read
+        notification.readBy[currentUser.uid] = true;
+        
+        // Create the notification
+        return database.ref('notifications').push(notification)
+            .then((ref) => {
+                console.log("Notification created successfully with ID:", ref.key);
+                return { ...notification, id: ref.key };
+            })
+            .catch(error => {
+                console.error("Error creating notification:", error);
+                return Promise.reject(error);
+            });
+    }
+    
+    // Function to reset the form
+    function resetForm() {
+        // Reset main form elements
+        document.getElementById('jsaForm').reset();
+        document.getElementById('jsaId').value = '';
+        
+        // Reset job steps container
+        const jobStepsContainer = document.getElementById('jobStepsContainer');
+        jobStepsContainer.innerHTML = '';
+        
+        // Reset counter
+        jobStepCounter = 0;
+        
+        // Add initial job step
+        addJobStep();
+        
+        // Hide other location field
+        document.getElementById('otherLocationField').style.display = 'none';
+        
+        // Hide success message
+        document.getElementById('successMessage').style.display = 'none';
+    }
+    
+    // Function to check URL for edit mode parameter
+    function checkUrlForEditMode() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const jsaId = urlParams.get('edit');
+        
+        if (jsaId) {
+            loadJsaForEditing(jsaId);
+        }
+    }
+    
+    // Function to load JSA for editing
+    function loadJsaForEditing(jsaId) {
+        showLoading("Loading JSA data...");
+        
+        // Update page title
+        document.getElementById('formTitle').textContent = 'Edit Job Safety Analysis (JSA)';
+        
+        // Set the hidden JSA ID field
+        document.getElementById('jsaId').value = jsaId;
+        
+        // Fetch JSA data from Firebase
+        database.ref(`jsas/${jsaId}`).once('value')
+            .then(snapshot => {
+                const jsa = snapshot.val();
+                if (!jsa) {
+                    throw new Error('JSA not found');
+                }
+                
+                // Populate form with JSA data
+                populateFormWithJsaData(jsa);
+                hideLoading();
+            })
+            .catch(error => {
+                console.error("Error loading JSA for editing:", error);
+                hideLoading();
+                alert(`Error loading JSA: ${error.message}`);
+                window.location.href = 'jsaboard.html'; // Redirect to JSA board
+            });
+    }
+    
+    // Function to populate form with JSA data
+    function populateFormWithJsaData(jsa) {
+        // Populate job information
+        document.getElementById('jobTitle').value = jsa.jobTitle || '';
+        document.getElementById('jobDescription').value = jsa.jobDescription || '';
+        document.getElementById('startDate').value = jsa.startDate || '';
+        document.getElementById('endDate').value = jsa.endDate || '';
+        
+        // Set location - handle both dropdown and Other field
+        const locationSelect = document.getElementById('jobLocation');
+        const otherLocationField = document.getElementById('otherLocationField');
+        const otherLocationInput = document.getElementById('otherLocation');
+        
+        if (jsa.location) {
+            // Check if the location exists in the dropdown options
+            let locationExists = false;
+            for (let i = 0; i < locationSelect.options.length; i++) {
+                if (locationSelect.options[i].value === jsa.location) {
+                    locationSelect.value = jsa.location;
+                    locationExists = true;
+                    break;
+                }
+            }
+            
+            // If location doesn't exist in dropdown, set to "Other" and fill the other field
+            if (!locationExists) {
+                locationSelect.value = 'Other';
+                otherLocationInput.value = jsa.location;
+                otherLocationField.style.display = 'block';
+            }
+        }
+        
+        // Populate team information
+        if (jsa.supervisorId) {
+            document.getElementById('supervisor').value = jsa.supervisorId;
+        }
+        document.getElementById('workersInvolved').value = jsa.workersInvolved || '';
+        
+        // Populate job steps
+        const jobStepsContainer = document.getElementById('jobStepsContainer');
+        jobStepsContainer.innerHTML = '';
+        jobStepCounter = 0;
+        
+        if (jsa.jobSteps && jsa.jobSteps.length > 0) {
+            jsa.jobSteps.forEach((step, index) => {
+                addJobStep(); // This increments jobStepCounter
+                
+                const stepElement = document.querySelector(`.job-step[data-step-id="${jobStepCounter}"]`);
+                document.getElementById(`stepDescription-${jobStepCounter}`).value = step.description || '';
+                
+                // Clear default hazard-control pairs
+                const hazardControlsContainer = document.getElementById(`hazardControls-${jobStepCounter}`);
+                hazardControlsContainer.innerHTML = '';
+                
+                // Add hazard-control pairs
+                if (step.hazardsAndControls && step.hazardsAndControls.length > 0) {
+                    step.hazardsAndControls.forEach((pair, pairIndex) => {
+                        addHazardControlPair(jobStepCounter);
+                        
+                        // Get the last added pair
+                        const pairElements = hazardControlsContainer.querySelectorAll('.hazard-control-pair');
+                        const lastPairElement = pairElements[pairElements.length - 1];
+                        const pairId = lastPairElement.dataset.pairId;
+                        
+                        document.getElementById(`hazard-${pairId}`).value = pair.hazard || '';
+                        document.getElementById(`control-${pairId}`).value = pair.control || '';
+                    });
+                } else {
+                    // Add at least one hazard-control pair if none existed
+                    addHazardControlPair(jobStepCounter);
+                }
+            });
+        } else {
+            // Add at least one job step if none existed
+            addJobStep();
+        }
+        
+        // Populate PPE requirements
+        if (jsa.ppe && jsa.ppe.length > 0) {
+            const ppeCheckboxes = document.querySelectorAll('input[name="ppe"]');
+            ppeCheckboxes.forEach(checkbox => {
+                checkbox.checked = jsa.ppe.includes(checkbox.value);
+            });
+        }
+        document.getElementById('additionalPpe').value = jsa.additionalPpe || '';
+        
+        // Populate additional safety information
+        document.getElementById('permits').value = jsa.permits || '';
+        document.getElementById('specialTools').value = jsa.specialTools || '';
+        document.getElementById('emergencyProcedures').value = jsa.emergencyProcedures || '';
+    }
+    
+    // Setup avatar dropdown functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const userAvatarContainer = document.getElementById('userAvatarContainer');
+        const userDropdown = document.querySelector('.user-dropdown');
+        
+        if (userAvatarContainer && userDropdown) {
+            // Toggle dropdown when clicking the avatar
+            userAvatarContainer.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent event from bubbling up
+                userDropdown.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking anywhere else
+            document.addEventListener('click', function(e) {
+                if (userDropdown.classList.contains('show')) {
+                    userDropdown.classList.remove('show');
+                }
+            });
+            
+            // Prevent clicks inside dropdown from closing it
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
+    });
+    </script>
+</body>
+</html>
