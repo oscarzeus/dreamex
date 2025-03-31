@@ -1301,6 +1301,33 @@
                 transform: translateY(0);
             }
         }
+
+        /* Styles for frozen rows */
+        .frozen-row {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .frozen-row td {
+            position: relative;
+        }
+
+        .frozen-row td::after {
+            content: '🔒';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #888;
+        }
+
+        /* Style for the guest message */
+        .guest-message {
+            color: #999;
+            font-style: italic;
+            font-size: 11px;
+        }
         
     </style>
     <script type="module">
@@ -1329,6 +1356,12 @@
     window.deleteRiskFromDatabase = deleteRiskFromDatabase;
     window.loadRisksFromDatabase = loadRisksFromDatabase;
 
+    // Add this function to check if the user is a guest
+    function isGuestUser() {
+        // You might want to implement a more robust check based on your authentication system
+        return !localStorage.getItem('user') || localStorage.getItem('user') === 'guest';
+    }
+    
     // Function to add or update a risk in the database - with duplicate prevention
     function addRiskToDatabase(risk) {
         // Always set default initials since there's no login
@@ -1362,7 +1395,7 @@
         return remove(riskRef);
     }
 
-    // Function to load risks from the database
+    // Function to load risks from the database - modified to include timestamp extraction
     function loadRisksFromDatabase() {
         const risksRef = ref(db, 'risks');
         let displayedRiskIds = new Set(); // Track displayed risk IDs
@@ -1376,7 +1409,6 @@
             if (data) {
                 // Sort the risks by creation time (assuming ID contains timestamp)
                 const sortedRisks = Object.values(data).sort((a, b) => {
-                    // Extract timestamp from ID if possible, otherwise compare IDs
                     const getTimestamp = id => {
                         const match = id.match(/RISK(\d+)/);
                         return match ? parseInt(match[1]) : 0;
@@ -1385,18 +1417,15 @@
                 });
                 
                 sortedRisks.forEach(risk => {
-                    // Skip if we've already displayed this risk
                     if (displayedRiskIds.has(risk.id)) {
                         console.warn(`Duplicate risk ID detected and skipped: ${risk.id}`);
                         return;
                     }
                     
-                    // Create and add the row
                     const row = createRiskRowFromData(risk);
                     attachRowEventListeners(row);
                     tbody.appendChild(row);
                     
-                    // Track this risk ID
                     displayedRiskIds.add(risk.id);
                 });
             }
@@ -1411,7 +1440,7 @@
         });
     }
 
-    // Helper function to create a row from risk data - ensure data-risk-id is always set
+    // Helper function to create a row from risk data - modified for guest users
     function createRiskRowFromData(risk) {
         const row = document.createElement('tr');
         
@@ -1443,22 +1472,18 @@
                 <option value="Reputational & Brand">Reputational & Brand</option>
                 <option value="Environmental, Health & Safety">Environmental, Health & Safety</option>
                 <option value="Cybersecurity & Technology">Cybersecurity & Technology</option>
-                <option value="Supply Chain & Logistics">Supply Chain & Logistics</option>
-                <option value="Social & Ethical">Social & Ethical</option>
             </select>
         </td>`;
         
         // Add likelihood dropdown
         row.innerHTML += `<td>
             <select class="likelihood-select">
-                ${getLikelihoodOptions()}
             </select>
         </td>`;
         
         // Add impact dropdown
         row.innerHTML += `<td>
             <select class="impact-select">
-                ${getImpactOptions()}
             </select>
         </td>`;
         
@@ -1471,21 +1496,12 @@
         // Add strategy dropdown
         row.innerHTML += `<td>
             <select class="strategy-select">
-                <option value="" disabled selected>Select Strategy</option>
-                <option value="Mitigate">Mitigate</option>
-                <option value="Transfer">Transfer</option>
-                <option value="Avoid">Avoid</option>
-                <option value="Accept">Accept</option>
             </select>
         </td>`;
         
         // Add status dropdown
         row.innerHTML += `<td>
             <select>
-                <option value="">Select</option>
-                <option value="1">Not Started</option>
-                <option value="2">In Progress</option>
-                <option value="3">Completed</option>
             </select>
         </td>`;
         
@@ -1506,8 +1522,6 @@
         
         row.innerHTML += `<td>
             <span class="residual-value" 
-                  data-score="${residualRiskScore}" 
-                  data-likelihood="${residualRiskLikelihood}" 
                   data-impact="${residualRiskImpact}">${residualRiskLevel}</span>
             <button type="button" class="residual-settings-btn" onclick="showResidualSettings(this)">⚙️</button>
         </td>`;
@@ -1521,40 +1535,34 @@
         // Find the user in dashboardUsers if available
         if (window.dashboardUsers && window.dashboardUsers.length > 0) {
             const user = window.dashboardUsers.find(u => 
-                u.uid === userId || 
-                u.initials === userInitials
-            );
+            u.uid === userId || u.initials === userInitials);
             
             if (user) {
-                userInitials = user.initials;
-                userId = user.uid;
-                colorClass = user.color;
-                userName = user.displayName;
+                userInitials = user.initials || userInitials;
+                userId = user.uid || userId;
+                colorClass = user.color || colorClass;
+                userName = user.displayName || userName;
             }
         }
         
         // Generate HTML for initials cell with dropdown from dashboard users
         const initialsHtml = `
             <td class="user-initials-cell" onclick="showInitialsDropdown(this, event)">
-                <div class="initials-container">
-                    <div class="initials-circle ${colorClass}" data-initials="${userInitials}" data-userid="${userId}">
-                        ${userInitials}
-                    </div>
-                    <div class="edit-initials">✏️</div>
+                <div class="initials-circle ${colorClass}" data-userid="${userId}" data-initials="${userInitials}">
+                    ${userInitials}
                 </div>
-                <div class="user-name-display" title="${userName}">${userName}</div>
-                <div class="initials-dropdown">
-                    ${generateUserOptions()}
-                </div>
+                <span class="user-name-display">${userName}</span>
+                <div class="edit-initials">✏️</div>
             </td>`;
         
         row.innerHTML += initialsHtml;
         
         // Add action buttons conditionally based on user role
         if (isGuestUser()) {
-            // For guests, show no action buttons
+            // For guests, show no action buttons and add the frozen-row class
+            row.classList.add('frozen-row');
             row.innerHTML += `<td>
-                <span class="guest-message" style="color: #999; font-style: italic; font-size: 11px;">View only</span>
+                <span class="guest-message">View only</span>
             </td>`;
         } else {
             // For regular users, show all action buttons
@@ -1605,143 +1613,94 @@
         return row;
     }
 
-    // Helper function to attach event listeners to a row - needs enhancement
+    // Helper function to attach event listeners to a row - modified for guest users
     function attachRowEventListeners(row) {
-        // Existing listeners
-        row.querySelector('.likelihood-select').addEventListener('change', function() {
-            computeScoreAndRisk(row);
-        });
-        row.querySelector('.impact-select').addEventListener('change', function() {
-            computeScoreAndRisk(row);
-        });
-        row.querySelector('.description-select').addEventListener('change', function() {
-            renderRiskDescriptionChart();
-            updateRiskInFirebase(row); // Add Firebase update
-        });
-        
-        // NEW: Add listeners to other select elements
-        row.querySelector('.strategy-select').addEventListener('change', function() {
-            updateRiskInFirebase(row);
-        });
-        
-        row.querySelector('td:nth-of-type(10) select').addEventListener('change', function() {
-            updateRiskInFirebase(row);
-        });
-        
-        // NEW: Add listener to date input
-        row.querySelector('input[type="date"]').addEventListener('change', function() {
-            updateRiskInFirebase(row);
-        });
-        
-        // NEW: Add listeners to contenteditable cells for blur events
-        row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
-            cell.addEventListener('blur', function() {
+        if (!isGuestUser()) {
+            // Only attach event listeners for non-guest users
+            row.querySelector('.likelihood-select').addEventListener('change', function() {
+                computeScoreAndRisk(row);
+            });
+            row.querySelector('.impact-select').addEventListener('change', function() {
+                computeScoreAndRisk(row);
+            });
+            row.querySelector('.description-select').addEventListener('change', function() {
+                renderRiskDescriptionChart();
                 updateRiskInFirebase(row);
             });
-        });
-    }
-
-    // NEW: Helper function to update a risk in Firebase from row data
-    function updateRiskInFirebase(row) {
-        const riskId = row.getAttribute('data-risk-id') || row.cells[1].innerText.trim();
-        if (riskId) {
-            const risk = window.getRiskFromRow(row);
-            window.updateRiskInDatabase(risk)
-                .then(() => {
-                    console.log(`Risk ${risk.id} updated in Firebase`);
-                })
-                .catch(error => {
-                    console.error('Error updating risk in Firebase:', error);
+            
+            // Add listeners to other select elements
+            row.querySelector('.strategy-select').addEventListener('change', function() {
+                updateRiskInFirebase(row);
+            });
+            
+            row.querySelector('td:nth-of-type(10) select').addEventListener('change', function() {
+                updateRiskInFirebase(row);
+            });
+            
+            // Add listener to date input
+            row.querySelector('input[type="date"]').addEventListener('change', function() {
+                updateRiskInFirebase(row);
+            });
+            
+            // Add listeners to contenteditable cells for blur events
+            row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.addEventListener('blur', function() {
+                    updateRiskInFirebase(row);
                 });
-        }
-    }
-
-    // Helper function to get likelihood options based on current matrix size
-    function getLikelihoodOptions() {
-        if (currentMatrixSize === '3x3') {
-            return likelihoodOptions3;
-        } else if (currentMatrixSize === '7x7') {
-            return likelihoodOptions7;
+            });
         } else {
-            return likelihoodOptions5;
-        }
-    }
-    
-    // Helper function to get impact options based on current matrix size
-    function getImpactOptions() {
-        if (currentMatrixSize === '3x3') {
-            return impactOptions3;
-        } else if (currentMatrixSize === '7x7') {
-            return impactOptions7;
-        } else {
-            return impactOptions5;
+            // For guest users, make all inputs and selects disabled
+            row.querySelectorAll('input, select').forEach(element => {
+                element.disabled = true;
+            });
+            row.querySelectorAll('[contenteditable="true"]').forEach(cell => {
+                cell.contentEditable = false;
+            });
         }
     }
 
-    // Function to extract risk data from a row
-    function getRiskFromRow(row) {
-        // Get detailed residual risk information
-        const residualSpan = row.querySelector('.residual-value');
-        const residualCell = residualSpan ? residualSpan.closest('td') : null;
-        const residualRisk = {
-            level: residualSpan ? residualSpan.innerText.trim() : "",
-            score: residualSpan ? residualSpan.getAttribute('data-score') || "" : "",
-            likelihood: residualSpan ? residualSpan.getAttribute('data-likelihood') || "" : "",
-            impact: residualSpan ? residualSpan.getAttribute('data-impact') || "" : ""
-        };
-        
-        // Get the initials, userId and userName from the cell
-        const initialsCircle = row.querySelector('.initials-circle');
-        const userNameDisplay = row.querySelector('.user-name-display');
-        const userInitials = initialsCircle ? initialsCircle.getAttribute('data-initials') : 'GU';
-        const userId = initialsCircle ? initialsCircle.getAttribute('data-userid') : '';
-        const userName = userNameDisplay ? userNameDisplay.textContent : 'Guest User';
-        
-        return {
-            id: row.getAttribute('data-risk-id') || row.cells[1].innerText.trim(),
-            name: row.cells[2].innerText.trim(),
-            description: row.querySelector('.description-select')?.value || "",
-            likelihood: row.querySelector('.likelihood-select')?.value || "",
-            impact: row.querySelector('.impact-select')?.value || "",
-            score: row.querySelector('.score-cell')?.innerText.trim() || "",
-            level: row.querySelector('.level-cell')?.innerText.trim() || "",
-            strategy: row.querySelector('.strategy-select')?.value || "",
-            status: row.querySelector('td:nth-of-type(10) select')?.value || "",
-            control: row.cells[10].innerText.trim(),
-            responsible: row.cells[11].innerText.trim(),
-            closingDate: row.querySelector('input[type="date"]')?.value || "",
-            residualRisk: residualRisk.level || "", // For backward compatibility
-            residualRiskDetails: residualRisk, // Store detailed residual risk info
-            userInitials: userInitials || "GU",
-            userId: userId || "",
-            userName: userName || "Guest User"
-        };
-    }
+    // ... existing code...
 
-    // Load risks from Firebase when the page loads
+    // Add risk button event listener with debounce protection
     document.addEventListener('DOMContentLoaded', function() {
-        // Enable all menu items
-        document.querySelectorAll(".menu-left li")
-            .forEach(li => li.classList.remove("disabled"));
+        // Check if user is guest and adjust UI accordingly
+        if (isGuestUser()) {
+            // Disable certain features for guest users
+            document.querySelector('.risk-actions .add-risk-btn').style.display = 'none';
+            document.querySelector('#save-progress-btn').style.display = 'none';
+            document.querySelector('#import-risk-btn').style.display = 'none';
+            
+            // Add a message for guest users
+            const guestMessage = document.createElement('div');
+            guestMessage.textContent = 'You are viewing as a guest. Some features are disabled.';
+            guestMessage.className = 'guest-message';
+            guestMessage.style.marginTop = '10px';
+            document.querySelector('.risk-actions').appendChild(guestMessage);
+        }
         
-        // Show all toolbar buttons
-        document.querySelector('.export-btn').style.display = 'inline-flex';
-        document.querySelector('.risk-actions').style.display = 'flex';
-        document.querySelector('#save-progress-btn').style.display = 'inline-flex';
-        document.querySelector('.settings-icon-btn').style.display = 'inline-block';
-        document.querySelector('#import-risk-btn').style.display = 'inline-flex';
-        document.querySelector('.download-icon-btn').style.display = 'inline-flex';
+        // First remove any existing click listeners by cloning the button
+        const addRiskBtn = document.querySelector('.risk-actions .add-risk-btn');
+        if (addRiskBtn) {
+            const newAddRiskBtn = addRiskBtn.cloneNode(true);
+            addRiskBtn.parentNode.replaceChild(newAddRiskBtn, addRiskBtn);
+            
+            // Add the click listener to the new button
+            newAddRiskBtn.addEventListener('click', function() {
+                // Only proceed if not a guest user
+                if (!isGuestUser()) {
+                    addNewRiskRow();
+                }
+            });
+        }
 
         // Load dashboard users before loading risks
         loadDashboardUsers().then(users => {
             window.dashboardUsers = users;
             console.log('Loaded dashboard users:', users);
             
-            // Then load risks from Firebase
             loadRisksFromDatabase();
         }).catch(error => {
             console.error('Error loading dashboard users:', error);
-            // Default to Guest User if we can't load users
             window.dashboardUsers = [{
                 uid: 'guest',
                 email: 'guest@example.com',
@@ -1749,7 +1708,6 @@
                 initials: 'GU',
                 color: '#95a5a6'
             }];
-            // Still load risks
             loadRisksFromDatabase();
         });
     });
@@ -1758,113 +1716,7 @@
     window.createRiskRowFromData = createRiskRowFromData;
     window.attachRowEventListeners = attachRowEventListeners;
     window.getRiskFromRow = getRiskFromRow;
-
-    // Add risk button event listener with debounce protection
-    document.addEventListener('DOMContentLoaded', function() {
-        // First remove any existing click listeners by cloning the button
-        const addRiskBtn = document.querySelector('.risk-actions .add-risk-btn');
-        const newAddRiskBtn = addRiskBtn.cloneNode(true);
-        addRiskBtn.parentNode.replaceChild(newAddRiskBtn, addRiskBtn);
-        
-        // Add debounce protection
-        let isProcessing = false;
-        
-        newAddRiskBtn.addEventListener('click', function() {
-            // Prevent double-creation by checking if we're already processing
-            if (isProcessing) {
-                return;
-            }
-            
-            isProcessing = true;
-            
-            // Create a more unique ID with timestamp and random component
-            const timestamp = Date.now();
-            const randomNum = Math.floor(Math.random() * 1000);
-            const newRiskId = `RISK${timestamp}-${randomNum}`;
-            
-            // Set default user initials since there's no login
-            let userInitials = "GU"; // Default Guest User
-            
-            const newRisk = {
-                id: newRiskId,
-                name: "",
-                description: "",
-                likelihood: "",
-                impact: "",
-                score: "",
-                level: "",
-                strategy: "",
-                status: "",
-                control: "",
-                responsible: "",
-                closingDate: "",
-                residualRisk: "",
-                userInitials: userInitials
-            };
-            
-            // Add the risk to Firebase and let the onValue listener update the UI
-            addRiskToDatabase(newRisk)
-                .then(() => {
-                    console.log('New empty risk created in Firebase:', newRisk);
-                    
-                    // Reset processing flag after a delay
-                    setTimeout(() => {
-                        isProcessing = false;
-                    }, 500);
-                })
-                .catch(error => {
-                    console.error('Error creating new risk in Firebase:', error);
-                    isProcessing = false; // Reset flag on error too
-                });
-        });
-    });
-
-    // Add a new function to load dashboard users from Firebase
-    function loadDashboardUsers() {
-        const usersRef = ref(db, 'users');
-        return get(usersRef).then((snapshot) => {
-            const users = [];
-            if (snapshot.exists()) {
-                snapshot.forEach((childSnapshot) => {
-                    const userData = childSnapshot.val();
-                    // Extract user information
-                    if (userData) {
-                        const initials = window.getUserInitials ? 
-                            window.getUserInitials(userData.displayName || userData.email) : 
-                            getInitialsFromName(userData.displayName || userData.email);
-                        
-                        users.push({
-                            uid: childSnapshot.key,
-                            email: userData.email || '',
-                            displayName: userData.displayName || userData.email || 'Unknown User',
-                            initials: initials,
-                            color: getColorForInitials(initials)
-                        });
-                    }
-                });
-            }
-            
-            
-            return users;
-        });
-    }
-    
-    // Helper function to get initials if getUserInitials is not available
-    function getInitialsFromName(name) {
-        if (!name) return 'GU';
-        const nameParts = name.split(/[\s._-]+/);
-        return nameParts.map(part => part.charAt(0).toUpperCase()).join('').substring(0, 2);
-    }
-    
-    // Helper function to get a consistent color for initials
-    function getColorForInitials(initials) {
-        const colorClasses = ['blue', 'green', 'purple', 'orange', 'red'];
-        const hashCode = initials.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-        return colorClasses[hashCode % colorClasses.length];
-    }
-    
-    // Store dashboard users globally
-    window.dashboardUsers = [];
+    window.isGuestUser = isGuestUser;
 </script>
 <script>
     // Override the existing functions to work with Firebase
