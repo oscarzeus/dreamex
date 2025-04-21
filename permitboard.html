@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permit Board - HSE System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .board-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 8px 35px 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .search-box i {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .permit-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .permit-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .permit-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+
+        .permit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .permit-type {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .permit-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-draft { background: #e9ecef; color: #495057; }
+        .status-expired { background: #f8f9fa; color: #6c757d; }
+
+        .permit-body {
+            margin-bottom: 15px;
+        }
+
+        .permit-info {
+            margin-bottom: 5px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .permit-info i {
+            width: 16px;
+            color: #666;
+        }
+
+        .permit-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .btn-view {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .btn-approve {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .filter-chip {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-chip.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Table View Styles */
+        .view-toggle {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .view-toggle-btn {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-toggle-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .permit-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .permit-table th,
+        .permit-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .permit-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #34495e;
+            position: sticky;
+            top: 0;
+        }
+
+        .permit-table tbody tr:hover {
+            background-color: #f5f7fa;
+        }
+
+        .permit-table .permit-type-cell {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .permit-table .permit-type-cell i {
+            width: 16px;
+            color: var(--primary-color);
+        }
+
+        .permit-grid.hidden,
+        .permit-table.hidden {
+            display: none;
+        }
+
+        .permit-grid.visible {
+            display: grid;
+        }
+
+        .permit-table.visible {
+            display: table;
+        }
+
+        @media (max-width: 768px) {
+            .board-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .search-box {
+                max-width: 100%;
+            }
+
+            .permit-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="board-container">
+        <div class="board-header">
+            <h1>Permit Board</h1>
+            <a href="permit.html" class="btn btn-primary">
+                <i class="fas fa-plus"></i> New Permit
+            </a>
+        </div>
+
+        <div class="filter-section">
+            <div class="search-box">
+                <input type="text" id="permitSearch" placeholder="Search permits...">
+                <i class="fas fa-search"></i>
+            </div>
+            
+            <div class="filter-chips">
+                <button class="filter-chip active" data-filter="all">All</button>
+                <button class="filter-chip" data-filter="pending">Pending</button>
+                <button class="filter-chip" data-filter="approved">Approved</button>
+                <button class="filter-chip" data-filter="rejected">Rejected</button>
+                <button class="filter-chip" data-filter="expired">Expired</button>
+            </div>
+        </div>
+
+        <div class="view-toggle">
+            <span>View:</span>
+            <button class="view-toggle-btn active" data-view="grid">Grid</button>
+            <button class="view-toggle-btn" data-view="table">Table</button>
+        </div>
+
+        <div class="permit-grid visible" id="permitGrid">
+            <!-- Permits will be dynamically inserted here -->
+        </div>
+
+        <table class="permit-table" id="permitTable">
+            <thead>
+                <tr>
+                    <th>Permit Number</th>
+                    <th>Type</th>
+                    <th>Location</th>
+                    <th>Valid From</th>
+                    <th>Valid To</th>
+                    <th>Supervisor</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Permits will be dynamically inserted here -->
+            </tbody>
+        </table>
+    </main>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const database = firebase.database();
+        const auth = firebase.auth();
+
+        // Check authentication
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                initializePermitBoard();
+            } else {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function initializePermitBoard() {
+            const permitGrid = document.getElementById('permitGrid');
+            const permitTable = document.getElementById('permitTable').querySelector('tbody');
+            const searchInput = document.getElementById('permitSearch');
+            const filterChips = document.querySelectorAll('.filter-chip');
+            const viewToggleBtns = document.querySelectorAll('.view-toggle-btn');
+            let currentFilter = 'all';
+            let currentView = 'grid';
+
+            // Real-time permit listener
+            database.ref('permits').on('value', snapshot => {
+                permitGrid.innerHTML = ''; // Clear existing permits
+                permitTable.innerHTML = ''; // Clear existing permits
+                
+                if (snapshot.exists()) {
+                    const permits = [];
+                    snapshot.forEach(child => {
+                        permits.push({
+                            id: child.key,
+                            ...child.val()
+                        });
+                    });
+
+                    // Sort permits by date (newest first)
+                    permits.sort((a, b) => b.createdAt - a.createdAt);
+
+                    // Filter and display permits
+                    updatePermitDisplay(permits);
+                }
+            });
+
+            // Search functionality
+            searchInput.addEventListener('input', () => {
+                const permits = [];
+                database.ref('permits').once('value').then(snapshot => {
+                    snapshot.forEach(child => {
+                        permits.push({
+                            id: child.key,
+                            ...child.val()
+                        });
+                    });
+                    updatePermitDisplay(permits);
+                });
+            });
+
+            // Filter functionality
+            filterChips.forEach(chip => {
+                chip.addEventListener('click', () => {
+                    filterChips.forEach(c => c.classList.remove('active'));
+                    chip.classList.add('active');
+                    currentFilter = chip.dataset.filter;
+                    
+                    const permits = [];
+                    database.ref('permits').once('value').then(snapshot => {
+                        snapshot.forEach(child => {
+                            permits.push({
+                                id: child.key,
+                                ...child.val()
+                            });
+                        });
+                        updatePermitDisplay(permits);
+                    });
+                });
+            });
+
+            // View toggle functionality
+            viewToggleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    viewToggleBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentView = btn.dataset.view;
+                    
+                    // Get current permits and update display when view is toggled
+                    database.ref('permits').once('value').then(snapshot => {
+                        const permits = [];
+                        snapshot.forEach(child => {
+                            permits.push({
+                                id: child.key,
+                                ...child.val()
+                            });
+                        });
+                        updatePermitDisplay(permits);
+                    });
+                });
+            });
+
+            function updatePermitDisplay(permits) {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                const filteredPermits = permits.filter(permit => {
+                    const matchesSearch = 
+                        permit.permitNumber.toLowerCase().includes(searchTerm) ||
+                        permit.location.toLowerCase().includes(searchTerm) ||
+                        permit.description.toLowerCase().includes(searchTerm);
+                    
+                    const matchesFilter = 
+                        currentFilter === 'all' ||
+                        permit.status === currentFilter;
+
+                    return matchesSearch && matchesFilter;
+                });
+
+                if (currentView === 'grid') {
+                    permitGrid.classList.add('visible');
+                    permitGrid.classList.remove('hidden');
+                    permitTable.parentElement.classList.add('hidden');
+                    permitTable.parentElement.classList.remove('visible');
+
+                    permitGrid.innerHTML = filteredPermits.map(permit => `
+                        <div class="permit-card">
+                            <div class="permit-header">
+                                <div class="permit-type">
+                                    ${getPermitTypeIcon(permit.permitType)} ${formatPermitType(permit.permitType)}
+                                </div>
+                                <span class="permit-status status-${permit.status}">${formatStatus(permit.status)}</span>
+                            </div>
+                            <div class="permit-body">
+                                <div class="permit-info">
+                                    <i class="fas fa-hashtag"></i>
+                                    <span>${permit.permitNumber}</span>
+                                </div>
+                                <div class="permit-info">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    <span>${permit.location}</span>
+                                </div>
+                                <div class="permit-info">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>${formatDate(permit.validFrom)} - ${formatDate(permit.validTo)}</span>
+                                </div>
+                                <div class="permit-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>${permit.supervisorName}</span>
+                                </div>
+                            </div>
+                            <div class="permit-actions">
+                                <button class="btn btn-view" onclick="viewPermit('${permit.id}')">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                ${getActionButtons(permit.status, permit.id)}
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    permitGrid.classList.add('hidden');
+                    permitGrid.classList.remove('visible');
+                    permitTable.parentElement.classList.add('visible');
+                    permitTable.parentElement.classList.remove('hidden');
+
+                    permitTable.innerHTML = filteredPermits.map(permit => `
+                        <tr>
+                            <td>${permit.permitNumber}</td>
+                            <td class="permit-type-cell">
+                                ${getPermitTypeIcon(permit.permitType)} ${formatPermitType(permit.permitType)}
+                            </td>
+                            <td>${permit.location}</td>
+                            <td>${formatDate(permit.validFrom)}</td>
+                            <td>${formatDate(permit.validTo)}</td>
+                            <td>${permit.supervisorName || 'N/A'}</td>
+                            <td><span class="permit-status status-${permit.status}">${formatStatus(permit.status)}</span></td>
+                            <td class="permit-actions">
+                                <button class="btn btn-view" onclick="viewPermit('${permit.id}')">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                ${getActionButtons(permit.status, permit.id)}
+                            </td>
+                        </tr>
+                    `).join('');
+                }
+            }
+
+            function getPermitTypeIcon(type) {
+                const icons = {
+                    'hot-work': '<i class="fas fa-fire"></i>',
+                    'cold-work': '<i class="fas fa-tools"></i>',
+                    'electrical': '<i class="fas fa-bolt"></i>',
+                    'confined-space': '<i class="fas fa-door-closed"></i>',
+                    'height': '<i class="fas fa-arrow-up"></i>',
+                    'excavation': '<i class="fas fa-dig"></i>'
+                };
+                return icons[type] || '<i class="fas fa-file-alt"></i>';
+            }
+
+            function formatPermitType(type) {
+                return type.split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ') + ' Permit';
+            }
+
+            function formatStatus(status) {
+                return status.charAt(0).toUpperCase() + status.slice(1);
+            }
+
+            function formatDate(dateString) {
+                return new Date(dateString).toLocaleDateString();
+            }
+
+            function getActionButtons(status, permitId) {
+                if (status === 'pending') {
+                    return `
+                        <button class="btn btn-approve" onclick="approvePermit('${permitId}')">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
+                        <button class="btn btn-reject" onclick="rejectPermit('${permitId}')">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    `;
+                }
+                return '';
+            }
+        }
+
+        function viewPermit(permitId) {
+            window.location.href = `permit-details.html?id=${permitId}`;
+        }
+
+        function approvePermit(permitId) {
+            if (confirm('Are you sure you want to approve this permit?')) {
+                database.ref(`permits/${permitId}`).update({
+                    status: 'approved',
+                    approvedAt: firebase.database.ServerValue.TIMESTAMP,
+                    approvedBy: auth.currentUser.uid
+                });
+            }
+        }
+
+        function rejectPermit(permitId) {
+            const reason = prompt('Please provide a reason for rejection:');
+            if (reason) {
+                database.ref(`permits/${permitId}`).update({
+                    status: 'rejected',
+                    rejectedAt: firebase.database.ServerValue.TIMESTAMP,
+                    rejectedBy: auth.currentUser.uid,
+                    rejectionReason: reason
+                });
+            }
+        }
+    </script>
+</body>
+</html>

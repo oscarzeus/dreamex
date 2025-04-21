@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Medical Visit Request</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        main {
+            margin-top: 80px; /* Add gap between fixed navbar and content */
+            padding-top: 20px;
+        }
+        
+        .form-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .loading-text {
+            margin-left: 1rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .dropdown-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        .dropdown-toggle {
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dropdown-list {
+            position: absolute;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .dropdown-search {
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 101;
+        }
+
+        .file-upload-container {
+            margin-top: 1.5rem;
+        }
+
+        .file-upload-btn {
+            display: inline-block;
+            background-color: #f8f9fa;
+            border: 1px dashed #dee2e6;
+            border-radius: 4px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-btn:hover {
+            background-color: #e9ecef;
+        }
+
+        .file-list {
+            margin-top: 1rem;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-name {
+            flex-grow: 1;
+            margin-left: 0.5rem;
+        }
+
+        .file-remove {
+            background: none;
+            border: none;
+            color: #dc3545;
+            cursor: pointer;
+        }
+
+        .request-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .form-group {
+                width: 100%;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="form-container">
+        <div class="form-header">
+            <h1>Medical Visit Request</h1>
+        </div>
+
+        <div id="request-success" class="request-success">
+            <i class="fas fa-check-circle"></i> Your medical visit request has been submitted successfully. You will receive a notification when it's approved.
+        </div>
+
+        <form id="medical-request-form" class="form-section">
+            <div class="form-section">
+                <h3>Employee Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="employee-id">Employee ID</label>
+                        <input type="text" id="employee-id" name="employeeId" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="employee-name-dropdown">Employee Name</label>
+                        <div class="dropdown-container">
+                            <button type="button" id="employee-name-dropdown" class="form-control dropdown-toggle">
+                                <span id="selected-employee">Select Employee</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <input type="hidden" id="employee-name-input" name="employeeName" required>
+                            <div id="employee-dropdown" class="dropdown-list" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <input type="text" id="department" name="department" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="job-title">Job Title</label>
+                        <input type="text" id="job-title" name="jobTitle" class="form-control" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Visit Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="visit-type">Visit Type *</label>
+                        <select id="visit-type" name="visitType" class="form-control" required>
+                            <option value="">Select Visit Type</option>
+                            <!-- Options will be populated from Firebase -->
+                        </select>
+                    </div>
+                    <div class="form-group" id="other-visit-type-container" style="display: none;">
+                        <label for="other-visit-type">Specify Visit Type *</label>
+                        <input type="text" id="other-visit-type" name="otherVisitType" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="preferred-date">Preferred Date *</label>
+                        <input type="date" id="preferred-date" name="preferredDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="preferred-time">Preferred Time *</label>
+                        <select id="preferred-time" name="preferredTime" class="form-control" required>
+                            <option value="">Select Time</option>
+                            <option value="morning">Morning (9:00 AM - 12:00 PM)</option>
+                            <option value="afternoon">Afternoon (1:00 PM - 5:00 PM)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="reason">Reason for Visit *</label>
+                    <textarea id="reason" name="reason" class="form-control" rows="4" required placeholder="Please describe the reason for your medical visit request..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Is this visit related to a workplace incident or condition? *</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="workplace-related-yes" name="workplaceRelated" value="yes" required>
+                            <label for="workplace-related-yes">Yes</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="workplace-related-no" name="workplaceRelated" value="no" required>
+                            <label for="workplace-related-no">No</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="incident-details-container" class="form-group" style="display: none;">
+                    <label for="incident-details">Incident Details *</label>
+                    <textarea id="incident-details" name="incidentDetails" class="form-control" rows="4" placeholder="Please provide details about the workplace incident or condition..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Have you consulted a doctor for this condition before? *</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="previous-consultation-yes" name="previousConsultation" value="yes" required>
+                            <label for="previous-consultation-yes">Yes</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="previous-consultation-no" name="previousConsultation" value="no" required>
+                            <label for="previous-consultation-no">No</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="previous-consultation-details-container" class="form-group" style="display: none;">
+                    <label for="previous-consultation-details">Previous Consultation Details</label>
+                    <textarea id="previous-consultation-details" name="previousConsultationDetails" class="form-control" rows="4" placeholder="Please provide details about your previous consultation..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Additional Information</h3>
+                <div class="form-group">
+                    <label>Do you have any supporting documents or medical records to attach?</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="has-documents-yes" name="hasDocuments" value="yes">
+                            <label for="has-documents-yes">Yes</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="has-documents-no" name="hasDocuments" value="no" checked>
+                            <label for="has-documents-no">No</label>
+                        </div>
+                    </div>
+                </div>
+                <div id="documents-container" class="form-group" style="display: none;">
+                    <label>Upload Documents (Images, PDFs)</label>
+                    <div class="file-upload-container">
+                        <input type="file" id="document-upload" accept="image/*, application/pdf" multiple style="display: none;">
+                        <label for="document-upload" class="file-upload-btn">
+                            <i class="fas fa-file-upload"></i> Choose Files
+                        </label>
+                        <div id="file-list" class="file-list"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="additional-notes">Additional Notes</label>
+                    <textarea id="additional-notes" name="additionalNotes" class="form-control" rows="4" placeholder="Please provide any additional information that might be relevant..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="consent" name="consent" required>
+                    I consent to share my medical information with the company's healthcare provider for the purpose of this visit request.
+                </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Request</button>
+        </form>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <span class="loading-text">Submitting request...</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded');
+                return;
+            }
+
+            // DOM Elements
+            const employeeDropdownBtn = document.getElementById('employee-name-dropdown');
+            const employeeDropdown = document.getElementById('employee-dropdown');
+            const selectedEmployee = document.getElementById('selected-employee');
+            const employeeNameInput = document.getElementById('employee-name-input');
+            const departmentInput = document.getElementById('department');
+            const jobTitleInput = document.getElementById('job-title');
+            const employeeIdInput = document.getElementById('employee-id');
+            const visitTypeSelect = document.getElementById('visit-type');
+            const otherVisitTypeContainer = document.getElementById('other-visit-type-container');
+            const otherVisitTypeInput = document.getElementById('other-visit-type');
+            const workplaceRelatedYes = document.getElementById('workplace-related-yes');
+            const workplaceRelatedNo = document.getElementById('workplace-related-no');
+            const incidentDetailsContainer = document.getElementById('incident-details-container');
+            const previousConsultationYes = document.getElementById('previous-consultation-yes');
+            const previousConsultationNo = document.getElementById('previous-consultation-no');
+            const previousConsultationDetailsContainer = document.getElementById('previous-consultation-details-container');
+            const hasDocumentsYes = document.getElementById('has-documents-yes');
+            const hasDocumentsNo = document.getElementById('has-documents-no');
+            const documentsContainer = document.getElementById('documents-container');
+            const documentUpload = document.getElementById('document-upload');
+            const fileListContainer = document.getElementById('file-list');
+            const medicalRequestForm = document.getElementById('medical-request-form');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const requestSuccess = document.getElementById('request-success');
+            const preferredDateInput = document.getElementById('preferred-date');
+
+            // Set minimum date to today for preferred date
+            const today = new Date();
+            preferredDateInput.min = today.toISOString().split('T')[0];
+            preferredDateInput.value = today.toISOString().split('T')[0];
+
+            // Toggle dropdown visibility
+            employeeDropdownBtn.addEventListener('click', function() {
+                if (employeeDropdown.style.display === 'none' || !employeeDropdown.style.display) {
+                    employeeDropdown.style.display = 'block';
+                    loadEmployees();
+                } else {
+                    employeeDropdown.style.display = 'none';
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!employeeDropdownBtn.contains(event.target) && !employeeDropdown.contains(event.target)) {
+                    employeeDropdown.style.display = 'none';
+                }
+            });
+
+            // Initialize department mapping
+            let departmentNames = {};
+            
+            // Function to load departments
+            function loadDepartments() {
+                return firebase.database().ref('departments').once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            snapshot.forEach((deptSnapshot) => {
+                                const deptId = deptSnapshot.key;
+                                const deptData = deptSnapshot.val();
+                                departmentNames[deptId] = deptData.name || deptId;
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error loading departments:', error);
+                    });
+            }
+            
+            // Function to load employees from Firebase
+            function loadEmployees() {
+                employeeDropdown.innerHTML = '<div class="dropdown-item loading">Loading employees...</div>';
+                
+                // First load departments, then load employees
+                loadDepartments().then(() => {
+                    firebase.database().ref('users').once('value')
+                        .then((snapshot) => {
+                            employeeDropdown.innerHTML = '';
+                            
+                            if (!snapshot.exists()) {
+                                employeeDropdown.innerHTML = '<div class="dropdown-item no-results">No employees found</div>';
+                                return;
+                            }
+                            
+                            // Add a search input at the top
+                            const searchDiv = document.createElement('div');
+                            searchDiv.className = 'dropdown-search';
+                            searchDiv.innerHTML = `
+                                <input type="text" id="employee-search" class="form-control" placeholder="Search by name or ID...">
+                            `;
+                            employeeDropdown.appendChild(searchDiv);
+                            
+                            const searchInput = document.getElementById('employee-search');
+                            searchInput.addEventListener('input', function() {
+                                filterEmployees(this.value.toLowerCase());
+                            });
+                            
+                            // Store employees in an array for sorting
+                            const employees = [];
+                            
+                            // Add all employee items
+                            snapshot.forEach((userSnapshot) => {
+                                const userId = userSnapshot.key;
+                                const userData = userSnapshot.val();
+                                
+                                // Get employee name from multiple possible fields
+                                const employeeName = userData.name || userData.displayName || 
+                                                ((userData.firstName && userData.lastName) ? 
+                                                    `${userData.firstName} ${userData.lastName}` : 
+                                                    userData.email || `User ${userId.substring(0, 5)}`);
+                                                    
+                                // Get employee ID from possible fields
+                                const employeeId = userData.employeeId || userData.id || '';
+                                
+                                // Get department name instead of ID
+                                const departmentId = userData.department || '';
+                                const departmentName = departmentNames[departmentId] || '';
+                                
+                                employees.push({
+                                    id: userId,
+                                    name: employeeName,
+                                    employeeId: employeeId,
+                                    departmentId: departmentId,
+                                    departmentName: departmentName,
+                                    jobTitle: userData.jobTitle || userData.role || ''
+                                });
+                            });
+                            
+                            // Sort employees alphabetically by name
+                            employees.sort((a, b) => a.name.localeCompare(b.name));
+                            
+                            // Create and add employee items to dropdown
+                            employees.forEach(employee => {
+                                const item = document.createElement('div');
+                                item.className = 'dropdown-item';
+                                item.dataset.id = employee.id;
+                                item.dataset.name = employee.name;
+                                item.dataset.employeeId = employee.employeeId;
+                                item.dataset.departmentId = employee.departmentId;
+                                item.dataset.departmentName = employee.departmentName;
+                                item.dataset.jobTitle = employee.jobTitle;
+                                
+                                // Display both name and ID if available
+                                if (employee.employeeId) {
+                                    item.innerHTML = `<strong>${employee.name}</strong> <span class="employee-id">(ID: ${employee.employeeId})</span>`;
+                                } else {
+                                    item.textContent = employee.name;
+                                }
+                                
+                                // Handle click on employee
+                                item.addEventListener('click', function() {
+                                    // Update selected employee display
+                                    selectedEmployee.textContent = this.dataset.name;
+                                    employeeNameInput.value = this.dataset.name;
+                                    
+                                    // Set employee ID in the employee ID field
+                                    if (this.dataset.employeeId) {
+                                        employeeIdInput.value = this.dataset.employeeId;
+                                    }
+                                    
+                                    // Update related employee fields if data exists
+                                    departmentInput.value = this.dataset.departmentName;
+                                    jobTitleInput.value = this.dataset.jobTitle;
+                                    
+                                    // Close dropdown
+                                    employeeDropdown.style.display = 'none';
+                                });
+                                
+                                employeeDropdown.appendChild(item);
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('Error loading employees:', error);
+                            employeeDropdown.innerHTML = '<div class="dropdown-item error">Error loading employees</div>';
+                        });
+                });
+            }
+            
+            // Function to filter employees in dropdown
+            function filterEmployees(searchTerm) {
+                const items = employeeDropdown.getElementsByClassName('dropdown-item');
+                let resultsFound = false;
+                
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (!item.dataset || !item.dataset.name) continue;
+                    
+                    const nameMatch = item.dataset.name.toLowerCase().includes(searchTerm);
+                    const idMatch = item.dataset.employeeId && item.dataset.employeeId.toLowerCase().includes(searchTerm);
+                    
+                    if (nameMatch || idMatch) {
+                        item.style.display = 'block';
+                        resultsFound = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+                
+                // Show a "no results" message if no matches were found
+                const noResultsMessage = employeeDropdown.querySelector('.no-results-message');
+                if (!resultsFound) {
+                    if (!noResultsMessage) {
+                        const message = document.createElement('div');
+                        message.className = 'dropdown-item no-results-message';
+                        message.textContent = 'No matching employees found';
+                        message.style.fontStyle = 'italic';
+                        message.style.color = '#6c757d';
+                        message.style.textAlign = 'center';
+                        employeeDropdown.appendChild(message);
+                    } else {
+                        noResultsMessage.style.display = 'block';
+                    }
+                } else if (noResultsMessage) {
+                    noResultsMessage.style.display = 'none';
+                }
+            }
+
+            // Handle visit type change
+            visitTypeSelect.addEventListener('change', function() {
+                if (this.value === 'other') {
+                    otherVisitTypeContainer.style.display = 'block';
+                    otherVisitTypeInput.setAttribute('required', 'required');
+                } else {
+                    otherVisitTypeContainer.style.display = 'none';
+                    otherVisitTypeInput.removeAttribute('required');
+                }
+            });
+
+            // Handle workplace related radio buttons
+            workplaceRelatedYes.addEventListener('change', function() {
+                if (this.checked) {
+                    incidentDetailsContainer.style.display = 'block';
+                    document.getElementById('incident-details').setAttribute('required', 'required');
+                }
+            });
+
+            workplaceRelatedNo.addEventListener('change', function() {
+                if (this.checked) {
+                    incidentDetailsContainer.style.display = 'none';
+                    document.getElementById('incident-details').removeAttribute('required');
+                }
+            });
+
+            // Handle previous consultation radio buttons
+            previousConsultationYes.addEventListener('change', function() {
+                if (this.checked) {
+                    previousConsultationDetailsContainer.style.display = 'block';
+                }
+            });
+
+            previousConsultationNo.addEventListener('change', function() {
+                if (this.checked) {
+                    previousConsultationDetailsContainer.style.display = 'none';
+                }
+            });
+
+            // Handle documents radio buttons
+            hasDocumentsYes.addEventListener('change', function() {
+                if (this.checked) {
+                    documentsContainer.style.display = 'block';
+                }
+            });
+
+            hasDocumentsNo.addEventListener('change', function() {
+                if (this.checked) {
+                    documentsContainer.style.display = 'none';
+                }
+            });
+
+            // Handle file uploads
+            const selectedFiles = new Set();
+
+            documentUpload.addEventListener('change', function(event) {
+                const files = Array.from(event.target.files);
+                files.forEach(file => {
+                    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+                        selectedFiles.add(file);
+                        
+                        // Create file item in the list
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item';
+                        fileItem.innerHTML = `
+                            <i class="fas fa-${file.type === 'application/pdf' ? 'file-pdf' : 'file-image'}"></i>
+                            <span class="file-name">${file.name}</span>
+                            <button type="button" class="file-remove"><i class="fas fa-times"></i></button>
+                        `;
+                        
+                        // Add remove button functionality
+                        const removeButton = fileItem.querySelector('.file-remove');
+                        removeButton.addEventListener('click', function() {
+                            selectedFiles.delete(file);
+                            fileItem.remove();
+                        });
+                        
+                        fileListContainer.appendChild(fileItem);
+                    }
+                });
+                
+                // Reset file input
+                event.target.value = '';
+            });
+
+            // Handle form submission
+            medicalRequestForm.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                
+                // Show loading overlay
+                loadingOverlay.style.display = 'flex';
+                
+                try {
+                    // Validate form
+                    if (!this.checkValidity()) {
+                        this.reportValidity();
+                        loadingOverlay.style.display = 'none';
+                        return;
+                    }
+                    
+                    // Gather form data
+                    const formData = new FormData(this);
+                    const requestData = {};
+                    
+                    formData.forEach((value, key) => {
+                        if (value !== '') {
+                            requestData[key] = value;
+                        }
+                    });
+                    
+                    // Add status
+                    requestData.status = 'pending';
+                    
+                    // Add timestamp
+                    requestData.timestamp = firebase.database.ServerValue.TIMESTAMP;
+                    
+                    // Add requester information
+                    const user = firebase.auth().currentUser;
+                    if (user) {
+                        requestData.requesterId = user.uid;
+                        requestData.requesterEmail = user.email;
+                    }
+                    
+                    // Upload documents if any
+                    if (selectedFiles.size > 0) {
+                        const documentUrls = [];
+                        
+                        for (const file of selectedFiles) {
+                            // Generate unique filename
+                            const extension = file.name.split('.').pop();
+                            const filename = `medical-requests/${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${extension}`;
+                            
+                            // Upload file
+                            const storageRef = firebase.storage().ref(filename);
+                            const uploadTask = await storageRef.put(file);
+                            
+                            // Get download URL
+                            const downloadURL = await uploadTask.ref.getDownloadURL();
+                            documentUrls.push(downloadURL);
+                        }
+                        
+                        // Add document URLs to request data
+                        requestData.documentUrls = documentUrls;
+                    }
+                    
+                    // Save request to database
+                    const newRequestRef = firebase.database().ref('medical-visit-requests').push();
+                    await newRequestRef.set(requestData);
+                    
+                    // Show success message
+                    requestSuccess.style.display = 'block';
+                    
+                    // Reset form
+                    medicalRequestForm.reset();
+                    selectedEmployee.textContent = 'Select Employee';
+                    employeeIdInput.value = '';
+                    departmentInput.value = '';
+                    jobTitleInput.value = '';
+                    fileListContainer.innerHTML = '';
+                    selectedFiles.clear();
+                    
+                    // Scroll to top to show success message
+                    window.scrollTo(0, 0);
+                    
+                    // Hide success message after 5 seconds
+                    setTimeout(() => {
+                        requestSuccess.style.display = 'none';
+                    }, 5000);
+                    
+                } catch (error) {
+                    console.error('Error submitting medical visit request:', error);
+                    alert('An error occurred while submitting your request. Please try again.');
+                } finally {
+                    loadingOverlay.style.display = 'none';
+                }
+            });
+
+            // Auto-populate employee information if user is logged in
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    firebase.database().ref('users/' + user.uid).once('value')
+                        .then(snapshot => {
+                            if (snapshot.exists()) {
+                                const userData = snapshot.val();
+                                
+                                // Check if user is an employee (not admin or other role)
+                                if (userData.employeeId) {
+                                    // Set employee data
+                                    selectedEmployee.textContent = userData.name || userData.displayName || user.email;
+                                    employeeNameInput.value = userData.name || userData.displayName || user.email;
+                                    employeeIdInput.value = userData.employeeId;
+                                    
+                                    // Set department
+                                    const departmentId = userData.department;
+                                    if (departmentId) {
+                                        firebase.database().ref('departments/' + departmentId).once('value')
+                                            .then(deptSnapshot => {
+                                                if (deptSnapshot.exists()) {
+                                                    departmentInput.value = deptSnapshot.val().name || '';
+                                                }
+                                            });
+                                    }
+                                    
+                                    // Set job title
+                                    jobTitleInput.value = userData.jobTitle || userData.role || '';
+                                }
+                            }
+                        });
+                }
+            });
+
+            // Load visit types from Firebase
+            function loadVisitTypes() {
+                firebase.database().ref('fieldOptions/visit-type').once('value')
+                    .then((snapshot) => {
+                        // Clear existing options except the default one
+                        while (visitTypeSelect.options.length > 1) {
+                            visitTypeSelect.remove(1);
+                        }
+
+                        if (snapshot.exists()) {
+                            const options = [];
+                            snapshot.forEach((optionSnapshot) => {
+                                const option = optionSnapshot.val();
+                                if (option.enabled) {
+                                    options.push({
+                                        label: option.label,
+                                        value: option.value
+                                    });
+                                }
+                            });
+
+                            // Sort options alphabetically
+                            options.sort((a, b) => a.label.localeCompare(b.label));
+
+                            // Add options to select
+                            options.forEach(opt => {
+                                const optionElement = document.createElement('option');
+                                optionElement.value = opt.value;
+                                optionElement.textContent = opt.label;
+                                visitTypeSelect.appendChild(optionElement);
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error loading visit types:', error);
+                    });
+            }
+
+            // Listen for changes in field options
+            document.addEventListener('fieldOptionsChanged', function(event) {
+                if (event.detail.fieldType === 'visit-type') {
+                    loadVisitTypes();
+                }
+            });
+
+            // Load visit types on page load
+            loadVisitTypes();
+        });
+    </script>
+</body>
+</html>

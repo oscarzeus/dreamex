@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Event Management</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .events-container {
+            width: 100%;
+            margin: 90px auto 0; /* Kept the top margin at 90px */
+            padding: 0 20px; /* Added horizontal padding to prevent content touching edges */
+        }
+        
+        .events-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .events-title h2 {
+            margin-bottom: 5px;
+        }
+        
+        .events-title p {
+            color: #6c757d;
+            margin-top: 0;
+        }
+        
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px solid #dee2e6;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            align-items: flex-end;
+        }
+        
+        .filter-group {
+            flex: 1 1 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .filter-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .event-list {
+            margin-bottom: 20px;
+        }
+        
+        .event-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .event-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .event-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .event-table tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .severity-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .severity-low {
+            background-color: #28a745;
+        }
+        
+        .severity-medium {
+            background-color: #ffc107;
+        }
+        
+        .severity-high {
+            background-color: #dc3545;
+        }
+        
+        .event-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.875rem;
+        }
+        
+        .btn-view {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-edit {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background-color: #138496;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .pagination button.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .pagination button:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-open {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+        }
+        
+        .status-in-progress {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+        
+        .status-closed {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+        }
+        
+        .status-overdue {
+            background-color: #ffebee;
+            color: #b71c1c;
+        }
+        
+        /* Summary cards */
+        .summary-cards {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .summary-card {
+            flex: 1 1 200px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .summary-card .card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .summary-card .card-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .summary-card .card-trend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .trend-up {
+            color: #dc3545;
+        }
+        
+        .trend-down {
+            color: #28a745;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .tabs {
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+            
+            .tab-btn {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            .event-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder - will be replaced by the header component -->
+    <div id="header-placeholder"></div>
+
+    <main class="events-container">
+        <div class="events-header">
+            <div class="events-title">
+                <h2>HSE Events</h2>
+                <p>Manage incidents, inspections, observations and more</p>
+            </div>
+            <a href="event-form.html" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Report New Event
+            </a>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="card-title">Total Events</div>
+                <div class="card-value" id="totalEvents">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span>12% from last month</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-title">Open Events</div>
+                <div class="card-value" id="openEvents">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-down trend-down"></i>
+                    <span>5% from last month</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-title">Overdue</div>
+                <div class="card-value" id="overdueEvents">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span>3% from last month</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-title">High Severity</div>
+                <div class="card-value" id="highSeverityEvents">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-down trend-down"></i>
+                    <span>8% from last month</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="all">All Events</button>
+                <button class="tab-btn" data-tab="incidents">Incidents</button>
+                <button class="tab-btn" data-tab="near-misses">Near Misses</button>
+                <button class="tab-btn" data-tab="observations">Observations</button>
+                <button class="tab-btn" data-tab="inspections">Inspections</button>
+                <button class="tab-btn" data-tab="audits">Audits</button>
+            </div>
+
+            <!-- All Events Tab -->
+            <div id="all" class="tab-content active">
+                <div class="filter-section">
+                    <div class="filter-group">
+                        <label for="dateFrom">From Date</label>
+                        <input type="date" id="dateFrom" class="filter-control">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dateTo">To Date</label>
+                        <input type="date" id="dateTo" class="filter-control">
+                    </div>
+                    <div class="filter-group">
+                        <label for="eventType">Event Type</label>
+                        <select id="eventType" class="filter-control">
+                            <option value="">All Types</option>
+                            <option value="incident">Incident</option>
+                            <option value="near-miss">Near Miss</option>
+                            <option value="observation">Observation</option>
+                            <option value="inspection">Inspection</option>
+                            <option value="audit">Audit</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="eventStatus">Status</label>
+                        <select id="eventStatus" class="filter-control">
+                            <option value="">All Statuses</option>
+                            <option value="open">Open</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="closed">Closed</option>
+                            <option value="overdue">Overdue</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="eventLocation">Location</label>
+                        <select id="eventLocation" class="filter-control">
+                            <option value="">All Locations</option>
+                            <!-- Locations will be populated from Firebase -->
+                        </select>
+                    </div>
+                    <div class="filter-buttons">
+                        <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+                        <button id="resetFilters" class="btn btn-secondary">Reset</button>
+                    </div>
+                </div>
+
+                <div class="event-list">
+                    <table class="event-table">
+                        <thead>
+                            <tr>
+                                <th>Event ID</th>
+                                <th>Type</th>
+                                <th>Title</th>
+                                <th>Location</th>
+                                <th>Date Reported</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventTableBody">
+                            <!-- Event rows will be populated from Firebase -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="eventPagination">
+                    <!-- Pagination buttons will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Other tabs will have similar structure -->
+            <div id="incidents" class="tab-content">
+                <!-- Content for incidents tab -->
+            </div>
+            
+            <div id="near-misses" class="tab-content">
+                <!-- Content for near misses tab -->
+            </div>
+            
+            <div id="observations" class="tab-content">
+                <!-- Content for observations tab -->
+            </div>
+            
+            <div id="inspections" class="tab-content">
+                <!-- Content for inspections tab -->
+            </div>
+            
+            <div id="audits" class="tab-content">
+                <!-- Content for audits tab -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <!-- Moment.js for date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/datetime-utils.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today as default for dateTo
+            document.getElementById('dateTo').valueAsDate = new Date();
+            
+            // Set 30 days ago as default for dateFrom
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
+
+            // Listen for date/time preference changes and update all elements
+            if (window.DateTimeUtils) {
+                document.addEventListener('datetimePreferencesChanged', function(e) {
+                    const userId = firebase.auth().currentUser?.uid || '';
+                    window.DateTimeUtils.updateAllDateTimeElements(userId);
+                });
+                
+                // Initial update on page load
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        window.DateTimeUtils.updateAllDateTimeElements(user.uid);
+                    }
+                });
+            }
+            
+            // Tab switching functionality
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all buttons and contents
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Load events for the selected tab
+                    loadEvents(tabId);
+                });
+            });
+            
+            // Filter functionality
+            document.getElementById('applyFilters').addEventListener('click', function() {
+                loadEvents(getActiveTabId());
+            });
+            
+            document.getElementById('resetFilters').addEventListener('click', function() {
+                // Reset date filters to defaults
+                document.getElementById('dateTo').valueAsDate = new Date();
+                document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
+                
+                // Reset other filters
+                document.getElementById('eventType').value = '';
+                document.getElementById('eventStatus').value = '';
+                document.getElementById('eventLocation').value = '';
+                
+                // Reload events
+                loadEvents(getActiveTabId());
+            });
+            
+            // Function to get active tab ID
+            function getActiveTabId() {
+                const activeTab = document.querySelector('.tab-btn.active');
+                return activeTab ? activeTab.getAttribute('data-tab') : 'all';
+            }
+            
+            // Load locations for filter dropdown
+            function loadLocations() {
+                const locationSelect = document.getElementById('eventLocation');
+                
+                database.ref('locations').once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            snapshot.forEach(locSnapshot => {
+                                const loc = locSnapshot.val();
+                                const option = document.createElement('option');
+                                option.value = locSnapshot.key;
+                                option.textContent = loc.name || locSnapshot.key;
+                                locationSelect.appendChild(option);
+                            });
+                        } else {
+                            // Add some default locations if none exist
+                            const defaultLocations = [
+                                'Main Building', 'Warehouse', 'Production Floor', 
+                                'Office Area', 'Loading Dock', 'Laboratory', 'Outdoor Yard'
+                            ];
+                            
+                            defaultLocations.forEach(location => {
+                                const option = document.createElement('option');
+                                option.value = location.toLowerCase().replace(/\s+/g, '-');
+                                option.textContent = location;
+                                locationSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading locations:', error);
+                    });
+            }
+            
+            // Load events from Firebase based on filters
+            function loadEvents(tabId) {
+                const eventTableBody = document.getElementById('eventTableBody');
+                eventTableBody.innerHTML = ''; // Clear existing rows
+                
+                // Get filter values
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+                const eventType = document.getElementById('eventType').value;
+                const eventStatus = document.getElementById('eventStatus').value;
+                const eventLocation = document.getElementById('eventLocation').value;
+                
+                // Build query to Firebase
+                let eventsRef = database.ref('events');
+                
+                // Apply filters
+                eventsRef.once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const events = [];
+                            
+                            snapshot.forEach(eventSnapshot => {
+                                const event = eventSnapshot.val();
+                                event.id = eventSnapshot.key;
+                                
+                                // Apply filters
+                                if (tabId !== 'all' && event.eventType !== tabId && tabId !== 'incidents') {
+                                    return; // Skip if not matching tab
+                                }
+                                
+                                // Handle the incidents tab specially to include both incidents and accidents
+                                if (tabId === 'incidents' && event.eventType !== 'incident' && event.eventType !== 'accident') {
+                                    return;
+                                }
+                                
+                                if (eventType && event.eventType !== eventType) {
+                                    return; // Skip if event type doesn't match
+                                }
+                                
+                                if (eventStatus && event.status !== eventStatus) {
+                                    return; // Skip if status doesn't match
+                                }
+                                
+                                if (eventLocation && event.location !== eventLocation) {
+                                    return; // Skip if location doesn't match
+                                }
+                                
+                                // Date filtering
+                                if (dateFrom && event.dateReported < dateFrom) {
+                                    return; // Skip if before date range
+                                }
+                                
+                                if (dateTo && event.dateReported > dateTo) {
+                                    return; // Skip if after date range
+                                }
+                                
+                                events.push(event);
+                            });
+                            
+                            // Sort events by date (newest first)
+                            events.sort((a, b) => new Date(b.dateReported) - new Date(a.dateReported));
+                            
+                            // Update summary counts
+                            updateEventCounts(events);
+                            
+                            // Display events
+                            if (events.length > 0) {
+                                events.forEach(event => {
+                                    addEventRow(event);
+                                });
+                            } else {
+                                eventTableBody.innerHTML = `
+                                    <tr>
+                                        <td colspan="8" style="text-align: center;">No events found matching the criteria</td>
+                                    </tr>
+                                `;
+                            }
+                        } else {
+                            eventTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="8" style="text-align: center;">No events found</td>
+                                </tr>
+                            `;
+                            
+                            // Update summary cards with zeros
+                            document.getElementById('totalEvents').textContent = '0';
+                            document.getElementById('openEvents').textContent = '0';
+                            document.getElementById('overdueEvents').textContent = '0';
+                            document.getElementById('highSeverityEvents').textContent = '0';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading events:', error);
+                        eventTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="8" style="text-align: center;">Error loading events</td>
+                            </tr>
+                        `;
+                    });
+            }
+            
+            // Update event count summary cards
+            function updateEventCounts(events) {
+                document.getElementById('totalEvents').textContent = events.length;
+                
+                const openCount = events.filter(event => event.status === 'open' || event.status === 'in-progress').length;
+                document.getElementById('openEvents').textContent = openCount;
+                
+                const overdueCount = events.filter(event => event.status === 'overdue').length;
+                document.getElementById('overdueEvents').textContent = overdueCount;
+                
+                const highSeverityCount = events.filter(event => event.severity === 'high').length;
+                document.getElementById('highSeverityEvents').textContent = highSeverityCount;
+            }
+            
+            // Add event row to the table
+            function addEventRow(event) {
+                const eventTableBody = document.getElementById('eventTableBody');
+                const row = document.createElement('tr');
+                
+                // Get current user ID for date formatting
+                const userId = firebase.auth().currentUser?.uid || '';
+                
+                // Format date using our centralized utility
+                const eventDateISO = event.dateReported ? new Date(event.dateReported).toISOString() : '';
+                
+                // Determine severity indicator class
+                let severityClass = '';
+                let severityText = event.severity || 'Low';
+                
+                switch(severityText.toLowerCase()) {
+                    case 'high':
+                        severityClass = 'severity-high';
+                        break;
+                    case 'medium':
+                        severityClass = 'severity-medium';
+                        break;
+                    case 'low':
+                        severityClass = 'severity-low';
+                        break;
+                }
+                
+                // Determine status badge class
+                let statusClass = '';
+                let statusText = event.status || 'Open';
+                
+                switch(statusText.toLowerCase()) {
+                    case 'open':
+                        statusClass = 'status-open';
+                        break;
+                    case 'in-progress':
+                        statusClass = 'status-in-progress';
+                        break;
+                    case 'closed':
+                        statusClass = 'status-closed';
+                        break;
+                    case 'overdue':
+                        statusClass = 'status-overdue';
+                        break;
+                }
+                
+                // Capitalize first letter of status and event type
+                const capitalizedStatus = statusText.charAt(0).toUpperCase() + statusText.slice(1);
+                const eventType = event.eventType ? event.eventType.charAt(0).toUpperCase() + event.eventType.slice(1) : 'N/A';
+                
+                row.innerHTML = `
+                    <td>${event.id}</td>
+                    <td>${eventType}</td>
+                    <td>${event.title || 'Untitled'}</td>
+                    <td>${event.location || 'N/A'}</td>
+                    <td class="formatted-date" data-time="${eventDateISO}">${window.DateTimeUtils ? window.DateTimeUtils.formatDate(eventDateISO, userId) : 'N/A'}</td>
+                    <td>
+                        <span class="severity-indicator ${severityClass}"></span>
+                        ${severityText.charAt(0).toUpperCase() + severityText.slice(1)}
+                    </td>
+                    <td><span class="status-badge ${statusClass}">${capitalizedStatus}</span></td>
+                    <td class="event-actions">
+                        <button class="btn btn-sm btn-view" data-id="${event.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-edit" data-id="${event.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-delete" data-id="${event.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                eventTableBody.appendChild(row);
+                
+                // Add event listeners to the buttons
+                const viewBtn = row.querySelector('.btn-view');
+                viewBtn.addEventListener('click', function() {
+                    const eventId = this.getAttribute('data-id');
+                    window.location.href = `event-details.html?id=${eventId}`;
+                });
+                
+                const editBtn = row.querySelector('.btn-edit');
+                editBtn.addEventListener('click', function() {
+                    const eventId = this.getAttribute('data-id');
+                    window.location.href = `event-form.html?id=${eventId}`;
+                });
+                
+                const deleteBtn = row.querySelector('.btn-delete');
+                deleteBtn.addEventListener('click', function() {
+                    const eventId = this.getAttribute('data-id');
+                    if (confirm('Are you sure you want to delete this event?')) {
+                        deleteEvent(eventId);
+                    }
+                });
+            }
+            
+            // Delete event
+            function deleteEvent(eventId) {
+                database.ref(`events/${eventId}`).remove()
+                    .then(() => {
+                        alert('Event deleted successfully');
+                        loadEvents(getActiveTabId()); // Reload events for current tab
+                    })
+                    .catch(error => {
+                        console.error('Error deleting event:', error);
+                        alert(`Error deleting event: ${error.message}`);
+                    });
+            }
+            
+            // Sign out functionality
+            const signOutBtn = document.getElementById('signOutBtn');
+            if (signOutBtn) {
+                signOutBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    auth.signOut().then(() => {
+                        console.log('User signed out');
+                        window.location.href = 'login.html';
+                    }).catch((error) => {
+                        console.error('Sign out error:', error);
+                    });
+                });
+            }
+            
+            // Initialize page
+            loadLocations();
+            loadEvents('all'); // Load all events initially
+        });
+    </script>
+</body>
+</html>

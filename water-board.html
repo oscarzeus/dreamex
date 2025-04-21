@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Water Quality Dashboard</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .dashboard-container {
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .filters-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .reports-table {
+            width: 100%;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .reports-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .reports-table th {
+            background: #f8f9fa;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            border-bottom: 2px solid #dee2e6;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .reports-table th:hover {
+            background: #e9ecef;
+        }
+
+        .reports-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-normal { background-color: #d4edda; color: #155724; }
+        .status-warning { background-color: #fff3cd; color: #856404; }
+        .status-critical { background-color: #f8d7da; color: #721c24; }
+
+        .loading-spinner {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            font-size: 1.5rem;
+            color: #3498db;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 2rem;
+            gap: 0.5rem;
+        }
+
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .pagination button.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+
+        .pagination button:hover:not(.active) {
+            background: #f5f5f5;
+        }
+
+        .no-reports {
+            text-align: center;
+            padding: 2rem;
+            color: #777;
+            font-style: italic;
+        }
+
+        /* Modal for detailed view */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 1000px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            font-size: 28px;
+            font-weight: bold;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #555;
+        }
+
+        .detail-row {
+            display: flex;
+            margin-bottom: 1.5rem;
+            gap: 2rem;
+        }
+
+        .detail-col {
+            flex: 1;
+        }
+
+        .detail-section {
+            margin-bottom: 2rem;
+        }
+
+        .detail-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item {
+            margin-bottom: 1rem;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 0.3rem;
+        }
+
+        .detail-value {
+            color: #333;
+        }
+
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .parameter-card {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 1rem;
+            background-color: #f8f9fa;
+        }
+
+        .parameter-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .parameter-value {
+            font-size: 1.1rem;
+            color: #2c3e50;
+        }
+
+        .parameter-limit {
+            font-size: 0.875rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        .photos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .photo-item img:hover {
+            transform: scale(1.05);
+        }
+
+        /* Standards dropdown styles */
+        .standards-dropdown {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 1.5rem;
+        }
+
+        .standards-dropdown .btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: #f0f8ff;
+            border: 1px solid #b0d3f0;
+            color: #2c6ca0;
+            transition: all 0.3s ease;
+        }
+
+        .standards-dropdown .btn:hover {
+            background-color: #e0f0ff;
+        }
+
+        .standards-dropdown-content {
+            display: none;
+            position: absolute;
+            background-color: white;
+            min-width: 300px;
+            max-width: 500px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+            border-radius: 6px;
+            padding: 0;
+            margin-top: 8px;
+            right: 0;
+        }
+
+        .standards-dropdown-content.show {
+            display: block;
+        }
+
+        .standards-header {
+            padding: 10px 15px;
+            background-color: #f0f8ff;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            color: #2c6ca0;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+
+        .standards-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .standard-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .standard-item:last-child {
+            border-bottom: none;
+        }
+
+        .standard-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .standard-value {
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2px;
+        }
+
+        .standard-source {
+            font-size: 0.8rem;
+            color: #777;
+            margin-top: 6px;
+            font-style: italic;
+        }
+
+        .no-standards {
+            padding: 15px;
+            text-align: center;
+            color: #777;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .filters-container {
+                flex-direction: column;
+            }
+
+            .filter-group {
+                width: 100%;
+            }
+
+            .detail-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .standards-dropdown-content {
+                width: 100%;
+                min-width: auto;
+                left: 0;
+                right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="dashboard-container">
+        <div class="dashboard-header">
+            <div>
+                <h1>Water Quality Reports</h1>
+                <p>View and manage water quality test results</p>
+            </div>
+            <div class="d-flex">
+                <div class="standards-dropdown">
+                    <button id="standards-btn" class="btn">
+                        <i class="fas fa-flask"></i> Water Quality Standards
+                    </button>
+                    <div id="standards-dropdown-content" class="standards-dropdown-content">
+                        <!-- Standards will be loaded here dynamically -->
+                    </div>
+                </div>
+                <a href="water.html" class="btn btn-primary ml-2">
+                    <i class="fas fa-plus"></i> New Water Quality Report
+                </a>
+            </div>
+        </div>
+
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="water-type-filter">Water Type</label>
+                <select id="water-type-filter" class="form-control">
+                    <option value="">All Types</option>
+                    <option value="drinking">Drinking Water</option>
+                    <option value="surface">Surface Water</option>
+                    <option value="groundwater">Groundwater</option>
+                    <option value="wastewater">Wastewater</option>
+                    <option value="rainwater">Rainwater</option>
+                    <option value="bottled">Bottled Water</option>
+                    <option value="recreational">Recreational Water</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="status-filter">Status</label>
+                <select id="status-filter" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="normal">Normal</option>
+                    <option value="warning">Warning</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="start-date">Start Date</label>
+                <input type="date" id="start-date" class="form-control">
+            </div>
+            <div class="filter-group">
+                <label for="end-date">End Date</label>
+                <input type="date" id="end-date" class="form-control">
+            </div>
+            <div class="filter-group">
+                <label for="location-filter">Location</label>
+                <input type="text" id="location-filter" class="form-control" placeholder="Filter by location">
+            </div>
+        </div>
+
+        <div class="reports-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th data-sort="timestamp">Date <i class="fas fa-sort"></i></th>
+                        <th data-sort="waterType">Water Type <i class="fas fa-sort"></i></th>
+                        <th data-sort="location">Location <i class="fas fa-sort"></i></th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-table-body">
+                    <!-- Reports will be loaded here -->
+                </tbody>
+            </table>
+
+            <div class="loading-spinner" id="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+
+            <div class="no-reports" id="no-reports" style="display: none;">
+                No water quality reports found. Try adjusting your filters or <a href="water.html">create a new report</a>.
+            </div>
+
+            <div class="pagination" id="pagination">
+                <!-- Pagination buttons will be generated dynamically -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Report Detail Modal -->
+    <div id="report-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Water Quality Report Details</h2>
+                <span class="close-modal" id="close-modal">&times;</span>
+            </div>
+            <div id="report-details-container">
+                <!-- Report details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const reportsTableBody = document.getElementById('reports-table-body');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const noReports = document.getElementById('no-reports');
+            const pagination = document.getElementById('pagination');
+            const reportModal = document.getElementById('report-modal');
+            const closeModal = document.getElementById('close-modal');
+            const reportDetailsContainer = document.getElementById('report-details-container');
+
+            // Check if Firebase is initialized
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase is not initialized');
+                noReports.style.display = 'block';
+                noReports.textContent = 'Error: Unable to connect to the database. Please refresh the page.';
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            // Filter elements
+            const waterTypeFilter = document.getElementById('water-type-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const startDateFilter = document.getElementById('start-date');
+            const endDateFilter = document.getElementById('end-date');
+            const locationFilter = document.getElementById('location-filter');
+
+            // Keep track of sorting and pagination
+            let currentSort = { field: 'timestamp', direction: 'desc' };
+            let currentPage = 1;
+            let itemsPerPage = 10;
+            let allReports = [];
+            const locationOptions = new Set();
+
+            // Icons for water types
+            const waterTypeIcons = {
+                drinking: 'glass-water',
+                surface: 'water',
+                groundwater: 'faucet-drip',
+                wastewater: 'toilet',
+                rainwater: 'cloud-rain',
+                bottled: 'bottle-water',
+                recreational: 'person-swimming'
+            };
+
+            // Initialize date filters to last 30 days by default
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+            
+            startDateFilter.valueAsDate = thirtyDaysAgo;
+            endDateFilter.valueAsDate = today;
+
+            // Check authentication
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    // User is signed in, load reports
+                    loadWaterQualityReports();
+                    
+                    // Initialize standards dropdown
+                    updateStandardsDropdown();
+                    
+                    // Setup event listeners for filters
+                    setupEventListeners();
+                } else {
+                    // User is not signed in, redirect to login
+                    window.location.href = 'login.html';
+                }
+            });
+
+            // Load reports from Firebase
+            function loadWaterQualityReports() {
+                const reportsTable = document.querySelector('.reports-table table');
+                
+                // Show loading spinner
+                loadingSpinner.style.display = 'flex';
+                if (reportsTable) reportsTable.style.display = 'none';
+                noReports.style.display = 'none';
+                
+                // Get reports from Firebase
+                firebase.database().ref('water-quality-reports').once('value')
+                    .then(snapshot => {
+                        // Hide loading spinner
+                        loadingSpinner.style.display = 'none';
+                        
+                        if (!snapshot.exists()) {
+                            // No reports found
+                            noReports.style.display = 'block';
+                            if (reportsTable) reportsTable.style.display = 'none';
+                            return;
+                        }
+                        
+                        // Clear existing data
+                        allReports = [];
+                        locationOptions.clear();
+                        
+                        // Process reports data
+                        snapshot.forEach(reportSnapshot => {
+                            const report = reportSnapshot.val();
+                            report.id = reportSnapshot.key;
+                            
+                            // Add to reports array
+                            allReports.push(report);
+                            
+                            // Add location to options if not already included
+                            if (report.location) {
+                                locationOptions.add(report.location);
+                            }
+                        });
+                        
+                        // Show table and apply filters
+                        if (reportsTable) reportsTable.style.display = 'table';
+                        applyFilters();
+                    })
+                    .catch(error => {
+                        console.error('Error loading reports:', error);
+                        loadingSpinner.style.display = 'none';
+                        noReports.style.display = 'block';
+                        noReports.textContent = 'Error loading reports. Please try again.';
+                        if (reportsTable) reportsTable.style.display = 'none';
+                    });
+            }
+
+            // Apply filters and update table
+            function applyFilters() {
+                let filteredReports = allReports;
+                
+                // Water type filter
+                if (waterTypeFilter.value) {
+                    filteredReports = filteredReports.filter(report => 
+                        report.waterType === waterTypeFilter.value
+                    );
+                }
+                
+                // Status filter
+                if (statusFilter.value) {
+                    filteredReports = filteredReports.filter(report => 
+                        report.status === statusFilter.value
+                    );
+                }
+                
+                // Date range filter
+                const startDate = startDateFilter.valueAsDate;
+                const endDate = endDateFilter.valueAsDate;
+                if (startDate && endDate) {
+                    // Add one day to endDate to include the whole day
+                    const adjustedEndDate = new Date(endDate);
+                    adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+                    
+                    filteredReports = filteredReports.filter(report => {
+                        // Try to use samplingDate and fall back to timestamp if needed
+                        const dateField = report.samplingDate || report.timestamp;
+                        if (!dateField) return true; // If no date, include it
+                        
+                        try {
+                            const reportDate = new Date(dateField);
+                            return reportDate >= startDate && reportDate < adjustedEndDate;
+                        } catch (e) {
+                            console.warn('Invalid date in report:', dateField, e);
+                            return true; // Include it if date parsing fails
+                        }
+                    });
+                }
+                
+                // Location filter
+                const locationSearch = locationFilter.value.toLowerCase();
+                if (locationSearch) {
+                    filteredReports = filteredReports.filter(report =>
+                        report.location && report.location.toLowerCase().includes(locationSearch)
+                    );
+                }
+                
+                // Sort reports
+                filteredReports.sort((a, b) => {
+                    let aValue, bValue;
+                    
+                    // Special handling for timestamp/date fields
+                    if (currentSort.field === 'timestamp') {
+                        // Try to use samplingDate first, fallback to timestamp
+                        aValue = a.samplingDate || a.timestamp;
+                        bValue = b.samplingDate || b.timestamp;
+                        
+                        // Convert to Date objects for comparison
+                        aValue = aValue ? new Date(aValue) : new Date(0);
+                        bValue = bValue ? new Date(bValue) : new Date(0);
+                    } else {
+                        // For other fields
+                        aValue = a[currentSort.field] || '';
+                        bValue = b[currentSort.field] || '';
+                    }
+                    
+                    // Comparison logic
+                    if (aValue < bValue) return currentSort.direction === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return currentSort.direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                
+                // Update table with filtered and sorted data
+                updateTable(filteredReports);
+            }
+
+            // Update table with provided data
+            function updateTable(reports) {
+                // Add console logs for debugging
+                console.log('Updating table with reports:', reports);
+                
+                reportsTableBody.innerHTML = '';
+                const reportsTable = document.querySelector('.reports-table table');
+                
+                if (reports.length === 0) {
+                    noReports.style.display = 'block';
+                    if (reportsTable) reportsTable.style.display = 'none';
+                    return;
+                }
+                
+                noReports.style.display = 'none';
+                if (reportsTable) reportsTable.style.display = 'table';
+                
+                // Calculate pagination
+                const totalPages = Math.ceil(reports.length / itemsPerPage);
+                const start = (currentPage - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                const pageReports = reports.slice(start, end);
+                
+                console.log(`Showing page ${currentPage} of ${totalPages} (${start}-${end} of ${reports.length})`);
+                
+                // Add reports to table
+                pageReports.forEach(report => {
+                    const row = document.createElement('tr');
+                    
+                    // Format date
+                    let date;
+                    try {
+                        date = new Date(report.samplingDate || report.timestamp);
+                        if (isNaN(date.getTime())) {
+                            console.warn('Invalid date format:', report.samplingDate || report.timestamp);
+                            date = new Date(); // Fallback to current date
+                        }
+                    } catch (error) {
+                        console.error('Error parsing date:', error);
+                        date = new Date(); // Fallback to current date
+                    }
+                    
+                    const formattedDate = date.toLocaleDateString() + ' ' + 
+                                        date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    
+                    // Get the correct icon or use a default
+                    const waterType = report.waterType || 'unknown';
+                    const icon = waterTypeIcons[waterType] || 'water';
+                    
+                    // Create table cells
+                    row.innerHTML = `
+                        <td>${formattedDate}</td>
+                        <td>
+                            <i class="fas fa-${icon}"></i>
+                            ${waterType.charAt(0).toUpperCase() + waterType.slice(1)}
+                        </td>
+                        <td>${report.location || 'Unknown location'}</td>
+                        <td>
+                            <span class="status-badge status-${report.status || 'normal'}">
+                                ${(report.status || 'normal').charAt(0).toUpperCase() + (report.status || 'normal').slice(1)}
+                            </span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary view-report" data-id="${report.id}">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-sm btn-secondary edit-report" data-id="${report.id}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    `;
+                    
+                    // Add click handler for view button
+                    const viewButton = row.querySelector('.view-report');
+                    viewButton.addEventListener('click', () => showReportDetails(report));
+                    
+                    // Add click handler for edit button
+                    const editButton = row.querySelector('.edit-report');
+                    editButton.addEventListener('click', () => {
+                        window.location.href = `water.html?id=${report.id}`;
+                    });
+                    
+                    // Add row to table
+                    reportsTableBody.appendChild(row);
+                });
+                
+                // Update pagination
+                updatePagination(totalPages);
+            }
+
+            // Show detailed report in modal
+            function showReportDetails(report) {
+                console.log('Showing details for report:', report);
+                
+                // Format date
+                let formattedDate = 'Unknown date';
+                try {
+                    if (report.samplingDate || report.timestamp) {
+                        const date = new Date(report.samplingDate || report.timestamp);
+                        if (!isNaN(date.getTime())) {
+                            formattedDate = date.toLocaleDateString() + ' ' + 
+                                date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error formatting date:', error);
+                }
+                
+                // Get the water type and icon
+                const waterType = report.waterType || 'unknown';
+                const icon = waterTypeIcons[waterType] || 'water';
+                
+                let html = `
+                    <div class="detail-row">
+                        <div class="detail-col">
+                            <div class="detail-section">
+                                <h3>General Information</h3>
+                                <div class="detail-item">
+                                    <div class="detail-label">Water Type</div>
+                                    <div class="detail-value">
+                                        <i class="fas fa-${icon}"></i>
+                                        ${waterType.charAt(0).toUpperCase() + waterType.slice(1)}
+                                    </div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Location</div>
+                                    <div class="detail-value">${report.location || 'Unknown location'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Sampling Date & Time</div>
+                                    <div class="detail-value">${formattedDate}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Weather Conditions</div>
+                                    <div class="detail-value">${report.weatherConditions || 'Not specified'}</div>
+                                </div>
+                                <div class="detail-item">
+                                    <div class="detail-label">Status</div>
+                                    <div class="detail-value">
+                                        <span class="status-badge status-${report.status || 'normal'}">
+                                            ${(report.status || 'normal').charAt(0).toUpperCase() + (report.status || 'normal').slice(1)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add parameters section
+                if (report.parameters && Object.keys(report.parameters).length > 0) {
+                    html += `
+                        <div class="detail-section">
+                            <h3>Water Parameters</h3>
+                            <div class="parameters-grid">
+                    `;
+                    
+                    // Group parameters by type (optional)
+                    Object.entries(report.parameters).forEach(([name, value]) => {
+                        // Default status is normal, could add logic to determine status based on value
+                        let paramStatus = 'normal';
+                        let limitInfo = '';
+                        
+                        // Add parameter card with value and any limit information
+                        html += `
+                            <div class="parameter-card parameter-${paramStatus}">
+                                <div class="parameter-name">
+                                    ${formatParameterName(name)}
+                                </div>
+                                <div class="parameter-value">${value}</div>
+                                ${limitInfo ? `<div class="parameter-limit">${limitInfo}</div>` : ''}
+                            </div>
+                        `;
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Add observations if they exist
+                if (report.observations) {
+                    html += `
+                        <div class="detail-section">
+                            <h3>Observations</h3>
+                            <p>${report.observations}</p>
+                        </div>
+                    `;
+                }
+                
+                // Add recommendations if they exist
+                if (report.recommendations) {
+                    html += `
+                        <div class="detail-section">
+                            <h3>Recommendations</h3>
+                            <p>${report.recommendations}</p>
+                        </div>
+                    `;
+                }
+                
+                // Add photos section if photos exist
+                if (report.photoUrls && Array.isArray(report.photoUrls) && report.photoUrls.length > 0) {
+                    html += `
+                        <div class="detail-section">
+                            <h3>Photos</h3>
+                            <div class="photos-grid">
+                    `;
+                    
+                    report.photoUrls.forEach(url => {
+                        if (url) {
+                            html += `
+                                <div class="photo-item">
+                                    <img src="${url}" alt="Water sample photo" onclick="window.open('${url}', '_blank')">
+                                </div>
+                            `;
+                        }
+                    });
+                    
+                    html += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Update modal content and show modal
+                reportDetailsContainer.innerHTML = html;
+                reportModal.style.display = 'block';
+            }
+
+            // Helper function to format parameter names
+            function formatParameterName(name) {
+                return name
+                    .split('_')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+            }
+
+            // Setup event listeners
+            function setupEventListeners() {
+                // Filter change events
+                waterTypeFilter.addEventListener('change', () => {
+                    currentPage = 1;
+                    applyFilters();
+                    updateStandardsDropdown(); // Update standards dropdown when water type changes
+                });
+                
+                statusFilter.addEventListener('change', () => {
+                    currentPage = 1;
+                    applyFilters();
+                });
+                
+                startDateFilter.addEventListener('change', () => {
+                    currentPage = 1;
+                    applyFilters();
+                });
+                
+                endDateFilter.addEventListener('change', () => {
+                    currentPage = 1;
+                    applyFilters();
+                });
+                
+                locationFilter.addEventListener('input', () => {
+                    currentPage = 1;
+                    applyFilters();
+                });
+                
+                // Sort headers
+                document.querySelectorAll('th[data-sort]').forEach(header => {
+                    header.addEventListener('click', () => {
+                        const field = header.dataset.sort;
+                        if (currentSort.field === field) {
+                            currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                        } else {
+                            currentSort.field = field;
+                            currentSort.direction = 'asc';
+                        }
+                        applyFilters();
+                    });
+                });
+                
+                // Modal close button
+                closeModal.addEventListener('click', () => {
+                    reportModal.style.display = 'none';
+                });
+                
+                // Close modal when clicking outside
+                window.addEventListener('click', (e) => {
+                    if (e.target === reportModal) {
+                        reportModal.style.display = 'none';
+                    }
+                });
+                
+                // Standards dropdown toggle
+                standardsBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    standardsDropdownContent.classList.toggle('show');
+                });
+                
+                // Close standards dropdown when clicking outside
+                window.addEventListener('click', () => {
+                    if (standardsDropdownContent.classList.contains('show')) {
+                        standardsDropdownContent.classList.remove('show');
+                    }
+                });
+            }
+
+            // Update pagination controls
+            function updatePagination(totalPages) {
+                pagination.innerHTML = '';
+                
+                if (totalPages <= 1) {
+                    return;
+                }
+                
+                // Previous button
+                const prevButton = document.createElement('button');
+                prevButton.innerHTML = '&laquo;';
+                prevButton.disabled = currentPage === 1;
+                prevButton.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        applyFilters(); // Call applyFilters instead of updateTable
+                    }
+                });
+                pagination.appendChild(prevButton);
+                
+                // Page buttons
+                const maxButtons = 5; // Maximum number of page buttons to show
+                let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+                let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+                
+                // Adjust start page if needed
+                if (endPage - startPage + 1 < maxButtons) {
+                    startPage = Math.max(1, endPage - maxButtons + 1);
+                }
+                
+                // First page button if not included in the range
+                if (startPage > 1) {
+                    const firstButton = document.createElement('button');
+                    firstButton.textContent = '1';
+                    firstButton.addEventListener('click', () => {
+                        currentPage = 1;
+                        applyFilters(); // Call applyFilters instead of updateTable
+                    });
+                    pagination.appendChild(firstButton);
+                    
+                    // Add ellipsis if there's a gap
+                    if (startPage > 2) {
+                        const ellipsis = document.createElement('span');
+                        ellipsis.textContent = '...';
+                        ellipsis.style.margin = '0 0.5rem';
+                        pagination.appendChild(ellipsis);
+                    }
+                }
+                
+                // Page buttons
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    if (i === currentPage) {
+                        pageButton.classList.add('active');
+                    }
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        applyFilters(); // Call applyFilters instead of updateTable
+                    });
+                    
+                    pagination.appendChild(pageButton);
+                }
+                
+                // Last page button if not included in the range
+                if (endPage < totalPages) {
+                    // Add ellipsis if there's a gap
+                    if (endPage < totalPages - 1) {
+                        const ellipsis = document.createElement('span');
+                        ellipsis.textContent = '...';
+                        ellipsis.style.margin = '0 0.5rem';
+                        pagination.appendChild(ellipsis);
+                    }
+                    
+                    const lastButton = document.createElement('button');
+                    lastButton.textContent = totalPages;
+                    lastButton.addEventListener('click', () => {
+                        currentPage = totalPages;
+                        applyFilters(); // Call applyFilters instead of updateTable
+                    });
+                    pagination.appendChild(lastButton);
+                }
+                
+                // Next button
+                const nextButton = document.createElement('button');
+                nextButton.innerHTML = '&raquo;';
+                nextButton.disabled = currentPage === totalPages;
+                nextButton.addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        applyFilters(); // Call applyFilters instead of updateTable
+                    }
+                });
+                pagination.appendChild(nextButton);
+            }
+
+            // Define water quality standards for different water types
+            const waterQualityStandards = {
+                drinking: [
+                    { parameter: 'pH', value: '6.5-8.5', unit: '', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Total Dissolved Solids (TDS)', value: '< 1000', unit: 'mg/L', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Turbidity', value: '< 5', unit: 'NTU', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Dissolved Oxygen', value: '> 5', unit: 'mg/L', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'E. coli', value: '0', unit: 'CFU/100mL', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Total Coliform', value: '0', unit: 'CFU/100mL', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Chlorine Residual', value: '0.2-0.5', unit: 'mg/L', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Nitrate', value: '< 50', unit: 'mg/L', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Fluoride', value: '< 1.5', unit: 'mg/L', source: 'WHO Guidelines for Drinking-water Quality' },
+                    { parameter: 'Lead', value: '< 0.01', unit: 'mg/L', source: 'WHO Guidelines for Drinking-water Quality' }
+                ],
+                surface: [
+                    { parameter: 'pH', value: '6.5-9.0', unit: '', source: 'US EPA Water Quality Standards' },
+                    { parameter: 'Dissolved Oxygen', value: '> 4', unit: 'mg/L', source: 'US EPA Water Quality Standards' },
+                    { parameter: 'Turbidity', value: '< 50', unit: 'NTU', source: 'US EPA Water Quality Standards' },
+                    { parameter: 'Total Phosphorus', value: '< 0.1', unit: 'mg/L', source: 'US EPA Water Quality Standards' },
+                    { parameter: 'Total Nitrogen', value: '< 1.0', unit: 'mg/L', source: 'US EPA Water Quality Standards' },
+                    { parameter: 'Temperature', value: '< 32', unit: '°C', source: 'US EPA Water Quality Standards' },
+                    { parameter: 'E. coli', value: '< 126', unit: 'CFU/100mL', source: 'US EPA Water Quality Standards for Recreational Waters' }
+                ],
+                groundwater: [
+                    { parameter: 'pH', value: '6.5-8.5', unit: '', source: 'US EPA Ground Water Standards' },
+                    { parameter: 'Total Dissolved Solids (TDS)', value: '< 500', unit: 'mg/L', source: 'US EPA Secondary Drinking Water Regulations' },
+                    { parameter: 'Nitrate', value: '< 10', unit: 'mg/L', source: 'US EPA Ground Water Standards' },
+                    { parameter: 'Arsenic', value: '< 0.01', unit: 'mg/L', source: 'US EPA Ground Water Standards' },
+                    { parameter: 'Iron', value: '< 0.3', unit: 'mg/L', source: 'US EPA Secondary Drinking Water Regulations' },
+                    { parameter: 'Manganese', value: '< 0.05', unit: 'mg/L', source: 'US EPA Secondary Drinking Water Regulations' },
+                    { parameter: 'Hardness', value: '< 300', unit: 'mg/L as CaCO3', source: 'US EPA Secondary Drinking Water Regulations' }
+                ],
+                wastewater: [
+                    { parameter: 'pH', value: '6.0-9.0', unit: '', source: 'US EPA Wastewater Discharge Standards' },
+                    { parameter: 'Biochemical Oxygen Demand (BOD)', value: '< 30', unit: 'mg/L', source: 'US EPA Wastewater Discharge Standards' },
+                    { parameter: 'Chemical Oxygen Demand (COD)', value: '< 120', unit: 'mg/L', source: 'US EPA Wastewater Discharge Standards' },
+                    { parameter: 'Total Suspended Solids (TSS)', value: '< 30', unit: 'mg/L', source: 'US EPA Wastewater Discharge Standards' },
+                    { parameter: 'Ammonia Nitrogen', value: '< 10', unit: 'mg/L', source: 'US EPA Wastewater Discharge Standards' },
+                    { parameter: 'Phosphorus', value: '< 2', unit: 'mg/L', source: 'US EPA Wastewater Discharge Standards' },
+                    { parameter: 'Oil and Grease', value: '< 10', unit: 'mg/L', source: 'US EPA Wastewater Discharge Standards' }
+                ],
+                rainwater: [
+                    { parameter: 'pH', value: '5.5-7.0', unit: '', source: 'OECD Environmental Standards' },
+                    { parameter: 'Total Dissolved Solids (TDS)', value: '< 50', unit: 'mg/L', source: 'OECD Environmental Standards' },
+                    { parameter: 'Nitrate', value: '< 0.5', unit: 'mg/L', source: 'OECD Environmental Standards' },
+                    { parameter: 'Sulfate', value: '< 5', unit: 'mg/L', source: 'OECD Environmental Standards' },
+                    { parameter: 'Lead', value: '< 0.005', unit: 'mg/L', source: 'OECD Environmental Standards' }
+                ],
+                bottled: [
+                    { parameter: 'pH', value: '6.5-8.5', unit: '', source: 'Codex Alimentarius Standards for Bottled Waters' },
+                    { parameter: 'Total Dissolved Solids (TDS)', value: '< 500', unit: 'mg/L', source: 'Codex Alimentarius Standards for Bottled Waters' },
+                    { parameter: 'Nitrate', value: '< 50', unit: 'mg/L', source: 'Codex Alimentarius Standards for Bottled Waters' },
+                    { parameter: 'Arsenic', value: '< 0.01', unit: 'mg/L', source: 'Codex Alimentarius Standards for Bottled Waters' },
+                    { parameter: 'E. coli', value: '0', unit: 'CFU/100mL', source: 'Codex Alimentarius Standards for Bottled Waters' },
+                    { parameter: 'Total Coliform', value: '0', unit: 'CFU/100mL', source: 'Codex Alimentarius Standards for Bottled Waters' }
+                ],
+                recreational: [
+                    { parameter: 'pH', value: '6.5-8.5', unit: '', source: 'US EPA Recreational Water Quality Criteria' },
+                    { parameter: 'E. coli', value: '< 126', unit: 'CFU/100mL', source: 'US EPA Recreational Water Quality Criteria' },
+                    { parameter: 'Enterococci', value: '< 35', unit: 'CFU/100mL', source: 'US EPA Recreational Water Quality Criteria' },
+                    { parameter: 'Algae', value: '< 20,000', unit: 'cells/mL', source: 'US EPA Recreational Water Quality Criteria' },
+                    { parameter: 'Turbidity', value: '< 10', unit: 'NTU', source: 'US EPA Recreational Water Quality Criteria' },
+                    { parameter: 'Dissolved Oxygen', value: '> 5', unit: 'mg/L', source: 'US EPA Recreational Water Quality Criteria' }
+                ]
+            };
+
+            // Standards dropdown elements
+            const standardsBtn = document.getElementById('standards-btn');
+            const standardsDropdownContent = document.getElementById('standards-dropdown-content');
+
+            // Function to update standards dropdown based on selected water type
+            function updateStandardsDropdown() {
+                const selectedWaterType = waterTypeFilter.value;
+                const standardsList = selectedWaterType ? waterQualityStandards[selectedWaterType] : null;
+
+                // Update dropdown button text
+                if (selectedWaterType) {
+                    const waterTypeName = selectedWaterType.charAt(0).toUpperCase() + selectedWaterType.slice(1);
+                    standardsBtn.innerHTML = `<i class="fas fa-flask"></i> ${waterTypeName} Water Standards`;
+                } else {
+                    standardsBtn.innerHTML = `<i class="fas fa-flask"></i> Water Quality Standards`;
+                }
+
+                // Update dropdown content
+                if (standardsList && standardsList.length > 0) {
+                    let html = `
+                        <div class="standards-header">
+                            ${selectedWaterType.charAt(0).toUpperCase() + selectedWaterType.slice(1)} Water Quality Standards
+                        </div>
+                        <ul class="standards-list">
+                    `;
+
+                    standardsList.forEach(standard => {
+                        html += `
+                            <li class="standard-item">
+                                <div class="standard-name">${standard.parameter}</div>
+                                <div class="standard-value">
+                                    ${standard.value} ${standard.unit}
+                                </div>
+                                <div class="standard-source">Source: ${standard.source}</div>
+                            </li>
+                        `;
+                    });
+
+                    html += `</ul>`;
+                    standardsDropdownContent.innerHTML = html;
+                } else {
+                    standardsDropdownContent.innerHTML = `
+                        <div class="standards-header">Water Quality Standards</div>
+                        <div class="no-standards">
+                            ${selectedWaterType 
+                                ? `No specific standards available for ${selectedWaterType} water. Please select a different water type.` 
+                                : 'Please select a water type to view applicable standards.'}
+                        </div>
+                    `;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

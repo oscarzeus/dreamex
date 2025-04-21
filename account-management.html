@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Account Management</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Add any page-specific styles as needed -->
+    <style>
+        /* Account management specific styles can be added here */
+        .profile-section {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 2rem;
+        }
+        
+        .profile-avatar {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+        
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-avatar i {
+            font-size: 5rem;
+            color: #ccc;
+        }
+        
+        .change-avatar-btn {
+            width: 100%;
+        }
+        
+        /* Profile Completion Styles */
+        .profile-completion {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .completion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .completion-title {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+        
+        .completion-percentage {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .progress-bar-container {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--secondary-color);
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+        
+        .profile-completion.low .progress-bar {
+            background-color: var(--danger-color);
+        }
+        
+        .profile-completion.medium .progress-bar {
+            background-color: var(--warning-color);
+        }
+        
+        .profile-completion.high .progress-bar {
+            background-color: var(--success-color);
+        }
+        
+        .completion-tips {
+            margin-top: 0.75rem;
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .completion-tips ul {
+            margin: 0.5rem 0 0 1rem;
+            padding: 0;
+        }
+        
+        .completion-tips li {
+            margin-bottom: 0.4rem;
+        }
+        
+        .account-tabs {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+        }
+        
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .tab-btn.active {
+            border-bottom-color: var(--secondary-color);
+            color: var(--secondary-color);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @media (max-width: 768px) {
+            .profile-section {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            
+            .profile-avatar {
+                margin: 0 auto 1rem auto;
+            }
+        }
+        
+        /* Login Sessions Table Styles */
+        .sessions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        
+        .sessions-table th,
+        .sessions-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .sessions-table th {
+            font-weight: 600;
+            color: var(--primary-color);
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .card-subtitle {
+            margin-top: -0.5rem;
+            margin-bottom: 1rem;
+            color: #6c757d;
+        }
+        
+        .session-device {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .session-device i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            width: 24px;
+            text-align: center;
+        }
+        
+        .session-current {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .session-current-tag {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 0.75rem;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        
+        .session-ip {
+            font-family: monospace;
+            color: #555;
+        }
+        
+        .session-location {
+            display: flex;
+            align-items: center;
+        }
+        
+        .session-location i {
+            margin-right: 8px;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+        
+        .session-time {
+            white-space: nowrap;
+            color: #555;
+        }
+        
+        .session-time.recent {
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+        
+        .btn-sign-out {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-sign-out:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-sign-out:disabled {
+            background-color: rgba(220, 53, 69, 0.5);
+            cursor: not-allowed;
+        }
+        
+        @media (max-width: 992px) {
+            .sessions-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder - will be replaced by the header component -->
+    <div id="header-placeholder"></div>
+
+    <main>
+        <div class="content-wrapper">
+            <h1>My Account</h1>
+            
+            <div class="account-tabs">
+                <button class="tab-btn active" data-tab="profile">Profile Information</button>
+                <button class="tab-btn" data-tab="security">Security</button>
+                <button class="tab-btn" data-tab="preferences">Preferences</button>
+                <button class="tab-btn" data-tab="medical">Medical</button>
+                <button class="tab-btn" data-tab="sessions">Sessions</button>
+            </div>
+            
+            <!-- Profile Tab -->
+            <div class="tab-content active" id="profile-tab">
+                <div class="profile-section">
+                    <div>
+                        <div class="profile-avatar">
+                            <img id="profile-image" src="" alt="Profile Photo" style="display:none;">
+                            <i class="fas fa-user" id="profile-icon"></i>
+                        </div>
+                        <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+                        <button class="btn btn-primary change-avatar-btn" id="change-avatar-btn">Change Photo</button>
+                        
+                        <!-- Profile Completion Card -->
+                        <div class="profile-completion" id="profile-completion">
+                            <div class="completion-header">
+                                <div class="completion-title">Profile Completion</div>
+                                <div class="completion-percentage" id="completion-percentage">0%</div>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" id="completion-progress-bar" style="width: 0%;"></div>
+                            </div>
+                            <div class="completion-tips" id="completion-tips">
+                                <div>Complete your profile to improve your account security:</div>
+                                <ul id="incomplete-fields">
+                                    <!-- Incomplete fields will be added here -->
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <form id="profile-form">
+                            <div class="form-row" style="display: flex; gap: 15px;">
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="first-name">First Name</label>
+                                    <input type="text" id="first-name" name="first-name" required>
+                                </div>
+                                
+                                <div class="form-group" style="flex: 1;">
+                                    <label for="last-name">Last Name</label>
+                                    <input type="text" id="last-name" name="last-name" required>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="email">Email Address</label>
+                                <input type="email" id="email" name="email" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="job-title">Job Title</label>
+                                <input type="text" id="job-title" name="job-title">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="department">Department</label>
+                                <select id="department" name="department">
+                                    <option value="">Select Department</option>
+                                    <option value="operations">Operations</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="hse">Health & Safety</option>
+                                    <option value="management">Management</option>
+                                    <option value="hr">Human Resources</option>
+                                    <option value="admin">Settings</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="phone">Phone Number</label>
+                                <input type="tel" id="phone" name="phone">
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Tab -->
+            <div class="tab-content" id="security-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Change Password</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="password-form">
+                            <div class="form-group">
+                                <label for="current-password">Current Password</label>
+                                <input type="password" id="current-password" name="current-password" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="new-password">New Password</label>
+                                <input type="password" id="new-password" name="new-password" required>
+                                <small>Password must be at least 8 characters and include uppercase, lowercase, and numbers</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="confirm-password">Confirm New Password</label>
+                                <input type="password" id="confirm-password" name="confirm-password" required>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Update Password</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sessions Tab -->
+            <div class="tab-content" id="sessions-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Login Sessions</h2>
+                        <p class="card-subtitle">All devices you're currently logged in on</p>
+                    </div>
+                    <div class="card-body">
+                        <table class="sessions-table">
+                            <thead>
+                                <tr>
+                                    <th>Device</th>
+                                    <th>IP Address</th>
+                                    <th>Location</th>
+                                    <th>Last Activity</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessions-table">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 20px;">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preferences Tab -->
+            <div class="tab-content" id="preferences-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Email Notifications</h2>
+                    </div>
+                    <div class="card-body">
+                        <form id="notifications-form">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="notify-incidents" checked> 
+                                    Incident Reports
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="notify-risk-assessments" checked> 
+                                    Risk Assessment Updates
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="notify-trainings" checked> 
+                                    Training Reminders
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="notify-system" checked> 
+                                    System Announcements
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="notify-documents"> 
+                                    Document Updates
+                                </label>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary">Save Preferences</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Tab -->
+            <div class="tab-content" id="medical-tab">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Medical Information</h2>
+                        <p class="card-subtitle">Your personal medical information for emergency situations</p>
+                    </div>
+                    <div class="card-body">
+                        <!-- Medical Request Actions -->
+                        <div class="medical-actions" style="margin-bottom: 25px; display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                            <button id="request-medical-visit-btn" class="btn btn-primary">
+                                <i class="fas fa-calendar-plus"></i> Request Medical Visit
+                            </button>
+                            <a href="medicalrequest.html" class="btn btn-outline-primary">
+                                <i class="fas fa-file-medical"></i> Advanced Request Form
+                            </a>
+                            <a href="medicvisitboard.html" class="btn btn-outline-secondary">
+                                <i class="fas fa-clipboard-list"></i> View All Medical Requests
+                            </a>
+                        </div>
+
+                        <!-- My Medical Visits Section -->
+                        <div class="medical-visits-section" style="margin-bottom: 30px;">
+                            <h3>My Medical Visits</h3>
+                            <div class="medical-visits-container">
+                                <div id="medical-visits-loading" style="text-align: center; padding: 20px;">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading medical visits...
+                                </div>
+                                <div id="medical-visits-table-container" style="display: none;">
+                                    <table class="table medical-visits-table" style="width: 100%; border-collapse: collapse;">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Visit Type</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="medical-visits-body">
+                                            <!-- Medical visits will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div id="no-medical-visits" style="text-align: center; padding: 20px; display: none;">
+                                    <i class="fas fa-file-medical-alt" style="font-size: 2rem; color: #6c757d; margin-bottom: 10px;"></i>
+                                    <p>You don't have any medical visits yet.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <form id="medical-form">
+                            <div class="form-section">
+                                <h3>Emergency Contact</h3>
+                                <div class="form-row" style="display: flex; gap: 15px;">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="emergency-contact-name">Emergency Contact Name</label>
+                                        <input type="text" id="emergency-contact-name" name="emergency-contact-name">
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="emergency-contact-relationship">Relationship</label>
+                                        <input type="text" id="emergency-contact-relationship" name="emergency-contact-relationship">
+                                    </div>
+                                </div>
+                                <div class="form-row" style="display: flex; gap: 15px;">
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="emergency-contact-phone">Phone Number</label>
+                                        <input type="tel" id="emergency-contact-phone" name="emergency-contact-phone">
+                                    </div>
+                                    <div class="form-group" style="flex: 1;">
+                                        <label for="emergency-contact-alt-phone">Alternative Phone</label>
+                                        <input type="tel" id="emergency-contact-alt-phone" name="emergency-contact-alt-phone">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>Medical Details</h3>
+                                <div class="form-group">
+                                    <label for="blood-type">Blood Type</label>
+                                    <select id="blood-type" name="blood-type">
+                                        <option value="">Select Blood Type</option>
+                                        <option value="A+">A+</option>
+                                        <option value="A-">A-</option>
+                                        <option value="B+">B+</option>
+                                        <option value="B-">B-</option>
+                                        <option value="AB+">AB+</option>
+                                        <option value="AB-">AB-</option>
+                                        <option value="O+">O+</option>
+                                        <option value="O-">O-</option>
+                                        <option value="unknown">Unknown</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="allergies">Allergies</label>
+                                    <textarea id="allergies" name="allergies" rows="3" placeholder="List any allergies you have (medications, food, environmental, etc.)"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medical-conditions">Medical Conditions</label>
+                                    <textarea id="medical-conditions" name="medical-conditions" rows="3" placeholder="List any medical conditions that emergency responders should know about"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="medications">Current Medications</label>
+                                    <textarea id="medications" name="medications" rows="3" placeholder="List any medications you're currently taking"></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="form-section">
+                                <h3>Medical History</h3>
+                                <div class="form-group">
+                                    <label for="previous-surgeries">Previous Surgeries</label>
+                                    <textarea id="previous-surgeries" name="previous-surgeries" rows="3" placeholder="List any previous surgeries with dates if known"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="workplace-incidents">Previous Workplace Incidents</label>
+                                    <textarea id="workplace-incidents" name="workplace-incidents" rows="3" placeholder="List any previous workplace incidents or injuries"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h3>Additional Information</h3>
+                                <div class="form-group">
+                                    <label for="primary-physician">Primary Physician</label>
+                                    <input type="text" id="primary-physician" name="primary-physician">
+                                </div>
+                                <div class="form-group">
+                                    <label for="physician-contact">Physician Contact Information</label>
+                                    <input type="text" id="physician-contact" name="physician-contact">
+                                </div>
+                                <div class="form-group">
+                                    <label for="medical-notes">Additional Notes</label>
+                                    <textarea id="medical-notes" name="medical-notes" rows="3" placeholder="Any additional medical information that might be important in an emergency"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-notice" style="margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid #17a2b8; color: #495057;">
+                                <i class="fas fa-info-circle"></i> This information is kept confidential and will only be used in case of workplace medical emergencies.
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">Save Medical Information</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Medical Visit Request Modal -->
+            <div id="medical-visit-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.4);">
+                <div style="background-color: white; margin: 10% auto; padding: 20px; border-radius: 8px; width: 90%; max-width: 600px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">Request Medical Visit</h3>
+                        <button id="close-medical-modal" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                    </div>
+                    <form id="quick-medical-visit-form">
+                        <div class="form-group">
+                            <label for="quick-visit-type">Visit Type</label>
+                            <select id="quick-visit-type" class="form-control" required>
+                                <option value="">Select Visit Type</option>
+                                <option value="routine-checkup">Routine Checkup</option>
+                                <option value="specialized-examination">Specialized Examination</option>
+                                <option value="follow-up">Follow-up Visit</option>
+                                <option value="emergency">Emergency Visit</option>
+                                <option value="vaccination">Vaccination</option>
+                                <option value="occupational-health">Occupational Health Assessment</option>
+                                <option value="other">Other (please specify)</option>
+                            </select>
+                        </div>
+                        <div id="other-visit-type-group" class="form-group" style="display: none;">
+                            <label for="other-visit-type">Please specify</label>
+                            <input type="text" id="other-visit-type" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label for="quick-preferred-date">Preferred Date</label>
+                            <input type="date" id="quick-preferred-date" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick-preferred-time">Preferred Time</label>
+                            <select id="quick-preferred-time" class="form-control" required>
+                                <option value="">Select Time</option>
+                                <option value="morning">Morning (9:00 AM - 12:00 PM)</option>
+                                <option value="afternoon">Afternoon (1:00 PM - 5:00 PM)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="quick-visit-reason">Reason for Visit</label>
+                            <textarea id="quick-visit-reason" class="form-control" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Is this related to a workplace incident?</label>
+                            <div>
+                                <label style="margin-right: 15px;">
+                                    <input type="radio" name="workplace-related" value="yes"> Yes
+                                </label>
+                                <label>
+                                    <input type="radio" name="workplace-related" value="no" checked> No
+                                </label>
+                            </div>
+                        </div>
+                        <div id="workplace-incident-details-group" class="form-group" style="display: none;">
+                            <label for="workplace-incident-details">Incident Details</label>
+                            <textarea id="workplace-incident-details" class="form-control" rows="3"></textarea>
+                        </div>
+                        <div class="form-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                            <button type="button" id="cancel-medical-request" class="btn btn-secondary">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Submit Request</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (!user) {
+                    // Redirect to login page if not authenticated
+                    window.location.href = 'login.html';
+                } else {
+                    // Load user data
+                    loadUserData(user);
+                }
+            });
+
+            // Handle tab switching
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all tabs
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    this.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                });
+            });
+            
+            // Initialize Firebase Storage
+            const storage = firebase.storage();
+            
+            // Setup profile picture upload
+            const changeAvatarBtn = document.getElementById('change-avatar-btn');
+            const avatarUploadInput = document.getElementById('avatar-upload');
+            
+            if (changeAvatarBtn && avatarUploadInput) {
+                changeAvatarBtn.addEventListener('click', function() {
+                    avatarUploadInput.click();
+                });
+                
+                avatarUploadInput.addEventListener('change', function(e) {
+                    if (e.target.files.length > 0) {
+                        const file = e.target.files[0];
+                        uploadProfilePicture(file);
+                    }
+                });
+            }
+            
+            // Function to upload profile picture to Firebase Storage
+            function uploadProfilePicture(file) {
+                // Check if file is an image
+                if (!file.type.match('image.*')) {
+                    alert('Please select an image file.');
+                    return;
+                }
+                
+                // Check file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Image file is too large. Maximum size is 5MB.');
+                    return;
+                }
+                
+                const user = firebase.auth().currentUser;
+                
+                // Show loading state
+                const profileIcon = document.getElementById('profile-icon');
+                const profileImage = document.getElementById('profile-image');
+                changeAvatarBtn.disabled = true;
+                changeAvatarBtn.textContent = 'Uploading...';
+                
+                // Create storage reference with unique filename
+                const storageRef = storage.ref(`profile-pictures/${user.uid}_${Date.now()}.${file.name.split('.').pop()}`);
+                
+                // Upload file to Firebase Storage
+                const uploadTask = storageRef.put(file);
+                
+                // Monitor upload progress
+                uploadTask.on('state_changed',
+                    // Progress function
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        console.log(`Upload is ${progress}% done`);
+                    },
+                    // Error function
+                    (error) => {
+                        console.error('Error uploading profile picture:', error);
+                        alert('Error uploading profile picture. Please try again.');
+                        changeAvatarBtn.disabled = false;
+                        changeAvatarBtn.textContent = 'Change Photo';
+                    },
+                    // Complete function
+                    () => {
+                        // Get download URL
+                        uploadTask.snapshot.ref.getDownloadURL()
+                            .then((downloadURL) => {
+                                // Update user's profile with the new photo URL
+                                return user.updateProfile({
+                                    photoURL: downloadURL
+                                }).then(() => {
+                                    // Update user data in database
+                                    return firebase.database().ref(`users/${user.uid}/photoURL`).set(downloadURL);
+                                });
+                            })
+                            .then(() => {
+                                // Show success message
+                                alert('Profile picture updated successfully!');
+                                
+                                // Display the new image
+                                profileImage.src = user.photoURL;
+                                profileImage.style.display = 'block';
+                                profileIcon.style.display = 'none';
+                                
+                                // Update profile completion
+                                firebase.database().ref('users/' + user.uid).once('value')
+                                    .then(snapshot => {
+                                        const userData = snapshot.val() || {};
+                                        updateProfileCompletion(userData, user);
+                                    });
+                            })
+                            .catch((error) => {
+                                console.error('Error updating profile picture:', error);
+                                alert('Error updating profile picture. Please try again.');
+                            })
+                            .finally(() => {
+                                changeAvatarBtn.disabled = false;
+                                changeAvatarBtn.textContent = 'Change Photo';
+                            });
+                    }
+                );
+            }
+            
+            // Load user data from Firebase
+            function loadUserData(user) {
+                const profileForm = document.getElementById('profile-form');
+                const notificationsForm = document.getElementById('notifications-form');
+                
+                // Get user profile data
+                firebase.database().ref('users/' + user.uid).once('value')
+                    .then(snapshot => {
+                        const userData = snapshot.val() || {};
+                        
+                        // Populate profile form
+                        document.getElementById('first-name').value = userData.firstName || '';
+                        document.getElementById('last-name').value = userData.lastName || '';
+                        document.getElementById('email').value = user.email || '';
+                        document.getElementById('job-title').value = userData.jobTitle || '';
+                        document.getElementById('department').value = userData.department || '';
+                        document.getElementById('phone').value = userData.phone || '';
+                        
+                        // Load profile image if exists
+                        if (user.photoURL) {
+                            const profileImage = document.getElementById('profile-image');
+                            const profileIcon = document.getElementById('profile-icon');
+                            
+                            profileImage.src = user.photoURL;
+                            profileImage.style.display = 'block';
+                            profileIcon.style.display = 'none';
+                        }
+                        
+                        // Set notification preferences
+                        if (userData.notifications) {
+                            const notifyForm = document.getElementById('notifications-form');
+                            
+                            if (notifyForm) {
+                                Object.keys(userData.notifications).forEach(key => {
+                                    const checkbox = notifyForm.querySelector(`input[name="notify-${key}"]`);
+                                    if (checkbox) {
+                                        checkbox.checked = userData.notifications[key];
+                                    }
+                                });
+                            }
+                        }
+                        
+                        // Load login sessions
+                        loadLoginSessions(user.uid);
+                        
+                        // Calculate and update profile completion
+                        updateProfileCompletion(userData, user);
+                    })
+                    .catch(error => {
+                        console.error("Error loading user data:", error);
+                        alert("Error loading user data. Please try again later.");
+                    });
+                
+                // Load and display login sessions
+                function loadLoginSessions(userId) {
+                    const sessionsTable = document.getElementById('sessions-table');
+                    
+                    // Create or update current session
+                    createOrUpdateCurrentSession(userId);
+                    
+                    // Get current session ID
+                    const currentSessionId = localStorage.getItem('sessionId') || '';
+                    
+                    // Listen for session updates in real-time
+                    firebase.database().ref(`users/${userId}/sessions`).on('value', snapshot => {
+                        sessionsTable.innerHTML = ''; // Clear table
+                        
+                        if (snapshot.exists()) {
+                            // Convert to array and sort by last activity time (newest first)
+                            const sessions = [];
+                            snapshot.forEach(child => {
+                                sessions.push({
+                                    id: child.key,
+                                    ...child.val()
+                                });
+                            });
+                            
+                            sessions.sort((a, b) => b.lastActivity - a.lastActivity);
+                            
+                            // Display each session
+                            sessions.forEach(session => {
+                                const row = document.createElement('tr');
+                                const isCurrent = session.id === currentSessionId;
+                                
+                                if (isCurrent) {
+                                    row.classList.add('session-current');
+                                }
+                                
+                                // Format device information
+                                let deviceIcon = 'fa-desktop';
+                                if (session.device && session.device.toLowerCase().includes('mobile') || 
+                                    session.device && session.device.toLowerCase().includes('phone')) {
+                                    deviceIcon = 'fa-mobile-alt';
+                                } else if (session.device && session.device.toLowerCase().includes('tablet')) {
+                                    deviceIcon = 'fa-tablet-alt';
+                                }
+                                
+                                const deviceInfo = `${session.device || 'Unknown'} ${session.browser ? '• ' + session.browser : ''} ${session.os ? '• ' + session.os : ''}`;
+                                
+                                // Use centralized date/time formatting and data-time attribute
+                                const lastActivityISO = new Date(session.lastActivity).toISOString();
+                                const isRecent = Date.now() - session.lastActivity < 5 * 60 * 1000; // Within last 5 minutes
+                                
+                                // Create row HTML
+                                row.innerHTML = `
+                                    <td class="session-device">
+                                        <i class="fas ${deviceIcon}"></i>
+                                        ${deviceInfo}
+                                        ${isCurrent ? '<span class="session-current-tag">Current</span>' : ''}
+                                    </td>
+                                    <td class="session-ip">${session.ipAddress || 'Unknown'}</td>
+                                    <td class="session-location">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <div>
+                                            <div>${session.location || 'Unknown coordinates'}</div>
+                                            <div style="font-size: 0.8rem; color: #666;">${session.cityCountry || ''}</div>
+                                        </div>
+                                    </td>
+                                    <td class="session-time${isRecent ? ' recent' : ''}" data-time="${lastActivityISO}">${window.DateTimeUtils ? window.DateTimeUtils.formatDateTime(lastActivityISO, userId) : ''}</td>
+                                    <td>
+                                        ${isCurrent ? '-' : `<button class="btn-sign-out" data-session-id="${session.id}">Sign Out</button>`}
+                                    </td>
+                                `;
+                                
+                                sessionsTable.appendChild(row);
+                                
+                                // Add event listener to sign out button
+                                if (!isCurrent) {
+                                    const signOutBtn = row.querySelector('.btn-sign-out');
+                                    signOutBtn.addEventListener('click', function() {
+                                        terminateSession(userId, session.id);
+                                        this.disabled = true;
+                                        this.textContent = 'Signing out...';
+                                    });
+                                }
+                            });
+                        } else {
+                            // No sessions found
+                            sessionsTable.innerHTML = `
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 20px;">No active sessions found</td>
+                                </tr>
+                            `;
+                        }
+                    });
+                }
+                
+                // Create or update current session
+                function createOrUpdateCurrentSession(userId) {
+                    // Generate a unique session ID if one doesn't exist
+                    let sessionId = localStorage.getItem('sessionId');
+                    if (!sessionId) {
+                        sessionId = generateSessionId();
+                        localStorage.setItem('sessionId', sessionId);
+                    }
+                    
+                    // Get device and browser info
+                    const deviceInfo = getDeviceInfo();
+                    
+                    // Get IP address and location
+                    fetchIPInfo().then(ipInfo => {
+                        // Create session data
+                        const sessionData = {
+                            id: sessionId,
+                            device: deviceInfo.device,
+                            browser: deviceInfo.browser,
+                            os: deviceInfo.os,
+                            ipAddress: ipInfo.ip,
+                            location: ipInfo.location,
+                            lastActivity: Date.now(),
+                            createdAt: firebase.database().ServerValue.TIMESTAMP
+                        };
+                        
+                        // Save to Firebase
+                        firebase.database().ref(`users/${userId}/sessions/${sessionId}`).update(sessionData);
+                        
+                        // Update last activity time periodically
+                        setInterval(() => {
+                            firebase.database().ref(`users/${userId}/sessions/${sessionId}/lastActivity`).set(Date.now());
+                        }, 60000); // Every minute
+                    });
+                }
+                
+                // Terminate a session
+                function terminateSession(userId, sessionId) {
+                    return firebase.database().ref(`users/${userId}/sessions/${sessionId}`).remove()
+                        .then(() => {
+                            console.log('Session terminated successfully');
+                        })
+                        .catch(error => {
+                            console.error('Error terminating session:', error);
+                        });
+                }
+                
+                // Get device info
+                function getDeviceInfo() {
+                    const ua = navigator.userAgent;
+                    let device = 'Unknown Device';
+                    let browser = 'Unknown Browser';
+                    let os = 'Unknown OS';
+                    
+                    // Detect device
+                    if (/Windows NT/.test(ua)) {
+                        device = 'Windows PC';
+                    } else if (/Macintosh/.test(ua)) {
+                        device = 'Mac';
+                    } else if (/iPad/.test(ua)) {
+                        device = 'iPad';
+                    } else if (/iPhone/.test(ua)) {
+                        device = 'iPhone';
+                    } else if (/Android/.test(ua)) {
+                        device = /Mobile/.test(ua) ? 'Android Phone' : 'Android Tablet';
+                    } else if (/Linux/.test(ua)) {
+                        device = 'Linux PC';
+                    }
+                    
+                    // Detect browser
+                    if (/Edge\/|Edg\//.test(ua)) {
+                        browser = 'Edge';
+                    } else if (/Chrome\//.test(ua) && /Safari\//.test(ua) && !/Chromium\//.test(ua)) {
+                        browser = 'Chrome';
+                    } else if (/Firefox\//.test(ua) && !/Seamonkey\//.test(ua)) {
+                        browser = 'Firefox';
+                    } else if (/Safari\//.test(ua) && !/Chrome\//.test(ua) && !/Chromium\//.test(ua)) {
+                        browser = 'Safari';
+                    } else if (/MSIE|Trident/.test(ua)) {
+                        browser = 'Internet Explorer';
+                    } else if (/Opera\/|OPR\//.test(ua)) {
+                        browser = 'Opera';
+                    }
+                    
+                    // Detect OS
+                    if (/Windows NT 10/.test(ua)) {
+                        os = 'Windows 10';
+                    } else if (/Windows NT 6\.3/.test(ua)) {
+                        os = 'Windows 8.1';
+                    } else if (/Windows NT 6\.2/.test(ua)) {
+                        os = 'Windows 8';
+                    } else if (/Windows NT 6\.1/.test(ua)) {
+                        os = 'Windows 7';
+                    } else if (/Windows NT 6\.0/.test(ua)) {
+                        os = 'Windows Vista';
+                    } else if (/Windows NT 5\.1/.test(ua)) {
+                        os = 'Windows XP';
+                    } else if (/Macintosh.*Mac OS X/.test(ua)) {
+                        const macOSVersion = ua.match(/Mac OS X ([0-9_]+)/);
+                        os = macOSVersion ? `macOS ${macOSVersion[1].replace(/_/g, '.')}` : 'macOS';
+                    } else if (/Android/.test(ua)) {
+                        const androidVersion = ua.match(/Android ([0-9\.]+)/);
+                        os = androidVersion ? `Android ${androidVersion[1]}` : 'Android';
+                    } else if (/iOS|iPhone|iPad|iPod/.test(ua)) {
+                        const iOSVersion = ua.match(/OS ([0-9_]+)/);
+                        os = iOSVersion ? `iOS ${iOSVersion[1].replace(/_/g, '.')}` : 'iOS';
+                    } else if (/Linux/.test(ua)) {
+                        os = 'Linux';
+                    }
+                    
+                    return { device, browser, os };
+                }
+                
+                // Fetch IP information
+                function fetchIPInfo() {
+                    return fetch('https://ipapi.co/json/')
+                        .then(response => response.json())
+                        .then(data => {
+                            // Extract GPS coordinates and IP address
+                            const coordinates = data.latitude && data.longitude ? 
+                                `${data.latitude.toFixed(6)}, ${data.longitude.toFixed(6)}` : 
+                                'Unknown coordinates';
+                                
+                            return {
+                                ip: data.ip || 'Unknown IP',
+                                location: coordinates,
+                                cityCountry: `${data.city || ''}, ${data.country_name || ''}`
+                                    .replace(/^, /, '')
+                                    .replace(/, $/, '') || 'Unknown location'
+                            };
+                        })
+                        .catch(error => {
+                            console.error('Error fetching IP information:', error);
+                            return { 
+                                ip: 'Unknown IP', 
+                                location: 'Unknown coordinates',
+                                cityCountry: 'Unknown location' 
+                            };
+                        });
+                }
+                
+                // Generate unique session ID
+                function generateSessionId() {
+                    const randomPart = Math.random().toString(36).substring(2, 10);
+                    const timestampPart = Date.now().toString(36);
+                    return `${timestampPart}-${randomPart}`;
+                }
+                
+                // Calculate profile completion percentage
+                function updateProfileCompletion(userData, user) {
+                    const profileFields = [
+                        { field: 'firstName', label: 'First Name', value: userData.firstName || '' },
+                        { field: 'lastName', label: 'Last Name', value: userData.lastName || '' },
+                        { field: 'jobTitle', label: 'Job Title', value: userData.jobTitle || '' },
+                        { field: 'department', label: 'Department', value: userData.department || '' },
+                        { field: 'phone', label: 'Phone Number', value: userData.phone || '' },
+                        { field: 'photo', label: 'Profile Photo', value: user.photoURL ? 'yes' : '' }
+                    ];
+                    
+                    // Count completed fields
+                    const completedFields = profileFields.filter(field => field.value).length;
+                    const totalFields = profileFields.length;
+                    
+                    // Calculate percentage
+                    const completionPercentage = Math.round((completedFields / totalFields) * 100);
+                    
+                    // Update UI elements
+                    const percentageElement = document.getElementById('completion-percentage');
+                    const progressBar = document.getElementById('completion-progress-bar');
+                    const profileCompletionCard = document.getElementById('profile-completion');
+                    const incompleteFieldsList = document.getElementById('incomplete-fields');
+                    
+                    // Update percentage text and progress bar
+                    percentageElement.textContent = `${completionPercentage}%`;
+                    progressBar.style.width = `${completionPercentage}%`;
+                    
+                    // Update profile completion card class based on percentage
+                    profileCompletionCard.classList.remove('low', 'medium', 'high');
+                    if (completionPercentage < 40) {
+                        profileCompletionCard.classList.add('low');
+                    } else if (completionPercentage < 70) {
+                        profileCompletionCard.classList.add('medium');
+                    } else {
+                        profileCompletionCard.classList.add('high');
+                    }
+                    
+                    // Clear and repopulate incomplete fields list
+                    incompleteFieldsList.innerHTML = '';
+                    
+                    // Add incomplete fields to the list
+                    const incompleteFields = profileFields.filter(field => !field.value);
+                    if (incompleteFields.length > 0) {
+                        incompleteFields.forEach(field => {
+                            const listItem = document.createElement('li');
+                            listItem.textContent = `Add your ${field.label}`;
+                            incompleteFieldsList.appendChild(listItem);
+                        });
+                    } else {
+                        // If all fields are complete, show a success message
+                        const listItem = document.createElement('li');
+                        listItem.textContent = 'Your profile is complete!';
+                        listItem.style.color = 'var(--success-color)';
+                        listItem.style.fontWeight = 'bold';
+                        incompleteFieldsList.appendChild(listItem);
+                    }
+                }
+                
+                // Handle profile form submission
+                profileForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const updateData = {
+                        firstName: document.getElementById('first-name').value,
+                        lastName: document.getElementById('last-name').value,
+                        jobTitle: document.getElementById('job-title').value,
+                        department: document.getElementById('department').value,
+                        phone: document.getElementById('phone').value,
+                        lastUpdated: new Date().toISOString()
+                    };
+                    
+                    // Update user profile
+                    const updates = {};
+                    updates[`users/${user.uid}`] = updateData;
+                    
+                    firebase.database().ref().update(updates)
+                        .then(() => {
+                            alert("Profile updated successfully!");
+                        })
+                        .catch(error => {
+                            console.error("Error updating profile:", error);
+                            alert("Error updating profile. Please try again.");
+                        });
+                });
+                
+                // Handle password form submission
+                const passwordForm = document.getElementById('password-form');
+                
+                passwordForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const currentPassword = document.getElementById('current-password').value;
+                    const newPassword = document.getElementById('new-password').value;
+                    const confirmPassword = document.getElementById('confirm-password').value;
+                    
+                    // Check if new passwords match
+                    if (newPassword !== confirmPassword) {
+                        alert("New passwords don't match!");
+                        return;
+                    }
+                    
+                    // Validate password strength
+                    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+                    if (!passwordRegex.test(newPassword)) {
+                        alert("Password must be at least 8 characters and include uppercase, lowercase, numbers, and special characters.");
+                        return;
+                    }
+                    
+                    // Reauthenticate with current password
+                    const credential = firebase.auth.EmailAuthProvider.credential(
+                        user.email,
+                        currentPassword
+                    );
+                    
+                    user.reauthenticateWithCredential(credential)
+                        .then(() => {
+                            // Change password
+                            return user.updatePassword(newPassword);
+                        })
+                        .then(() => {
+                            alert("Password updated successfully!");
+                            passwordForm.reset();
+                        })
+                        .catch(error => {
+                            console.error("Error changing password:", error);
+                            if (error.code === 'auth/wrong-password') {
+                                alert("Current password is incorrect.");
+                            } else {
+                                alert("Error changing password. Please try again later.");
+                            }
+                        });
+                });
+                
+                // Handle notification preferences form submission
+                notificationsForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const notifications = {
+                        incidents: document.querySelector('input[name="notify-incidents"]').checked,
+                        'risk-assessments': document.querySelector('input[name="notify-risk-assessments"]').checked,
+                        trainings: document.querySelector('input[name="notify-trainings"]').checked,
+                        system: document.querySelector('input[name="notify-system"]').checked,
+                        documents: document.querySelector('input[name="notify-documents"]').checked
+                    };
+                    
+                    // Update notification preferences
+                    firebase.database().ref(`users/${user.uid}/notifications`).update(notifications)
+                        .then(() => {
+                            alert("Notification preferences updated successfully!");
+                        })
+                        .catch(error => {
+                            console.error("Error updating notification preferences:", error);
+                            alert("Error updating notification preferences. Please try again.");
+                        });
+                });
+
+                // Handle medical form submission
+                const medicalForm = document.getElementById('medical-form');
+                
+                medicalForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const medicalData = {
+                        emergencyContact: {
+                            name: document.getElementById('emergency-contact-name').value,
+                            relationship: document.getElementById('emergency-contact-relationship').value,
+                            phone: document.getElementById('emergency-contact-phone').value,
+                            alternativePhone: document.getElementById('emergency-contact-alt-phone').value
+                        },
+                        medicalDetails: {
+                            bloodType: document.getElementById('blood-type').value,
+                            allergies: document.getElementById('allergies').value,
+                            medicalConditions: document.getElementById('medical-conditions').value,
+                            medications: document.getElementById('medications').value
+                        },
+                        medicalHistory: {
+                            previousSurgeries: document.getElementById('previous-surgeries').value,
+                            workplaceIncidents: document.getElementById('workplace-incidents').value
+                        },
+                        additionalInfo: {
+                            primaryPhysician: document.getElementById('primary-physician').value,
+                            physicianContact: document.getElementById('physician-contact').value,
+                            notes: document.getElementById('medical-notes').value
+                        },
+                        lastUpdated: new Date().toISOString()
+                    };
+                    
+                    // Update medical data in Firebase
+                    firebase.database().ref(`users/${user.uid}/medical`).update(medicalData)
+                        .then(() => {
+                            alert("Medical information updated successfully!");
+                        })
+                        .catch(error => {
+                            console.error("Error updating medical information:", error);
+                            alert("Error updating medical information. Please try again.");
+                        });
+                });
+                
+                // Load medical data from Firebase
+                function loadMedicalData(userId) {
+                    firebase.database().ref(`users/${userId}/medical`).once('value')
+                        .then(snapshot => {
+                            const medicalData = snapshot.val() || {};
+                            
+                            // Fill emergency contact fields
+                            if (medicalData.emergencyContact) {
+                                document.getElementById('emergency-contact-name').value = medicalData.emergencyContact.name || '';
+                                document.getElementById('emergency-contact-relationship').value = medicalData.emergencyContact.relationship || '';
+                                document.getElementById('emergency-contact-phone').value = medicalData.emergencyContact.phone || '';
+                                document.getElementById('emergency-contact-alt-phone').value = medicalData.emergencyContact.alternativePhone || '';
+                            }
+                            
+                            // Fill medical details fields
+                            if (medicalData.medicalDetails) {
+                                document.getElementById('blood-type').value = medicalData.medicalDetails.bloodType || '';
+                                document.getElementById('allergies').value = medicalData.medicalDetails.allergies || '';
+                                document.getElementById('medical-conditions').value = medicalData.medicalDetails.medicalConditions || '';
+                                document.getElementById('medications').value = medicalData.medicalDetails.medications || '';
+                            }
+                            
+                            // Fill medical history fields
+                            if (medicalData.medicalHistory) {
+                                document.getElementById('previous-surgeries').value = medicalData.medicalHistory.previousSurgeries || '';
+                                document.getElementById('workplace-incidents').value = medicalData.medicalHistory.workplaceIncidents || '';
+                            }
+                            
+                            // Fill additional information fields
+                            if (medicalData.additionalInfo) {
+                                document.getElementById('primary-physician').value = medicalData.additionalInfo.primaryPhysician || '';
+                                document.getElementById('physician-contact').value = medicalData.additionalInfo.physicianContact || '';
+                                document.getElementById('medical-notes').value = medicalData.additionalInfo.notes || '';
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error loading medical information:", error);
+                        });
+                }
+                
+                // Load medical data when user data is loaded
+                loadMedicalData(user.uid);
+                
+                // Load user's medical visits
+                loadUserMedicalVisits(user.uid);
+                
+                // Medical Visit Request Functions
+                const requestMedicalVisitBtn = document.getElementById('request-medical-visit-btn');
+                const medicalVisitModal = document.getElementById('medical-visit-modal');
+                const closeModalBtn = document.getElementById('close-medical-modal');
+                const cancelRequestBtn = document.getElementById('cancel-medical-request');
+                const quickMedicalVisitForm = document.getElementById('quick-medical-visit-form');
+                const visitTypeSelect = document.getElementById('quick-visit-type');
+                const otherVisitTypeGroup = document.getElementById('other-visit-type-group');
+                const workplaceRelatedRadios = document.querySelectorAll('input[name="workplace-related"]');
+                const workplaceIncidentDetailsGroup = document.getElementById('workplace-incident-details-group');
+                
+                // Open medical visit request modal
+                requestMedicalVisitBtn.addEventListener('click', function() {
+                    // Set the minimum date to today
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('quick-preferred-date').min = today;
+                    
+                    // Clear form
+                    quickMedicalVisitForm.reset();
+                    
+                    // Show modal
+                    medicalVisitModal.style.display = 'block';
+                });
+                
+                // Close modal functions
+                closeModalBtn.addEventListener('click', function() {
+                    medicalVisitModal.style.display = 'none';
+                });
+                
+                cancelRequestBtn.addEventListener('click', function() {
+                    medicalVisitModal.style.display = 'none';
+                });
+                
+                // Close modal when clicking outside
+                window.addEventListener('click', function(e) {
+                    if (e.target === medicalVisitModal) {
+                        medicalVisitModal.style.display = 'none';
+                    }
+                });
+                
+                // Show/hide "Other" visit type input
+                visitTypeSelect.addEventListener('change', function() {
+                    if (this.value === 'other') {
+                        otherVisitTypeGroup.style.display = 'block';
+                    } else {
+                        otherVisitTypeGroup.style.display = 'none';
+                    }
+                });
+                
+                // Show/hide workplace incident details
+                workplaceRelatedRadios.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.value === 'yes') {
+                            workplaceIncidentDetailsGroup.style.display = 'block';
+                        } else {
+                            workplaceIncidentDetailsGroup.style.display = 'none';
+                        }
+                    });
+                });
+                
+                // Submit quick medical visit request
+                quickMedicalVisitForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const visitType = visitTypeSelect.value;
+                    const otherVisitType = document.getElementById('other-visit-type').value;
+                    const preferredDate = document.getElementById('quick-preferred-date').value;
+                    const preferredTime = document.getElementById('quick-preferred-time').value;
+                    const visitReason = document.getElementById('quick-visit-reason').value;
+                    const workplaceRelated = document.querySelector('input[name="workplace-related"]:checked').value;
+                    const incidentDetails = document.getElementById('workplace-incident-details').value;
+                    
+                    // Get user data for the request
+                    firebase.database().ref('users/' + user.uid).once('value')
+                        .then(snapshot => {
+                            const userData = snapshot.val() || {};
+                            
+                            // Create visit request data
+                            const requestData = {
+                                employeeName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || user.email,
+                                employeeId: userData.employeeId || '',
+                                department: userData.department || '',
+                                jobTitle: userData.jobTitle || '',
+                                visitType: visitType,
+                                otherVisitType: visitType === 'other' ? otherVisitType : '',
+                                preferredDate: preferredDate,
+                                preferredTime: preferredTime,
+                                reason: visitReason,
+                                workplaceRelated: workplaceRelated,
+                                incidentDetails: workplaceRelated === 'yes' ? incidentDetails : '',
+                                status: 'pending',
+                                timestamp: firebase.database.ServerValue.TIMESTAMP,
+                                userId: user.uid,
+                                email: user.email
+                            };
+                            
+                            // Save to Firebase
+                            return firebase.database().ref('medical-visit-requests').push(requestData);
+                        })
+                        .then(() => {
+                            // Success message
+                            alert('Medical visit request submitted successfully!');
+                            
+                            // Close modal and reset form
+                            medicalVisitModal.style.display = 'none';
+                            quickMedicalVisitForm.reset();
+                            
+                            // Reload visits
+                            loadUserMedicalVisits(user.uid);
+                        })
+                        .catch(error => {
+                            console.error('Error submitting medical visit request:', error);
+                            alert('Error submitting request. Please try again.');
+                        });
+                });
+                
+                // Load user's medical visit requests
+                function loadUserMedicalVisits(userId) {
+                    const loadingIndicator = document.getElementById('medical-visits-loading');
+                    const tableContainer = document.getElementById('medical-visits-table-container');
+                    const noVisitsMessage = document.getElementById('no-medical-visits');
+                    const visitsTableBody = document.getElementById('medical-visits-body');
+                    
+                    loadingIndicator.style.display = 'block';
+                    tableContainer.style.display = 'none';
+                    noVisitsMessage.style.display = 'none';
+                    
+                    firebase.database().ref('medical-visit-requests').orderByChild('userId').equalTo(userId).once('value')
+                        .then(snapshot => {
+                            // Hide loading indicator
+                            loadingIndicator.style.display = 'none';
+                            
+                            // Clear table
+                            visitsTableBody.innerHTML = '';
+                            
+                            // Check if there are any visits
+                            if (snapshot.exists()) {
+                                // Show table
+                                tableContainer.style.display = 'block';
+                                
+                                // Convert to array and sort by timestamp (newest first)
+                                const visits = [];
+                                snapshot.forEach(child => {
+                                    visits.push({
+                                        id: child.key,
+                                        ...child.val()
+                                    });
+                                });
+                                
+                                // Sort by timestamp, newest first
+                                visits.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                                
+                                // Add each visit to the table
+                                visits.forEach(visit => {
+                                    const row = document.createElement('tr');
+                                    
+                                    // Format visit type
+                                    let visitTypeFormatted = '';
+                                    if (visit.visitType === 'routine-checkup') visitTypeFormatted = 'Routine Checkup';
+                                    else if (visit.visitType === 'specialized-examination') visitTypeFormatted = 'Specialized Examination';
+                                    else if (visit.visitType === 'follow-up') visitTypeFormatted = 'Follow-up Visit';
+                                    else if (visit.visitType === 'emergency') visitTypeFormatted = 'Emergency Visit';
+                                    else if (visit.visitType === 'vaccination') visitTypeFormatted = 'Vaccination';
+                                    else if (visit.visitType === 'occupational-health') visitTypeFormatted = 'Occupational Health Assessment';
+                                    else if (visit.visitType === 'other' && visit.otherVisitType) visitTypeFormatted = visit.otherVisitType;
+                                    else visitTypeFormatted = visit.visitType || 'Unknown';
+                                    
+                                    // Format date
+                                    const visitDate = visit.preferredDate ? new Date(visit.preferredDate).toLocaleDateString() : 'N/A';
+                                    
+                                    // Format time
+                                    let visitTime = 'Any time';
+                                    if (visit.preferredTime === 'morning') visitTime = 'Morning (9AM-12PM)';
+                                    else if (visit.preferredTime === 'afternoon') visitTime = 'Afternoon (1PM-5PM)';
+                                    
+                                    // Format status badge
+                                    let statusClass = 'badge-warning';
+                                    if (visit.status === 'approved') statusClass = 'badge-success';
+                                    else if (visit.status === 'rejected') statusClass = 'badge-danger';
+                                    else if (visit.status === 'rescheduled') statusClass = 'badge-info';
+                                    else if (visit.status === 'completed') statusClass = 'badge-secondary';
+                                    
+                                    // Create row HTML
+                                    row.innerHTML = `
+                                        <td>${visitDate}<br><small>${visitTime}</small></td>
+                                        <td>${visitTypeFormatted}</td>
+                                        <td><span class="badge ${statusClass}" style="padding: 5px 10px; border-radius: 20px;">${visit.status ? visit.status.charAt(0).toUpperCase() + visit.status.slice(1) : 'Pending'}</span></td>
+                                        <td>
+                                            <button class="btn-view-details" data-id="${visit.id}" style="background: none; border: none; color: #0275d8; cursor: pointer;">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                            ${visit.status === 'pending' ? `
+                                            <button class="btn-cancel-request" data-id="${visit.id}" style="background: none; border: none; color: #dc3545; cursor: pointer; margin-left: 10px;">
+                                                <i class="fas fa-times"></i> Cancel
+                                            </button>
+                                            ` : ''}
+                                        </td>
+                                    `;
+                                    
+                                    visitsTableBody.appendChild(row);
+                                });
+                                
+                                // Add event listeners to view details buttons
+                                document.querySelectorAll('.btn-view-details').forEach(btn => {
+                                    btn.addEventListener('click', function() {
+                                        const requestId = this.getAttribute('data-id');
+                                        window.location.href = `medicalrequest.html?id=${requestId}&view=true`;
+                                    });
+                                });
+                                
+                                // Add event listeners to cancel request buttons
+                                document.querySelectorAll('.btn-cancel-request').forEach(btn => {
+                                    btn.addEventListener('click', function() {
+                                        if (confirm('Are you sure you want to cancel this medical visit request?')) {
+                                            const requestId = this.getAttribute('data-id');
+                                            firebase.database().ref(`medical-visit-requests/${requestId}`).remove()
+                                                .then(() => {
+                                                    alert('Medical visit request cancelled successfully!');
+                                                    loadUserMedicalVisits(userId);
+                                                })
+                                                .catch(error => {
+                                                    console.error('Error cancelling medical visit request:', error);
+                                                    alert('Error cancelling request. Please try again.');
+                                                });
+                                        }
+                                    });
+                                });
+                            } else {
+                                // Show no visits message
+                                noVisitsMessage.style.display = 'block';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading medical visits:', error);
+                            loadingIndicator.style.display = 'none';
+                            noVisitsMessage.style.display = 'block';
+                            noVisitsMessage.innerHTML = `
+                                <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #dc3545; margin-bottom: 10px;"></i>
+                                <p>Error loading medical visits. Please try again later.</p>
+                            `;
+                        });
+                }
+            }
+
+            // After loadUserData(user), add listener for datetime preference changes and update all date/time fields
+            if (window.DateTimeUtils) {
+                document.addEventListener('datetimePreferencesChanged', function(e) {
+                    window.DateTimeUtils.updateAllDateTimeElements(user.uid);
+                });
+                // Initial update on page load
+                window.DateTimeUtils.updateAllDateTimeElements(user.uid);
+            }
+        });
+    </script>
+</body>
+</html>

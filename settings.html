@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Settings</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .settings-container {
+            max-width: 100%;
+            margin: 90px auto 0;
+            padding: 0 20px;
+        }
+        
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .settings-title h2 {
+            margin-bottom: 5px;
+        }
+        
+        .settings-title p {
+            color: #666;
+            margin-top: 0;
+        }
+        
+        .settings-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        .settings-card-header {
+            background-color: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .settings-card-body {
+            padding: 20px;
+        }
+        
+        .settings-section {
+            margin-bottom: 30px;
+        }
+        
+        .settings-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .settings-section h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .settings-group {
+            margin-bottom: 20px;
+        }
+        
+        .settings-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .settings-group select, 
+        .settings-group input[type="text"], 
+        .settings-group input[type="email"], 
+        .settings-group input[type="password"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .settings-group .form-help {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .settings-group .toggle-container {
+            display: flex;
+            align-items: center;
+        }
+        
+        .settings-group .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin-right: 10px;
+        }
+        
+        .settings-group .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .settings-group .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .settings-group .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        .settings-group input:checked + .toggle-slider {
+            background-color: #2196F3;
+        }
+        
+        .settings-group input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .settings-group .toggle-label {
+            font-weight: 400;
+        }
+        
+        .settings-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding: 15px 20px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #eee;
+        }
+        
+        .settings-footer .btn {
+            margin-left: 10px;
+        }
+        
+        .format-preview {
+            background-color: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+        }
+        
+        .format-preview-item {
+            margin-bottom: 5px;
+        }
+        
+        .format-preview-item:last-child {
+            margin-bottom: 0;
+        }
+        
+        .format-preview-label {
+            font-weight: 500;
+            margin-right: 10px;
+            display: inline-block;
+            width: 120px;
+        }
+        
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Status message styles */
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .format-input-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .format-input-preview select {
+            flex: 1;
+        }
+        
+        .inline-preview {
+            white-space: nowrap;
+            font-size: 14px;
+            color: #6c757d;
+        }
+        
+        /* Date format examples */
+        .date-format-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .date-format-example {
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .date-format-example:hover {
+            background: #e9ecef;
+            border-color: #ced4da;
+        }
+        
+        .date-format-example.selected {
+            background: #cfe2ff;
+            border-color: #9ec5fe;
+        }
+        
+        /* Field configuration styles */
+        .field-configuration {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+        
+        .field-config-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .field-config-header select {
+            width: 250px;
+        }
+        
+        .field-options-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .field-options-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .field-options-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #f8f9fa;
+        }
+        
+        .field-option-item {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .field-option-item:hover {
+            background-color: #f1f3f5;
+        }
+        
+        .field-option-item.disabled {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        .field-option-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .field-option-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
+        
+        .field-option-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .field-option-form {
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            background-color: white;
+        }
+        
+        .field-option-form h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .field-preview {
+            grid-column: 1 / -1;
+            border-top: 1px solid #dee2e6;
+            padding: 15px;
+        }
+        
+        .field-preview h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        
+        .preview-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .preview-tag {
+            padding: 5px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: white;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder - will be replaced by the header component -->
+    <div id="header-placeholder"></div>
+
+    <main class="settings-container">
+        <div class="settings-header">
+            <div class="settings-title">
+                <h2>System Settings</h2>
+                <p>Configure your HSE system preferences</p>
+            </div>
+        </div>
+        
+        <!-- Status Messages -->
+        <div id="statusSuccess" class="status-message status-success">
+            <i class="fas fa-check-circle"></i> Settings saved successfully!
+        </div>
+        <div id="statusError" class="status-message status-error">
+            <i class="fas fa-exclamation-circle"></i> Error saving settings. Please try again.
+        </div>
+        
+        <!-- Personal Settings Card -->
+        <div class="settings-card">
+            <div class="settings-card-header">
+                <span>Personal Settings</span>
+            </div>
+            <div class="settings-card-body">
+                <div class="settings-section">
+                    <h3>Date and Time Format</h3>
+                    <p>Choose your preferred date and time format for displaying across the system.</p>
+                    
+                    <div class="settings-grid">
+                        <div class="settings-group">
+                            <label for="dateFormat">Date Format</label>
+                            <div class="format-input-preview">
+                                <select id="dateFormat" class="form-control">
+                                    <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+                                    <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+                                    <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+                                    <option value="MMMM D, YYYY">MMMM D, YYYY</option>
+                                    <option value="D MMMM YYYY">D MMMM YYYY</option>
+                                    <option value="MMM D, YYYY">MMM D, YYYY</option>
+                                    <option value="D MMM YYYY">D MMM YYYY</option>
+                                </select>
+                                <span class="inline-preview">Preview: <span id="datePreview"></span></span>
+                            </div>
+                            <div class="form-help">Select the format for displaying dates in the system.</div>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <label for="timeFormat">Time Format</label>
+                            <div class="format-input-preview">
+                                <select id="timeFormat" class="form-control">
+                                    <option value="hh:mm A">12-hour</option>
+                                    <option value="HH:mm">24-hour</option>
+                                    <option value="h:mm A">12-hour without leading zero</option>
+                                    <option value="HH:mm:ss">24-hour with seconds</option>
+                                </select>
+                                <span class="inline-preview">Preview: <span id="timePreview"></span></span>
+                            </div>
+                            <div class="form-help">Select the format for displaying times in the system.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="format-preview">
+                        <h4>Combined Preview:</h4>
+                        <div class="format-preview-item">
+                            <span class="format-preview-label">Date & Time:</span>
+                            <span id="dateTimePreview"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Notification Preferences</h3>
+                    <p>Configure how you receive notifications from the system.</p>
+                    
+                    <div class="settings-grid">
+                        <div class="settings-group">
+                            <label>Email Notifications</label>
+                            <div class="toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="emailNotifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label">Receive notifications by email</span>
+                            </div>
+                            <div class="form-help">You'll receive email notifications for important events.</div>
+                        </div>
+                        
+                        <div class="settings-group">
+                            <label>Browser Notifications</label>
+                            <div class="toggle-container">
+                                <label class="toggle-switch">
+                                    <input type="checkbox" id="browserNotifications">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span class="toggle-label">Enable browser notifications</span>
+                            </div>
+                            <div class="form-help">You'll receive notifications in your browser when you're using the system.</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Form Field Configuration</h3>
+                    <p>Manage dropdown options for forms and customize field values across the system.</p>
+                    
+                    <div class="field-configuration">
+                        <div class="field-config-header">
+                            <select id="fieldTypeSelector" class="form-control">
+                                <optgroup label="User Management">
+                                    <option value="user-gender">Gender</option>
+                                    <option value="user-role">User Role</option>
+                                    <option value="account-status">Account Status</option>
+                                </optgroup>
+                                <!-- Medical Assessment Form Options -->
+                                <optgroup label="Medical Assessment Form">
+                                    <option value="assessment-type">Assessment Type</option>
+                                    <option value="medical-location">Medical Location</option>
+                                    <option value="medical-status">Medical Status</option>
+                                    <option value="medical-conditions">Medical Conditions</option>
+                                    <option value="vital-signs">Vital Signs</option>
+                                </optgroup>
+                                
+                                <!-- Risk Assessment Form Options -->
+                                <optgroup label="Risk Assessment Form">
+                                    <option value="risk-category">Risk Category</option>
+                                    <option value="hazard-type">Hazard Type</option>
+                                    <option value="risk-strategy">Risk Strategy</option>
+                                </optgroup>
+                                
+                                <!-- Job Safety Analysis Form Options -->
+                                <optgroup label="Job Safety Analysis Form">
+                                    <option value="job-type">Job Types</option>
+                                    <option value="job-step">Job Steps</option>
+                                    <option value="department">Departments</option>
+                                </optgroup>
+                                
+                                <!-- Event Form Options -->
+                                <optgroup label="Event Form">
+                                    <option value="event-type">Event Types</option>
+                                    <option value="injury-type">Injury Types</option>
+                                    <option value="property-damage">Property Damage</option>
+                                    <option value="incident-category">Incident Categories</option>
+                                    <option value="observation-type">Observation Types</option>
+                                    <option value="behavior-category">Behavior Categories</option>
+                                    <option value="inspection-type">Inspection Types</option>
+                                    <option value="equipment">Equipment</option>
+                                    <option value="compliance-standard">Compliance Standards</option>
+                                    <option value="severity">Severity Levels</option>
+                                    <option value="contributing-factors">Contributing Factors</option>
+                                </optgroup>
+                                
+                                <!-- Training Form Options -->
+                                <optgroup label="Training Form">
+                                    <option value="training-category">Training Categories</option>
+                                    <option value="training-type">Training Types</option>
+                                    <option value="certification">Certification Types</option>
+                                </optgroup>
+                                
+                                <!-- Permit Form Options -->
+                                <optgroup label="Permit Form">
+                                    <option value="permit-type">Permit Types</option>
+                                    <option value="isolation-type">Isolation Types</option>
+                                    <option value="emergency-equipment">Emergency Equipment</option>
+                                </optgroup>
+                                
+                                <!-- Training Creator Options -->
+                                <optgroup label="Training Creator">
+                                    <option value="trainer-qualification">Trainer Qualifications</option>
+                                    <option value="training-location">Training Locations</option>
+                                    <option value="audience-type">Audience Types</option>
+                                </optgroup>
+                                
+                                <!-- Common Options -->
+                                <optgroup label="Common Fields">
+                                    <option value="area">Work Areas</option>
+                                    <option value="department">Departments</option>
+                                    <option value="equipment">Equipment</option>
+                                    <option value="ppe">Personal Protective Equipment</option>
+                                </optgroup>
+                            </select>
+                            <button id="addFieldOptionBtn" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Add Option
+                            </button>
+                        </div>
+                        
+                        <div class="field-options-container">
+                            <div class="field-options-list" id="fieldOptionsList">
+                                <!-- Options will be populated dynamically -->
+                            </div>
+                            
+                            <div class="field-option-form" id="fieldOptionForm" style="display: none;">
+                                <h4 id="optionFormTitle">Add New Option</h4>
+                                <div class="form-group">
+                                    <label for="optionLabel">Option Label</label>
+                                    <input type="text" id="optionLabel" class="form-control" placeholder="Enter option label">
+                                </div>
+                                <div class="form-group">
+                                    <label for="optionValue">Option Value</label>
+                                    <input type="text" id="optionValue" class="form-control" placeholder="Enter option value">
+                                </div>
+                                <div class="form-group">
+                                    <label for="optionColor">Color (for tags)</label>
+                                    <input type="color" id="optionColor" class="form-control" value="#3498db">
+                                </div>
+                                <div class="form-group">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="optionEnabled" checked>
+                                        <label for="optionEnabled">Enabled</label>
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button id="cancelOptionBtn" class="btn btn-secondary btn-sm">Cancel</button>
+                                    <button id="saveOptionBtn" class="btn btn-success btn-sm">Save Option</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="field-preview">
+                            <h4>Preview</h4>
+                            <label for="previewDropdown">Risk Category</label>
+                            <select id="previewDropdown" class="form-control">
+                                <!-- Preview options will be populated here -->
+                            </select>
+                            <div class="preview-tags" id="previewTags">
+                                <!-- Tag preview will appear here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <button id="resetFormBtn" class="btn btn-secondary">Reset Changes</button>
+                <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Moment.js for date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/datetime-utils.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Current user ID (for saving preferences)
+            let currentUserId = null;
+            
+            // Get form elements
+            const dateFormatSelect = document.getElementById('dateFormat');
+            const timeFormatSelect = document.getElementById('timeFormat');
+            const emailNotificationsToggle = document.getElementById('emailNotifications');
+            const browserNotificationsToggle = document.getElementById('browserNotifications');
+            const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+            const resetFormBtn = document.getElementById('resetFormBtn');
+            const statusSuccess = document.getElementById('statusSuccess');
+            const statusError = document.getElementById('statusError');
+            
+            // Preview elements
+            const datePreview = document.getElementById('datePreview');
+            const timePreview = document.getElementById('timePreview');
+            const dateTimePreview = document.getElementById('dateTimePreview');
+            
+            // Date format examples
+            const dateFormatExamples = document.querySelectorAll('.date-format-example');
+            
+            // Check authentication
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    // User is signed in
+                    currentUserId = user.uid;
+                    
+                    // Load user preferences
+                    loadUserPreferences(currentUserId);
+                } else {
+                    // No user is signed in, redirect to login
+                    window.location.href = 'login.html';
+                }
+            });
+            
+            // Load user preferences from Firebase
+            function loadUserPreferences(userId) {
+                database.ref(`userPreferences/${userId}`).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const preferences = snapshot.val();
+                            
+                            // Set date/time format preferences if they exist
+                            if (preferences.datetimeFormat) {
+                                // Split the datetime format string into date and time components
+                                const formatParts = preferences.datetimeFormat.split(' ');
+                                const dateFormat = formatParts[0];
+                                const timeFormat = formatParts.slice(1).join(' ');
+                                
+                                // Set select values
+                                if (dateFormat && isValidOption(dateFormatSelect, dateFormat)) {
+                                    dateFormatSelect.value = dateFormat;
+                                    highlightSelectedExample('dateFormat', dateFormat);
+                                }
+                                
+                                if (timeFormat && isValidOption(timeFormatSelect, timeFormat)) {
+                                    timeFormatSelect.value = timeFormat;
+                                    highlightSelectedExample('timeFormat', timeFormat);
+                                }
+                            }
+                            
+                            // Set notification preferences if they exist
+                            if (preferences.notifications) {
+                                emailNotificationsToggle.checked = preferences.notifications.email !== false;
+                                browserNotificationsToggle.checked = preferences.notifications.browser === true;
+                            }
+                        }
+                        
+                        // Update preview regardless of whether preferences exist
+                        updateDateTimePreview();
+                    })
+                    .catch(error => {
+                        console.error('Error loading preferences:', error);
+                        showStatusMessage('error', 'Failed to load preferences: ' + error.message);
+                    });
+            }
+            
+            // Check if an option is valid in a select element
+            function isValidOption(selectElement, value) {
+                for (let i = 0; i < selectElement.options.length; i++) {
+                    if (selectElement.options[i].value === value) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+            
+            // Update date/time preview
+            function updateDateTimePreview() {
+                const now = new Date();
+                const dateFormat = dateFormatSelect.value;
+                const timeFormat = timeFormatSelect.value;
+                
+                // Use moment.js for formatting
+                datePreview.textContent = moment(now).format(dateFormat);
+                timePreview.textContent = moment(now).format(timeFormat);
+                dateTimePreview.textContent = moment(now).format(`${dateFormat} ${timeFormat}`);
+            }
+            
+            // Highlight selected format example
+            function highlightSelectedExample(selectId, format) {
+                // Remove previous highlights
+                document.querySelectorAll(`.date-format-example[data-format]`).forEach(el => {
+                    el.classList.remove('selected');
+                });
+                
+                // Add highlight to the selected format
+                const example = document.querySelector(`.date-format-example[data-format="${format}"]`);
+                if (example) {
+                    example.classList.add('selected');
+                }
+            }
+            
+            // Save user preferences to Firebase
+            function saveUserPreferences() {
+                if (!currentUserId) {
+                    showStatusMessage('error', 'No user is signed in.');
+                    return;
+                }
+                
+                const dateFormat = dateFormatSelect.value;
+                const timeFormat = timeFormatSelect.value;
+                const fullFormat = `${dateFormat} ${timeFormat}`;
+                
+                const preferences = {
+                    datetimeFormat: fullFormat,
+                    notifications: {
+                        email: emailNotificationsToggle.checked,
+                        browser: browserNotificationsToggle.checked
+                    },
+                    lastUpdated: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                // Save to Firebase
+                database.ref(`userPreferences/${currentUserId}`).update(preferences)
+                    .then(() => {
+                        console.log('Preferences saved successfully');
+                        showStatusMessage('success', 'Settings saved successfully!');
+                        
+                        // Update localStorage cache
+                        localStorage.setItem(`userDatetimeFormat_${currentUserId}`, fullFormat);
+                        
+                        // Dispatch event to notify other pages of the change
+                        const event = new CustomEvent('datetimePreferencesChanged', {
+                            detail: { 
+                                userId: currentUserId, 
+                                dateFormat: dateFormat, 
+                                timeFormat: timeFormat, 
+                                fullFormat: fullFormat 
+                            }
+                        });
+                        document.dispatchEvent(event);
+                    })
+                    .catch(error => {
+                        console.error('Error saving preferences:', error);
+                        showStatusMessage('error', 'Failed to save settings: ' + error.message);
+                    });
+            }
+            
+            // Show status message
+            function showStatusMessage(type, message) {
+                const statusElement = type === 'success' ? statusSuccess : statusError;
+                
+                // Update message text if provided
+                if (message) {
+                    statusElement.innerHTML = `<i class="fas fa-${type === 'success' ? 'check' : 'exclamation'}-circle"></i> ${message}`;
+                }
+                
+                // Show the message
+                statusElement.style.display = 'block';
+                
+                // Hide the message after 5 seconds
+                setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 5000);
+            }
+            
+            // Event listeners
+            dateFormatSelect.addEventListener('change', function() {
+                updateDateTimePreview();
+                highlightSelectedExample('dateFormat', this.value);
+            });
+            
+            timeFormatSelect.addEventListener('change', function() {
+                updateDateTimePreview();
+                highlightSelectedExample('timeFormat', this.value);
+            });
+            
+            // Event listeners for format examples
+            dateFormatExamples.forEach(example => {
+                example.addEventListener('click', function() {
+                    const format = this.getAttribute('data-format');
+                    
+                    // Determine if this is a date or time format example
+                    if (['MM/DD/YYYY', 'DD/MM/YYYY', 'YYYY-MM-DD', 'MMMM D, YYYY', 'D MMMM YYYY', 'MMM D, YYYY', 'D MMM YYYY'].includes(format)) {
+                        dateFormatSelect.value = format;
+                        highlightSelectedExample('dateFormat', format);
+                    } else {
+                        timeFormatSelect.value = format;
+                        highlightSelectedExample('timeFormat', format);
+                    }
+                    
+                    updateDateTimePreview();
+                });
+            });
+            
+            saveSettingsBtn.addEventListener('click', function() {
+                saveUserPreferences();
+            });
+            
+            resetFormBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to reset your changes?')) {
+                    loadUserPreferences(currentUserId);
+                }
+            });
+            
+            // Initialize preview
+            updateDateTimePreview();
+            
+            // Refresh preview every minute to show updated time
+            setInterval(updateDateTimePreview, 60000);
+            
+            // =============== FORM FIELD OPTIONS CONFIGURATION ===============
+            
+            // DOM elements for field options configuration
+            const fieldTypeSelector = document.getElementById('fieldTypeSelector');
+            const fieldOptionsList = document.getElementById('fieldOptionsList');
+            const fieldOptionForm = document.getElementById('fieldOptionForm');
+            const optionFormTitle = document.getElementById('optionFormTitle');
+            const addFieldOptionBtn = document.getElementById('addFieldOptionBtn');
+            const cancelOptionBtn = document.getElementById('cancelOptionBtn');
+            const saveOptionBtn = document.getElementById('saveOptionBtn');
+            const optionLabel = document.getElementById('optionLabel');
+            const optionValue = document.getElementById('optionValue');
+            const optionColor = document.getElementById('optionColor');
+            const optionEnabled = document.getElementById('optionEnabled');
+            const previewDropdown = document.getElementById('previewDropdown');
+            const previewTags = document.getElementById('previewTags');
+            
+            // Current field options and editing state
+            let currentFieldType = 'risk-category';
+            let currentOptions = [];
+            let isEditing = false;
+            let editingIndex = -1;
+            
+            // Default options for dropdown fields
+            const defaultFieldOptions = {
+                // Add User Management Form default options before medical assessment options
+                'user-gender': [
+                    { label: 'Male', value: 'male', color: '#0d6efd', enabled: true },
+                    { label: 'Female', value: 'female', color: '#dc3545', enabled: true },
+                    { label: 'Other', value: 'other', color: '#6f42c1', enabled: true },
+                    { label: 'Prefer not to say', value: 'prefer-not-to-say', color: '#6c757d', enabled: true }
+                ],
+                'user-role': [
+                    { label: 'Administrator', value: 'admin', color: '#dc3545', enabled: true },
+                    { label: 'Manager', value: 'manager', color: '#0d6efd', enabled: true },
+                    { label: 'Supervisor', value: 'supervisor', color: '#fd7e14', enabled: true },
+                    { label: 'HSE Officer', value: 'hse-officer', color: '#198754', enabled: true },
+                    { label: 'Employee', value: 'employee', color: '#6f42c1', enabled: true }
+                ],
+                'account-status': [
+                    { label: 'Active', value: 'active', color: '#198754', enabled: true },
+                    { label: 'Inactive', value: 'inactive', color: '#dc3545', enabled: true },
+                    { label: 'Pending', value: 'pending', color: '#fd7e14', enabled: true },
+                    { label: 'Suspended', value: 'suspended', color: '#6c757d', enabled: true }
+                ],
+                // Add Medical Assessment Form default options
+                'assessment-type': [
+                    { label: 'Pre-Employment', value: 'pre-employment', color: '#0d6efd', enabled: true },
+                    { label: 'Periodic Medical', value: 'periodic', color: '#28a745', enabled: true },
+                    { label: 'Return to Work', value: 'return-to-work', color: '#fd7e14', enabled: true },
+                    { label: 'Post-Incident', value: 'post-incident', color: '#dc3545', enabled: true },
+                    { label: 'Special Risk', value: 'special-risk', color: '#6f42c1', enabled: true },
+                    { label: 'Exit Medical', value: 'exit-medical', color: '#17a2b8', enabled: true }
+                ],
+                'medical-location': [
+                    { label: 'Main Clinic', value: 'main-clinic', color: '#0d6efd', enabled: true },
+                    { label: 'Branch Office Medical Center', value: 'branch-office', color: '#28a745', enabled: true },
+                    { label: 'Site Medical Unit', value: 'site-unit', color: '#fd7e14', enabled: true },
+                    { label: 'External Medical Facility', value: 'external', color: '#6f42c1', enabled: true }
+                ],
+                'medical-status': [
+                    { label: 'Fit for Duty', value: 'fit', color: '#28a745', enabled: true },
+                    { label: 'Fit with Restrictions', value: 'limited', color: '#fd7e14', enabled: true },
+                    { label: 'Temporarily Unfit', value: 'unfit', color: '#dc3545', enabled: true },
+                    { label: 'Medical Leave', value: 'medical-leave', color: '#6f42c1', enabled: true }
+                ],
+                'medical-conditions': [
+                    { label: 'Hypertension', value: 'hypertension', color: '#dc3545', enabled: true },
+                    { label: 'Diabetes', value: 'diabetes', color: '#fd7e14', enabled: true },
+                    { label: 'Asthma', value: 'asthma', color: '#0d6efd', enabled: true },
+                    { label: 'Heart Disease', value: 'heart-disease', color: '#6f42c1', enabled: true },
+                    { label: 'Back Injury', value: 'back-injury', color: '#28a745', enabled: true }
+                ],
+                'vital-signs': [
+                    { label: 'Blood Pressure', value: 'blood-pressure', color: '#dc3545', enabled: true },
+                    { label: 'Heart Rate', value: 'heart-rate', color: '#fd7e14', enabled: true },
+                    { label: 'Temperature', value: 'temperature', color: '#0d6efd', enabled: true },
+                    { label: 'Respiratory Rate', value: 'respiratory-rate', color: '#28a745', enabled: true },
+                    { label: 'Oxygen Saturation', value: 'oxygen-saturation', color: '#6f42c1', enabled: true }
+                ],
+                'risk-category': [
+                    { label: 'High Risk', value: 'high-risk', color: '#dc3545', enabled: true },
+                    { label: 'Medium Risk', value: 'medium-risk', color: '#fd7e14', enabled: true },
+                    { label: 'Low Risk', value: 'low-risk', color: '#28a745', enabled: true }
+                ],
+                'hazard-type': [
+                    { label: 'Chemical', value: 'chemical', color: '#6f42c1', enabled: true },
+                    { label: 'Electrical', value: 'electrical', color: '#fd7e14', enabled: true },
+                    { label: 'Mechanical', value: 'mechanical', color: '#20c997', enabled: true },
+                    { label: 'Ergonomic', value: 'ergonomic', color: '#17a2b8', enabled: true }
+                ],
+                'control-measure': [
+                    { label: 'Elimination', value: 'elimination', color: '#28a745', enabled: true },
+                    { label: 'Substitution', value: 'substitution', color: '#17a2b8', enabled: true },
+                    { label: 'Engineering', value: 'engineering', color: '#0d6efd', enabled: true },
+                    { label: 'Administrative', value: 'administrative', color: '#fd7e14', enabled: true },
+                    { label: 'PPE', value: 'ppe', color: '#dc3545', enabled: true }
+                ],
+                'job-type': [
+                    { label: 'Hot Work', value: 'hot-work', color: '#dc3545', enabled: true },
+                    { label: 'Confined Space', value: 'confined-space', color: '#6610f2', enabled: true },
+                    { label: 'Working at Height', value: 'working-at-height', color: '#fd7e14', enabled: true },
+                    { label: 'Excavation', value: 'excavation', color: '#20c997', enabled: true }
+                ],
+                'job-step': [
+                    { label: 'Preparation', value: 'preparation', color: '#0d6efd', enabled: true },
+                    { label: 'Execution', value: 'execution', color: '#fd7e14', enabled: true },
+                    { label: 'Completion', value: 'completion', color: '#28a745', enabled: true },
+                    { label: 'Emergency Response', value: 'emergency-response', color: '#dc3545', enabled: true }
+                ],
+                'event-type': [
+                    { label: 'Incident', value: 'incident', color: '#dc3545', enabled: true },
+                    { label: 'Near Miss', value: 'near-miss', color: '#fd7e14', enabled: true },
+                    { label: 'Hazard', value: 'hazard', color: '#ffc107', enabled: true },
+                    { label: 'Observation', value: 'observation', color: '#0d6efd', enabled: true }
+                ],
+                'injury-type': [
+                    { label: 'Laceration/Cut', value: 'laceration', color: '#dc3545', enabled: true },
+                    { label: 'Fracture', value: 'fracture', color: '#6610f2', enabled: true },
+                    { label: 'Burn', value: 'burn', color: '#fd7e14', enabled: true },
+                    { label: 'Sprain/Strain', value: 'sprain-strain', color: '#0d6efd', enabled: true },
+                    { label: 'Head Injury', value: 'head-injury', color: '#6f42c1', enabled: true },
+                    { label: 'Eye Injury', value: 'eye-injury', color: '#17a2b8', enabled: true }
+                ],
+                'property-damage': [
+                    { label: 'Vehicle Damage', value: 'vehicle', color: '#0d6efd', enabled: true },
+                    { label: 'Equipment Damage', value: 'equipment', color: '#fd7e14', enabled: true },
+                    { label: 'Structural Damage', value: 'structural', color: '#6f42c1', enabled: true },
+                    { label: 'Material Loss', value: 'material', color: '#20c997', enabled: true },
+                    { label: 'Tool Damage', value: 'tool', color: '#ffc107', enabled: true }
+                ],
+                'incident-category': [
+                    { label: 'Slip, Trip, or Fall', value: 'slip-trip-fall', color: '#fd7e14', enabled: true },
+                    { label: 'Struck By Object', value: 'struck-by', color: '#dc3545', enabled: true },
+                    { label: 'Caught In/Between', value: 'caught-in-between', color: '#6f42c1', enabled: true },
+                    { label: 'Vehicle Accident', value: 'vehicle-accident', color: '#0d6efd', enabled: true },
+                    { label: 'Chemical Exposure', value: 'chemical-exposure', color: '#6610f2', enabled: true }
+                ],
+                'observation-type': [
+                    { label: 'Safe Behavior', value: 'safe-behavior', color: '#28a745', enabled: true },
+                    { label: 'Unsafe Behavior', value: 'unsafe-behavior', color: '#dc3545', enabled: true },
+                    { label: 'Good Practice', value: 'good-practice', color: '#20c997', enabled: true },
+                    { label: 'Improvement Opportunity', value: 'improvement', color: '#fd7e14', enabled: true },
+                    { label: 'Procedural Violation', value: 'violation', color: '#6f42c1', enabled: true }
+                ],
+                'behavior-category': [
+                    { label: 'PPE Usage', value: 'ppe-usage', color: '#28a745', enabled: true },
+                    { label: 'Body Positioning', value: 'body-positioning', color: '#0d6efd', enabled: true },
+                    { label: 'Tool/Equipment Use', value: 'tool-usage', color: '#fd7e14', enabled: true },
+                    { label: 'Procedural Adherence', value: 'procedure', color: '#6f42c1', enabled: true },
+                    { label: 'Housekeeping', value: 'housekeeping', color: '#20c997', enabled: true }
+                ],
+                'inspection-type': [
+                    { label: 'Scheduled', value: 'scheduled', color: '#28a745', enabled: true },
+                    { label: 'Random', value: 'random', color: '#fd7e14', enabled: true },
+                    { label: 'Post-Incident', value: 'post-incident', color: '#dc3545', enabled: true },
+                    { label: 'Pre-Startup', value: 'pre-startup', color: '#0d6efd', enabled: true },
+                    { label: 'Regulatory', value: 'regulatory', color: '#6f42c1', enabled: true }
+                ],
+                'compliance-standard': [
+                    { label: 'OSHA', value: 'osha', color: '#dc3545', enabled: true },
+                    { label: 'ISO 45001', value: 'iso-45001', color: '#0d6efd', enabled: true },
+                    { label: 'EPA', value: 'epa', color: '#28a745', enabled: true },
+                    { label: 'Internal Standard', value: 'internal', color: '#6f42c1', enabled: true },
+                    { label: 'Client Requirement', value: 'client', color: '#fd7e14', enabled: true },
+                    { label: 'Local Regulation', value: 'local', color: '#20c997', enabled: true }
+                ],
+                'severity': [
+                    { label: 'Minor', value: 'minor', color: '#28a745', enabled: true },
+                    { label: 'Moderate', value: 'moderate', color: '#fd7e14', enabled: true },
+                    { label: 'Major', value: 'major', color: '#dc3545', enabled: true },
+                    { label: 'Critical', value: 'critical', color: '#6610f2', enabled: true }
+                ],
+                'training-category': [
+                    { label: 'Safety Training', value: 'safety', color: '#28a745', enabled: true },
+                    { label: 'Compliance', value: 'compliance', color: '#0d6efd', enabled: true },
+                    { label: 'Technical Skills', value: 'technical', color: '#6f42c1', enabled: true },
+                    { label: 'Emergency Response', value: 'emergency', color: '#dc3545', enabled: true }
+                ],
+                'training-type': [
+                    { label: 'Initial', value: 'initial', color: '#0d6efd', enabled: true },
+                    { label: 'Refresher', value: 'refresher', color: '#28a745', enabled: true },
+                    { label: 'Certification', value: 'certification', color: '#6f42c1', enabled: true },
+                    { label: 'Specialized', value: 'specialized', color: '#fd7e14', enabled: true }
+                ],
+                'certification': [
+                    { label: 'First Aid', value: 'first-aid', color: '#dc3545', enabled: true },
+                    { label: 'Forklift Operator', value: 'forklift', color: '#fd7e14', enabled: true },
+                    { label: 'Confined Space', value: 'confined-space', color: '#6610f2', enabled: true },
+                    { label: 'Fall Protection', value: 'fall-protection', color: '#28a745', enabled: true }
+                ],
+                'permit-type': [
+                    { label: 'Hot Work', value: 'hot-work', color: '#dc3545', enabled: true },
+                    { label: 'Confined Space', value: 'confined-space', color: '#6610f2', enabled: true },
+                    { label: 'Excavation', value: 'excavation', color: '#20c997', enabled: true },
+                    { label: 'Working at Height', value: 'height-work', color: '#fd7e14', enabled: true },
+                    { label: 'Electrical', value: 'electrical', color: '#ffc107', enabled: true }
+                ],
+                'isolation-type': [
+                    { label: 'Electrical', value: 'electrical', color: '#ffc107', enabled: true },
+                    { label: 'Mechanical', value: 'mechanical', color: '#20c997', enabled: true },
+                    { label: 'Hydraulic', value: 'hydraulic', color: '#0d6efd', enabled: true },
+                    { label: 'Pneumatic', value: 'pneumatic', color: '#6f42c1', enabled: true },
+                    { label: 'Chemical', value: 'chemical', color: '#6610f2', enabled: true }
+                ],
+                'emergency-equipment': [
+                    { label: 'Fire Extinguisher', value: 'fire-extinguisher', color: '#dc3545', enabled: true },
+                    { label: 'First Aid Kit', value: 'first-aid-kit', color: '#28a745', enabled: true },
+                    { label: 'Emergency Shower', value: 'emergency-shower', color: '#0d6efd', enabled: true },
+                    { label: 'Eye Wash Station', value: 'eye-wash', color: '#17a2b8', enabled: true },
+                    { label: 'Spill Kit', value: 'spill-kit', color: '#fd7e14', enabled: true }
+                ],
+                'trainer-qualification': [
+                    { label: 'Certified Instructor', value: 'certified-instructor', color: '#28a745', enabled: true },
+                    { label: 'Subject Matter Expert', value: 'sme', color: '#0d6efd', enabled: true },
+                    { label: 'External Trainer', value: 'external', color: '#6f42c1', enabled: true },
+                    { label: 'Internal Mentor', value: 'mentor', color: '#fd7e14', enabled: true }
+                ],
+                'training-location': [
+                    { label: 'Training Room', value: 'training-room', color: '#0d6efd', enabled: true },
+                    { label: 'Conference Room', value: 'conference-room', color: '#20c997', enabled: true },
+                    { label: 'On-site', value: 'on-site', color: '#fd7e14', enabled: true },
+                    { label: 'Field', value: 'field', color: '#28a745', enabled: true },
+                    { label: 'Online', value: 'online', color: '#6f42c1', enabled: true }
+                ],
+                'audience-type': [
+                    { label: 'All Employees', value: 'all-employees', color: '#0d6efd', enabled: true },
+                    { label: 'New Hires', value: 'new-hires', color: '#28a745', enabled: true },
+                    { label: 'Supervisors', value: 'supervisors', color: '#6f42c1', enabled: true },
+                    { label: 'Contractors', value: 'contractors', color: '#fd7e14', enabled: true },
+                    { label: 'Visitors', value: 'visitors', color: '#17a2b8', enabled: true }
+                ],
+                'area': [
+                    { label: 'Production', value: 'production', color: '#0d6efd', enabled: true },
+                    { label: 'Warehouse', value: 'warehouse', color: '#6f42c1', enabled: true },
+                    { label: 'Laboratory', value: 'laboratory', color: '#fd7e14', enabled: true },
+                    { label: 'Office', value: 'office', color: '#198754', enabled: true }
+                ],
+                'department': [
+                    { label: 'Operations', value: 'operations', color: '#0d6efd', enabled: true },
+                    { label: 'Maintenance', value: 'maintenance', color: '#fd7e14', enabled: true },
+                    { label: 'HSE', value: 'hse', color: '#198754', enabled: true },
+                    { label: 'Quality Control', value: 'quality-control', color: '#6f42c1', enabled: true }
+                ],
+                'equipment': [
+                    { label: 'Forklift', value: 'forklift', color: '#fd7e14', enabled: true },
+                    { label: 'Crane', value: 'crane', color: '#dc3545', enabled: true },
+                    { label: 'Scaffold', value: 'scaffold', color: '#6f42c1', enabled: true },
+                    { label: 'Power Tools', value: 'power-tools', color: '#0d6efd', enabled: true },
+                    { label: 'Heavy Machinery', value: 'heavy-machinery', color: '#20c997', enabled: true }
+                ],
+                'ppe': [
+                    { label: 'Hard Hat', value: 'hard-hat', color: '#fd7e14', enabled: true },
+                    { label: 'Safety Glasses', value: 'safety-glasses', color: '#0d6efd', enabled: true },
+                    { label: 'Safety Gloves', value: 'gloves', color: '#6f42c1', enabled: true },
+                    { label: 'Safety Boots', value: 'boots', color: '#198754', enabled: true },
+                    { label: 'High-Vis Vest', value: 'high-vis', color: '#ffc107', enabled: true },
+                    { label: 'Respirator', value: 'respirator', color: '#dc3545', enabled: true }
+                ],
+                'risk-strategy': [
+                    { label: 'Avoid', value: 'avoid', color: '#dc3545', enabled: true },
+                    { label: 'Mitigate', value: 'mitigate', color: '#fd7e14', enabled: true },
+                    { label: 'Transfer', value: 'transfer', color: '#0d6efd', enabled: true },
+                    { label: 'Accept', value: 'accept', color: '#28a745', enabled: true }
+                ],
+                'contributing-factors': [
+                    { label: 'Human Error', value: 'human-error', color: '#dc3545', enabled: true },
+                    { label: 'Equipment Failure', value: 'equipment-failure', color: '#fd7e14', enabled: true },
+                    { label: 'Environmental Conditions', value: 'environmental', color: '#20c997', enabled: true },
+                    { label: 'Procedural Deficiency', value: 'procedural', color: '#0d6efd', enabled: true },
+                    { label: 'Training Gap', value: 'training-gap', color: '#6f42c1', enabled: true },
+                    { label: 'Communication Breakdown', value: 'communication', color: '#6610f2', enabled: true },
+                    { label: 'Design Flaw', value: 'design-flaw', color: '#17a2b8', enabled: true },
+                    { label: 'Inadequate Supervision', value: 'supervision', color: '#ffc107', enabled: true },
+                    { label: 'Time Pressure', value: 'time-pressure', color: '#6c757d', enabled: true }
+                ]
+            };
+            
+            // Load field options from Firebase
+            function loadFieldOptions(fieldType) {
+                currentFieldType = fieldType;
+                
+                // Update the form title based on field type
+                const fieldTypeName = fieldTypeSelector.options[fieldTypeSelector.selectedIndex].text;
+                document.querySelector('.field-preview h4').textContent = `Preview: ${fieldTypeName}`;
+                document.querySelector('.field-preview label').textContent = fieldTypeName;
+                
+                // Clear the current options list
+                fieldOptionsList.innerHTML = '';
+                
+                // Reference to the options in Firebase
+                const optionsRef = database.ref(`fieldOptions/${fieldType}`);
+                
+                optionsRef.once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            // Load options from Firebase
+                            currentOptions = [];
+                            snapshot.forEach(childSnapshot => {
+                                const option = childSnapshot.val();
+                                option.key = childSnapshot.key;
+                                currentOptions.push(option);
+                            });
+                        } else {
+                            // Use default options if none exist in Firebase
+                            currentOptions = JSON.parse(JSON.stringify(defaultFieldOptions[fieldType] || []));
+                            
+                            // Save default options to Firebase
+                            if (currentOptions.length > 0) {
+                                saveOptionsToFirebase(fieldType, currentOptions);
+                            }
+                        }
+                        
+                        // Render the options list
+                        renderFieldOptions();
+                        // Update the preview
+                        updatePreview();
+                    })
+                    .catch(error => {
+                        console.error('Error loading field options:', error);
+                        showStatusMessage('error', 'Failed to load field options: ' + error.message);
+                    });
+            }
+            
+            // Render the field options list
+            function renderFieldOptions() {
+                fieldOptionsList.innerHTML = '';
+                
+                if (currentOptions.length === 0) {
+                    fieldOptionsList.innerHTML = '<div class="no-options">No options available. Click "Add Option" to create one.</div>';
+                    return;
+                }
+                
+                currentOptions.forEach((option, index) => {
+                    const optionItem = document.createElement('div');
+                    optionItem.className = `field-option-item ${option.enabled ? '' : 'disabled'}`;
+                    optionItem.innerHTML = `
+                        <div class="field-option-info">
+                            <div class="field-option-color" style="background-color: ${option.color};"></div>
+                            <span>${option.label}</span>
+                        </div>
+                        <div class="field-option-actions">
+                            <button class="btn btn-sm btn-outline-secondary edit-option" data-index="${index}">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-option" data-index="${index}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Add event listeners for edit and delete buttons
+                    optionItem.querySelector('.edit-option').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        editOption(index);
+                    });
+                    
+                    optionItem.querySelector('.delete-option').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteOption(index);
+                    });
+                    
+                    // Click on the item to edit
+                    optionItem.addEventListener('click', () => {
+                        editOption(index);
+                    });
+                    
+                    fieldOptionsList.appendChild(optionItem);
+                });
+            }
+            
+            // Update preview dropdown and tags
+            function updatePreview() {
+                // Clear current preview
+                previewDropdown.innerHTML = '';
+                previewTags.innerHTML = '';
+                
+                // Add empty option
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = `Select ${fieldTypeSelector.options[fieldTypeSelector.selectedIndex].text}...`;
+                previewDropdown.appendChild(emptyOption);
+                
+                // Add options to dropdown and create tags
+                currentOptions.forEach(option => {
+                    if (option.enabled) {
+                        // Add to dropdown
+                        const dropdownOption = document.createElement('option');
+                        dropdownOption.value = option.value;
+                        dropdownOption.textContent = option.label;
+                        previewDropdown.appendChild(dropdownOption);
+                        
+                        // Create tag preview
+                        const tag = document.createElement('div');
+                        tag.className = 'preview-tag';
+                        tag.style.backgroundColor = option.color;
+                        tag.innerHTML = `
+                            <span>${option.label}</span>
+                        `;
+                        previewTags.appendChild(tag);
+                    }
+                });
+            }
+            
+            // Show form to add a new option
+            function showAddOptionForm() {
+                optionFormTitle.textContent = 'Add New Option';
+                optionLabel.value = '';
+                optionValue.value = '';
+                optionColor.value = '#3498db';
+                optionEnabled.checked = true;
+                
+                fieldOptionForm.style.display = 'block';
+                isEditing = false;
+                editingIndex = -1;
+                
+                // Focus on the first field
+                optionLabel.focus();
+            }
+            
+            // Edit an existing option
+            function editOption(index) {
+                const option = currentOptions[index];
+                
+                optionFormTitle.textContent = 'Edit Option';
+                optionLabel.value = option.label;
+                optionValue.value = option.value;
+                optionColor.value = option.color;
+                optionEnabled.checked = option.enabled;
+                
+                fieldOptionForm.style.display = 'block';
+                isEditing = true;
+                editingIndex = index;
+                
+                // Focus on the first field
+                optionLabel.focus();
+            }
+            
+            // Delete an option
+            function deleteOption(index) {
+                if (confirm('Are you sure you want to delete this option?')) {
+                    // Remove the option
+                    const deletedOption = currentOptions.splice(index, 1)[0];
+                    
+                    // If the option has a key, delete it from Firebase
+                    if (deletedOption.key) {
+                        const optionRef = database.ref(`fieldOptions/${currentFieldType}/${deletedOption.key}`);
+                        optionRef.remove()
+                            .then(() => {
+                                console.log('Option deleted from Firebase');
+                                showStatusMessage('success', 'Option deleted successfully!');
+                            })
+                            .catch(error => {
+                                console.error('Error deleting option:', error);
+                                showStatusMessage('error', 'Failed to delete option: ' + error.message);
+                            });
+                    }
+                    
+                    // Re-render the list and update preview
+                    renderFieldOptions();
+                    updatePreview();
+                    
+                    // Notify other pages
+                    notifyFieldOptionsChanged();
+                }
+            }
+            
+            // Save option from form
+            function saveOption() {
+                const label = optionLabel.value.trim();
+                let value = optionValue.value.trim();
+                const color = optionColor.value;
+                const enabled = optionEnabled.checked;
+                
+                // Validate form
+                if (!label) {
+                    alert('Please enter an option label');
+                    optionLabel.focus();
+                    return;
+                }
+                
+                // Generate value from label if not provided
+                if (!value) {
+                    value = label.toLowerCase().replace(/\s+/g, '-');
+                }
+                
+                // Create option object
+                const option = {
+                    label,
+                    value,
+                    color,
+                    enabled
+                };
+                
+                if (isEditing) {
+                    // Update existing option
+                    const existingOption = currentOptions[editingIndex];
+                    option.key = existingOption.key; // Preserve the key if it exists
+                    currentOptions[editingIndex] = option;
+                } else {
+                    // Add new option
+                    currentOptions.push(option);
+                }
+                
+                // Save to Firebase
+                saveOptionsToFirebase(currentFieldType, currentOptions);
+                
+                // Hide the form
+                fieldOptionForm.style.display = 'none';
+                
+                // Re-render the list and update preview
+                renderFieldOptions();
+                updatePreview();
+                
+                // Notify other pages
+                notifyFieldOptionsChanged();
+                
+                showStatusMessage('success', isEditing ? 'Option updated successfully!' : 'Option added successfully!');
+            }
+            
+            // Save options to Firebase
+            function saveOptionsToFirebase(fieldType, options) {
+                const optionsRef = database.ref(`fieldOptions/${fieldType}`);
+                
+                // First clear existing options
+                optionsRef.remove()
+                    .then(() => {
+                        // Then add each option
+                        options.forEach(option => {
+                            const { key, ...optionData } = option; // Remove key if present
+                            const newOptionRef = optionsRef.push();
+                            newOptionRef.set(optionData)
+                                .then(() => {
+                                    // Update the key in the local array
+                                    const index = currentOptions.findIndex(o => 
+                                        o.label === option.label && o.value === option.value);
+                                    if (index !== -1) {
+                                        currentOptions[index].key = newOptionRef.key;
+                                    }
+                                });
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error saving options:', error);
+                        showStatusMessage('error', 'Failed to save options: ' + error.message);
+                    });
+            }
+            
+            // Notify other pages that field options have changed
+            function notifyFieldOptionsChanged() {
+                // Dispatch event to notify other pages of the change
+                const event = new CustomEvent('fieldOptionsChanged', {
+                    detail: { 
+                        fieldType: currentFieldType
+                    }
+                });
+                document.dispatchEvent(event);
+                
+                // Update localStorage to signal that options have changed
+                localStorage.setItem('fieldOptionsUpdated', JSON.stringify({
+                    fieldType: currentFieldType,
+                    timestamp: Date.now()
+                }));
+            }
+            
+            // Event listeners for field options configuration
+            fieldTypeSelector.addEventListener('change', function() {
+                loadFieldOptions(this.value);
+            });
+            
+            addFieldOptionBtn.addEventListener('click', showAddOptionForm);
+            
+            cancelOptionBtn.addEventListener('click', function() {
+                fieldOptionForm.style.display = 'none';
+            });
+            
+            saveOptionBtn.addEventListener('click', saveOption);
+            
+            // Auto-generate option value when label changes
+            optionLabel.addEventListener('input', function() {
+                if (!isEditing || optionValue.value === '') {
+                    optionValue.value = this.value.toLowerCase().replace(/\s+/g, '-');
+                }
+            });
+            
+            // Event listener for showing tags on dropdown change
+            previewDropdown.addEventListener('change', function() {
+                const selectedValue = this.value;
+                
+                // Highlight the corresponding tag
+                document.querySelectorAll('.preview-tag').forEach(tag => {
+                    tag.classList.remove('selected');
+                });
+                
+                if (selectedValue) {
+                    const selectedOption = currentOptions.find(opt => opt.value === selectedValue);
+                    if (selectedOption) {
+                        const tags = document.querySelectorAll('.preview-tag');
+                        for (let i = 0; i < tags.length; i++) {
+                            if (tags[i].textContent.trim() === selectedOption.label) {
+                                tags[i].classList.add('selected');
+                                break;
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Initialize field options
+            loadFieldOptions(fieldTypeSelector.value);
+        });
+    </script>
+</body>
+</html>

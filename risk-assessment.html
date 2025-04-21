@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Risk Assessment</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        main .content-wrapper {
+            margin-top: 30px; /* Increased margin-top from 90px to 120px to move content further down */
+        }
+        
+        .filters {
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            align-items: center;
+        }
+        
+        .filter-group {
+            display: flex;
+            align-items: center;
+        }
+        
+        .filter-group label {
+            margin-right: 0.5rem;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+        
+        .filter-group select, .filter-group input {
+            width: auto;
+            min-width: 150px;
+        }
+        
+        .spacer {
+            flex-grow: 1;
+        }
+        
+        .risk-assessment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .no-records {
+            text-align: center;
+            padding: 20px;
+            font-style: italic;
+            color: #777;
+        }
+
+        .risk-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 5px;
+        }
+
+        .risk-low {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .risk-medium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .risk-high {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .risk-extreme {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #3498db;
+        }
+
+        .loading-spinner i {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+            gap: 0.5rem;
+        }
+
+        .pagination-btn {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            background-color: transparent;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .pagination-btn:hover {
+            background-color: var(--light-bg);
+        }
+
+        .pagination-btn.active {
+            background-color: var(--secondary-color);
+            color: white;
+            border-color: var(--secondary-color);
+        }
+
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Risk Matrix Styles */
+        .risk-matrix {
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+        
+        .risk-matrix-table {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 600px;
+        }
+        
+        .risk-matrix-table th,
+        .risk-matrix-table td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
+        .risk-matrix-table th {
+            background-color: var(--light-bg);
+        }
+        
+        .risk-matrix-header {
+            font-weight: 600;
+            padding: 0.75rem;
+        }
+        
+        .likelihood-header {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-weight: 600;
+            padding: 1rem 0;
+        }
+        
+        .risk-cell {
+            padding: 1rem;
+            font-weight: 600;
+        }
+        
+        .low-risk {
+            background-color: #d4edda;
+        }
+        
+        .medium-risk {
+            background-color: #fff3cd;
+        }
+        
+        .high-risk {
+            background-color: #f8d7da;
+        }
+        
+        .extreme-risk {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .category-table {
+            margin-bottom: 2rem;
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        .category-table th,
+        .category-table td {
+            border: 1px solid var(--border-color);
+            padding: 0.75rem;
+        }
+        
+        .category-table th {
+            background-color: var(--light-bg);
+            font-weight: 600;
+            text-align: left;
+        }
+        
+        .risk-chart {
+            display: flex;
+            margin-top: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .risk-chart-bar {
+            flex-grow: 1;
+            height: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        .risk-chart-bar:first-child {
+            border-radius: 4px 0 0 4px;
+        }
+        
+        .risk-chart-bar:last-child {
+            border-radius: 0 4px 4px 0;
+        }
+        
+        /* Risk assessment detail styles */
+        .risk-detail-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .risk-detail-section:last-child {
+            border-bottom: none;
+        }
+        
+        .risk-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        
+        .risk-control-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: var(--light-bg);
+        }
+        
+        @media (max-width: 768px) {
+            .risk-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder - will be replaced by the header component -->
+    <div id="header-placeholder"></div>
+
+    <main>
+        <div class="content-wrapper">
+            <h1>Risk Assessment</h1>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Risk Assessment Register</h2>
+                    <button class="btn btn-primary" id="create-assessment-btn">
+                        <i class="fas fa-plus"></i> Create New Assessment
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label for="area-filter">Area:</label>
+                            <select id="area-filter" class="form-control">
+                                <option value="">All Areas</option>
+                                <option value="operations">Operations</option>
+                                <option value="warehouse">Warehouse</option>
+                                <option value="production">Production</option>
+                                <option value="office">Office</option>
+                                <option value="maintenance">Maintenance</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="risk-level-filter">Risk Level:</label>
+                            <select id="risk-level-filter" class="form-control">
+                                <option value="">All Levels</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="extreme">Extreme</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="date-filter">From Date:</label>
+                            <input type="date" id="date-filter" class="form-control">
+                        </div>
+                        
+                        <div class="spacer"></div>
+                        
+                        <div class="filter-group">
+                            <label for="assessment-search">Search:</label>
+                            <input type="text" id="assessment-search" placeholder="Search assessments..." class="form-control">
+                        </div>
+                    </div>
+                    
+                    <div class="loading-spinner" id="loading-spinner">
+                        <i class="fas fa-spinner fa-2x"></i>
+                    </div>
+
+                    <table id="assessment-table">
+                        <thead>
+                            <tr>
+                                <th>Assessment Title</th>
+                                <th>Area/Location</th>
+                                <th>Assessed By</th>
+                                <th>Assessment Date</th>
+                                <th>Review Date</th>
+                                <th>Risk Level</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="assessment-table-body">
+                            <!-- Sample data - would be populated from Firebase in production -->
+                            <tr>
+                                <td>Chemical Storage Area Risk Assessment</td>
+                                <td>Warehouse</td>
+                                <td>John Smith</td>
+                                <td>April 1, 2025</td>
+                                <td>April 1, 2026</td>
+                                <td><span class="risk-tag risk-high">High</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary view-assessment-btn" data-id="1" title="View"><i class="fas fa-eye"></i></button>
+                                        <button class="btn edit-assessment-btn" data-id="1" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger delete-assessment-btn" data-id="1" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Loading Dock Operations</td>
+                                <td>Operations</td>
+                                <td>Sarah Johnson</td>
+                                <td>March 15, 2025</td>
+                                <td>March 15, 2026</td>
+                                <td><span class="risk-tag risk-medium">Medium</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary view-assessment-btn" data-id="2" title="View"><i class="fas fa-eye"></i></button>
+                                        <button class="btn edit-assessment-btn" data-id="2" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger delete-assessment-btn" data-id="2" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Office Ergonomics Assessment</td>
+                                <td>Office</td>
+                                <td>Michael Wong</td>
+                                <td>March 10, 2025</td>
+                                <td>March 10, 2026</td>
+                                <td><span class="risk-tag risk-low">Low</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary view-assessment-btn" data-id="3" title="View"><i class="fas fa-eye"></i></button>
+                                        <button class="btn edit-assessment-btn" data-id="3" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger delete-assessment-btn" data-id="3" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Electrical Work in Confined Spaces</td>
+                                <td>Maintenance</td>
+                                <td>Robert Chen</td>
+                                <td>February 28, 2025</td>
+                                <td>February 28, 2026</td>
+                                <td><span class="risk-tag risk-extreme">Extreme</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary view-assessment-btn" data-id="4" title="View"><i class="fas fa-eye"></i></button>
+                                        <button class="btn edit-assessment-btn" data-id="4" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger delete-assessment-btn" data-id="4" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Production Line Safety Assessment</td>
+                                <td>Production</td>
+                                <td>Emily Davis</td>
+                                <td>February 15, 2025</td>
+                                <td>February 15, 2026</td>
+                                <td><span class="risk-tag risk-high">High</span></td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="btn btn-primary view-assessment-btn" data-id="5" title="View"><i class="fas fa-eye"></i></button>
+                                        <button class="btn edit-assessment-btn" data-id="5" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-danger delete-assessment-btn" data-id="5" title="Delete"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div id="pagination" class="pagination">
+                        <button class="pagination-btn disabled"><i class="fas fa-chevron-left"></i></button>
+                        <button class="pagination-btn active">1</button>
+                        <button class="pagination-btn">2</button>
+                        <button class="pagination-btn">3</button>
+                        <button class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h2 class="card-title">Risk Assessment Matrix</h2>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Use the risk matrix below to evaluate the likelihood and consequence of hazards to determine the risk level.</p>
+                    
+                    <div class="risk-matrix">
+                        <table class="risk-matrix-table">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th colspan="5" class="risk-matrix-header">Severity / Consequence</th>
+                                </tr>
+                                <tr>
+                                    <th></th>
+                                    <th>1 - Negligible</th>
+                                    <th>2 - Minor</th>
+                                    <th>3 - Moderate</th>
+                                    <th>4 - Major</th>
+                                    <th>5 - Catastrophic</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="likelihood-header">5 - Almost Certain</td>
+                                    <td class="risk-cell medium-risk">Medium</td>
+                                    <td class="risk-cell high-risk">High</td>
+                                    <td class="risk-cell extreme-risk">Extreme</td>
+                                    <td class="risk-cell extreme-risk">Extreme</td>
+                                    <td class="risk-cell extreme-risk">Extreme</td>
+                                </tr>
+                                <tr>
+                                    <td class="likelihood-header">4 - Likely</td>
+                                    <td class="risk-cell medium-risk">Medium</td>
+                                    <td class="risk-cell medium-risk">Medium</td>
+                                    <td class="risk-cell high-risk">High</td>
+                                    <td class="risk-cell extreme-risk">Extreme</td>
+                                    <td class="risk-cell extreme-risk">Extreme</td>
+                                </tr>
+                                <tr>
+                                    <td class="likelihood-header">3 - Possible</td>
+                                    <td class="risk-cell low-risk">Low</td>
+                                    <td class="risk-cell medium-risk">Medium</td>
+                                    <td class="risk-cell high-risk">High</td>
+                                    <td class="risk-cell high-risk">High</td>
+                                    <td class="risk-cell extreme-risk">Extreme</td>
+                                </tr>
+                                <tr>
+                                    <td class="likelihood-header">2 - Unlikely</td>
+                                    <td class="risk-cell low-risk">Low</td>
+                                    <td class="risk-cell low-risk">Low</td>
+                                    <td class="risk-cell medium-risk">Medium</td>
+                                    <td class="risk-cell high-risk">High</td>
+                                    <td class="risk-cell high-risk">High</td>
+                                </tr>
+                                <tr>
+                                    <td class="likelihood-header">1 - Rare</td>
+                                    <td class="risk-cell low-risk">Low</td>
+                                    <td class="risk-cell low-risk">Low</td>
+                                    <td class="risk-cell medium-risk">Medium</td>
+                                    <td class="risk-cell medium-risk">Medium</td>
+                                    <td class="risk-cell high-risk">High</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3>Risk Categories</h3>
+                            <table class="category-table">
+                                <thead>
+                                    <tr>
+                                        <th width="20%">Risk Level</th>
+                                        <th>Required Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="risk-tag risk-extreme">Extreme</span></td>
+                                        <td>Activity must not proceed. Immediate action required to reduce risk.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="risk-tag risk-high">High</span></td>
+                                        <td>Activity must not proceed without senior management approval and additional controls.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="risk-tag risk-medium">Medium</span></td>
+                                        <td>Activity can proceed with risk controls in place and regular monitoring.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="risk-tag risk-low">Low</span></td>
+                                        <td>Activity can proceed with minimal risk controls and normal supervision.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h3>Current Risk Distribution</h3>
+                            <div class="risk-chart">
+                                <div class="risk-chart-bar" style="background-color: #d4edda; width: 45%;">45%</div>
+                                <div class="risk-chart-bar" style="background-color: #fff3cd; width: 30%;">30%</div>
+                                <div class="risk-chart-bar" style="background-color: #f8d7da; width: 20%;">20%</div>
+                                <div class="risk-chart-bar" style="background-color: #dc3545; width: 5%;">5%</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem;">
+                                <div>Low</div>
+                                <div>Medium</div>
+                                <div>High</div>
+                                <div>Extreme</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- View Risk Assessment Modal -->
+    <div class="modal" id="view-assessment-modal" style="display: none;">
+        <div class="modal-content" style="width: 80%; max-width: 900px; margin: 5% auto;">
+            <div class="modal-header">
+                <h2 id="view-assessment-title">Risk Assessment Details</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="view-assessment-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Sample Risk Assessment Details -->
+                <div class="risk-detail-section">
+                    <div class="risk-detail-grid">
+                        <div>
+                            <p><strong>Assessment Title:</strong> Chemical Storage Area Risk Assessment</p>
+                            <p><strong>Area/Location:</strong> Warehouse</p>
+                            <p><strong>Assessed By:</strong> John Smith</p>
+                        </div>
+                        <div>
+                            <p><strong>Assessment Date:</strong> April 1, 2025</p>
+                            <p><strong>Review Date:</strong> April 1, 2026</p>
+                            <p><strong>Overall Risk Level:</strong> <span class="risk-tag risk-high">High</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="risk-detail-section">
+                    <h3>Assessment Scope</h3>
+                    <p>This risk assessment covers all activities related to chemical storage in the warehouse area, including handling, storage, and inventory management of hazardous chemicals. The assessment evaluates potential hazards and control measures for employees working in and around the chemical storage area.</p>
+                </div>
+                
+                <div class="risk-detail-section">
+                    <h3>Identified Hazards and Controls</h3>
+                    
+                    <div class="risk-control-item">
+                        <h4>Hazard: Chemical Spills</h4>
+                        <div class="risk-detail-grid">
+                            <div>
+                                <p><strong>Likelihood:</strong> 3 - Possible</p>
+                                <p><strong>Severity:</strong> 4 - Major</p>
+                                <p><strong>Risk Level (Before Controls):</strong> <span class="risk-tag risk-high">High</span></p>
+                            </div>
+                            <div>
+                                <p><strong>Control Measures:</strong></p>
+                                <ul>
+                                    <li>Secondary containment for all liquid chemicals</li>
+                                    <li>Regular inspection of containers for leaks or damage</li>
+                                    <li>Spill kits positioned strategically throughout the storage area</li>
+                                    <li>Regular training on spill response procedures</li>
+                                </ul>
+                                <p><strong>Risk Level (After Controls):</strong> <span class="risk-tag risk-medium">Medium</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="risk-control-item">
+                        <h4>Hazard: Fire/Explosion</h4>
+                        <div class="risk-detail-grid">
+                            <div>
+                                <p><strong>Likelihood:</strong> 2 - Unlikely</p>
+                                <p><strong>Severity:</strong> 5 - Catastrophic</p>
+                                <p><strong>Risk Level (Before Controls):</strong> <span class="risk-tag risk-high">High</span></p>
+                            </div>
+                            <div>
+                                <p><strong>Control Measures:</strong></p>
+                                <ul>
+                                    <li>Proper segregation of incompatible chemicals</li>
+                                    <li>Flammable materials stored in dedicated fire cabinets</li>
+                                    <li>Elimination of ignition sources in the storage area</li>
+                                    <li>Fire detection and suppression systems</li>
+                                    <li>Emergency evacuation procedures</li>
+                                </ul>
+                                <p><strong>Risk Level (After Controls):</strong> <span class="risk-tag risk-medium">Medium</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="risk-control-item">
+                        <h4>Hazard: Chemical Exposure</h4>
+                        <div class="risk-detail-grid">
+                            <div>
+                                <p><strong>Likelihood:</strong> 4 - Likely</p>
+                                <p><strong>Severity:</strong> 3 - Moderate</p>
+                                <p><strong>Risk Level (Before Controls):</strong> <span class="risk-tag risk-high">High</span></p>
+                            </div>
+                            <div>
+                                <p><strong>Control Measures:</strong></p>
+                                <ul>
+                                    <li>PPE requirements: Chemical-resistant gloves, safety goggles, and appropriate respirators when necessary</li>
+                                    <li>Adequate ventilation in the storage area</li>
+                                    <li>Emergency eyewash and shower stations nearby</li>
+                                    <li>Regular training on hazard communication and safe handling procedures</li>
+                                </ul>
+                                <p><strong>Risk Level (After Controls):</strong> <span class="risk-tag risk-medium">Medium</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="risk-detail-section">
+                    <h3>Additional Control Measures Required</h3>
+                    <ul>
+                        <li>Update chemical inventory system to better track hazardous materials</li>
+                        <li>Install additional ventilation in the northwest corner of the storage area</li>
+                        <li>Conduct specialized training for employees on the new GHS classification system</li>
+                        <li>Implement monthly inspections of all chemical containers and storage conditions</li>
+                    </ul>
+                </div>
+                
+                <div class="risk-detail-section">
+                    <h3>Monitoring and Review</h3>
+                    <p><strong>Monitoring Requirements:</strong> Weekly visual inspections of the chemical storage area, monthly checks of safety equipment including eyewash stations and emergency showers, quarterly review of chemical inventory and storage conditions.</p>
+                    <p><strong>Next Review Date:</strong> April 1, 2026, or sooner if there are significant changes to operations or after any incident.</p>
+                    <p><strong>Approved By:</strong> Robert Johnson, HSE Manager</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; padding-top: 20px;">
+                <button class="btn btn-secondary modal-close-btn" style="margin-right: 10px;">Close</button>
+                <button class="btn btn-primary" id="print-assessment-btn">
+                    <i class="fas fa-print"></i> Print Assessment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="delete-confirm-modal" style="display: none;">
+        <div class="modal-content" style="max-width: 500px; margin: 15% auto;">
+            <div class="modal-header">
+                <h3>Confirm Deletion</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this risk assessment? This action cannot be undone.</p>
+                <p id="delete-assessment-title" style="font-weight: bold;">Chemical Storage Area Risk Assessment</p>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; padding-top: 20px;">
+                <button class="btn modal-close-btn">Cancel</button>
+                <button class="btn btn-danger" id="confirm-delete-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <!-- Moment.js for date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/datetime-utils.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize elements
+            const createAssessmentBtn = document.getElementById('create-assessment-btn');
+            const assessmentTableBody = document.getElementById('assessment-table-body');
+            const areaFilter = document.getElementById('area-filter');
+            const riskLevelFilter = document.getElementById('risk-level-filter');
+            const dateFilter = document.getElementById('date-filter');
+            const assessmentSearch = document.getElementById('assessment-search');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const pagination = document.getElementById('pagination');
+            const viewAssessmentModal = document.getElementById('view-assessment-modal');
+            const deleteConfirmModal = document.getElementById('delete-confirm-modal');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            const printAssessmentBtn = document.getElementById('print-assessment-btn');
+            
+            // Show create assessment form
+            if (createAssessmentBtn) {
+                createAssessmentBtn.addEventListener('click', function() {
+                    window.location.href = 'risk-assessment-form.html';
+                });
+            }
+            
+            // Risk distribution chart data
+            let riskCounts = {
+                low: 0,
+                medium: 0,
+                high: 0,
+                extreme: 0
+            };
+            
+            // Load risks from Firebase
+            function loadRiskAssessments() {
+                // Show loading indicator
+                if (loadingSpinner) loadingSpinner.style.display = 'flex';
+                
+                // Clear any existing data
+                if (assessmentTableBody) assessmentTableBody.innerHTML = '';
+                
+                // Reset risk counts
+                riskCounts = { low: 0, medium: 0, high: 0, extreme: 0 };
+                
+                // Get filters
+                const areaValue = areaFilter ? areaFilter.value.toLowerCase() : '';
+                const levelValue = riskLevelFilter ? riskLevelFilter.value.toLowerCase() : '';
+                const dateValue = dateFilter ? dateFilter.value : '';
+                const searchValue = assessmentSearch ? assessmentSearch.value.toLowerCase() : '';
+                
+                // Get risks from Firebase
+                database.ref('riskmanagement').on('value', function(snapshot) {
+                    // Hide loading indicator
+                    if (loadingSpinner) loadingSpinner.style.display = 'none';
+                    
+                    if (!snapshot.exists()) {
+                        // No risks found
+                        if (assessmentTableBody) {
+                            assessmentTableBody.innerHTML = '<tr><td colspan="7" class="no-records">No risk assessments found</td></tr>';
+                        }
+                        updateRiskDistributionChart();
+                        return;
+                    }
+                    
+                    // Clear table
+                    if (assessmentTableBody) assessmentTableBody.innerHTML = '';
+                    
+                    const risks = [];
+                    
+                    // Convert snapshot to array for filtering and sorting
+                    snapshot.forEach(function(childSnapshot) {
+                        const risk = childSnapshot.val();
+                        risk.key = childSnapshot.key;
+                        risks.push(risk);
+                        
+                        // Count risks by level for the chart
+                        const riskLevel = risk.residualAssessment?.level || risk.inherentAssessment?.level || 'low';
+                        riskCounts[riskLevel.toLowerCase()]++;
+                    });
+                    
+                    // Filter risks based on selected filters
+                    const filteredRisks = risks.filter(risk => {
+                        // Filter by area/location
+                        if (areaValue && risk.location && risk.location.toLowerCase() !== areaValue) {
+                            return false;
+                        }
+                        
+                        // Filter by risk level
+                        if (levelValue) {
+                            const riskLevel = risk.residualAssessment?.level || risk.inherentAssessment?.level || '';
+                            if (riskLevel.toLowerCase() !== levelValue) {
+                                return false;
+                            }
+                        }
+                        
+                        // Filter by date
+                        if (dateValue) {
+                            const riskDate = risk.dateIdentified || '';
+                            if (riskDate < dateValue) {
+                                return false;
+                            }
+                        }
+                        
+                        // Filter by search
+                        if (searchValue) {
+                            const title = risk.title || '';
+                            const description = risk.description || '';
+                            const hazard = risk.hazard || '';
+                            const searchString = title + ' ' + description + ' ' + hazard;
+                            if (!searchString.toLowerCase().includes(searchValue)) {
+                                return false;
+                            }
+                        }
+                        
+                        return true;
+                    });
+                    
+                    // Sort risks by date (newest first)
+                    filteredRisks.sort((a, b) => {
+                        const dateA = a.dateIdentified || '';
+                        const dateB = b.dateIdentified || '';
+                        return dateB.localeCompare(dateA);
+                    });
+                    
+                    // Display risks in the table
+                    if (filteredRisks.length === 0) {
+                        if (assessmentTableBody) {
+                            assessmentTableBody.innerHTML = '<tr><td colspan="7" class="no-records">No matching risk assessments found</td></tr>';
+                        }
+                    } else {
+                        filteredRisks.forEach(risk => {
+                            addRiskToTable(risk);
+                        });
+                    }
+                    
+                    // Update risk distribution chart
+                    updateRiskDistributionChart();
+                });
+            }
+            
+            // Add risk to table
+            function addRiskToTable(risk) {
+                if (!assessmentTableBody) return;
+                
+                const tr = document.createElement('tr');
+                
+                // Risk title
+                const tdTitle = document.createElement('td');
+                tdTitle.textContent = risk.title || 'Untitled Risk';
+                tr.appendChild(tdTitle);
+                
+                // Area/Location
+                const tdLocation = document.createElement('td');
+                
+                // Check if it's a department ID first and try to get the department name
+                if (risk.department) {
+                    database.ref('departments/' + risk.department).once('value')
+                        .then(snapshot => {
+                            if (snapshot.exists()) {
+                                const department = snapshot.val();
+                                tdLocation.textContent = department.name || risk.location || 'N/A';
+                            } else {
+                                // If department not found, fall back to location or department ID
+                                tdLocation.textContent = risk.location || risk.department || 'N/A';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching department:', error);
+                            tdLocation.textContent = risk.location || risk.department || 'N/A';
+                        });
+                } else {
+                    tdLocation.textContent = risk.location || 'N/A';
+                }
+                
+                tr.appendChild(tdLocation);
+                
+                // Assessed By
+                const tdAssessedBy = document.createElement('td');
+                tdAssessedBy.textContent = risk.createdBy?.name || 'Unknown';
+                tr.appendChild(tdAssessedBy);
+                
+                // Assessment Date
+                const tdDate = document.createElement('td');
+                tdDate.textContent = formatDate(risk.dateIdentified) || 'N/A';
+                tr.appendChild(tdDate);
+                
+                // Review Date
+                const tdReviewDate = document.createElement('td');
+                // Calculate review date as 1 year from assessment date
+                const reviewDate = risk.dateIdentified ? calculateReviewDate(risk.dateIdentified) : 'N/A';
+                tdReviewDate.textContent = reviewDate;
+                tr.appendChild(tdReviewDate);
+                
+                // Risk Level
+                const tdLevel = document.createElement('td');
+                const riskLevel = risk.residualAssessment?.level || risk.inherentAssessment?.level || 'Low';
+                const span = document.createElement('span');
+                span.className = `risk-tag risk-${riskLevel.toLowerCase()}`;
+                span.textContent = riskLevel;
+                tdLevel.appendChild(span);
+                tr.appendChild(tdLevel);
+                
+                // Actions
+                const tdActions = document.createElement('td');
+                const actionsDiv = document.createElement('div');
+                actionsDiv.className = 'action-buttons';
+                
+                // View button
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'btn btn-primary view-assessment-btn';
+                viewBtn.innerHTML = '<i class="fas fa-eye"></i>';
+                viewBtn.title = 'View';
+                viewBtn.setAttribute('data-id', risk.key);
+                viewBtn.addEventListener('click', function() {
+                    viewRiskAssessment(risk.key);
+                });
+                actionsDiv.appendChild(viewBtn);
+                
+                // Edit button
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn edit-assessment-btn';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                editBtn.title = 'Edit';
+                editBtn.setAttribute('data-id', risk.key);
+                editBtn.addEventListener('click', function() {
+                    window.location.href = `risk-assessment-form.html?id=${risk.key}`;
+                });
+                actionsDiv.appendChild(editBtn);
+                
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger delete-assessment-btn';
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.title = 'Delete';
+                deleteBtn.setAttribute('data-id', risk.key);
+                deleteBtn.addEventListener('click', function() {
+                    showDeleteConfirmation(risk.key, risk.title || 'Untitled Risk');
+                });
+                actionsDiv.appendChild(deleteBtn);
+                
+                tdActions.appendChild(actionsDiv);
+                tr.appendChild(tdActions);
+                
+                assessmentTableBody.appendChild(tr);
+            }
+            
+            // Format date for display (YYYY-MM-DD to Month Day, Year)
+            function formatDate(dateString) {
+                if (!dateString) return 'N/A';
+                
+                // Use our centralized DateTimeUtils if available
+                if (window.DateTimeUtils) {
+                    const userId = firebase.auth().currentUser?.uid || '';
+                    return window.DateTimeUtils.formatDate(dateString, userId);
+                }
+                
+                // Fallback to default formatting if DateTimeUtils is not available
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+                
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+            
+            // Calculate review date (1 year after assessment date)
+            function calculateReviewDate(dateString) {
+                if (!dateString) return 'N/A';
+                
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return 'N/A';
+                
+                date.setFullYear(date.getFullYear() + 1);
+                
+                // Use DateTimeUtils if available to respect user's date format preferences
+                if (window.DateTimeUtils) {
+                    const userId = firebase.auth().currentUser?.uid || '';
+                    return window.DateTimeUtils.formatDate(date, userId);
+                }
+                
+                // Fallback to default formatting
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                return date.toLocaleDateString('en-US', options);
+            }
+            
+            // Update risk distribution chart
+            function updateRiskDistributionChart() {
+                const total = riskCounts.low + riskCounts.medium + riskCounts.high + riskCounts.extreme;
+                
+                if (total === 0) {
+                    document.querySelectorAll('.risk-chart-bar').forEach((bar, index) => {
+                        const levels = ['low', 'medium', 'high', 'extreme'];
+                        bar.style.width = '25%';
+                        bar.textContent = '0%';
+                    });
+                    return;
+                }
+                
+                // Calculate percentages
+                const percentages = {
+                    low: Math.round((riskCounts.low / total) * 100),
+                    medium: Math.round((riskCounts.medium / total) * 100),
+                    high: Math.round((riskCounts.high / total) * 100),
+                    extreme: Math.round((riskCounts.extreme / total) * 100)
+                };
+                
+                // Ensure percentages add up to 100%
+                const sum = percentages.low + percentages.medium + percentages.high + percentages.extreme;
+                if (sum < 100) {
+                    // Add the remainder to the largest category
+                    const largest = Object.keys(percentages).reduce((a, b) => 
+                        percentages[a] > percentages[b] ? a : b
+                    );
+                    percentages[largest] += (100 - sum);
+                } else if (sum > 100) {
+                    // Subtract from the largest category
+                    const largest = Object.keys(percentages).reduce((a, b) => 
+                        percentages[a] > percentages[b] ? a : b
+                    );
+                    percentages[largest] -= (sum - 100);
+                }
+                
+                // Update chart bars
+                document.querySelectorAll('.risk-chart-bar').forEach((bar, index) => {
+                    const levels = ['low', 'medium', 'high', 'extreme'];
+                    const level = levels[index];
+                    bar.style.width = percentages[level] + '%';
+                    bar.textContent = percentages[level] + '%';
+                    
+                    // Hide bars with 0%
+                    if (percentages[level] === 0) {
+                        bar.style.display = 'none';
+                    } else {
+                        bar.style.display = 'flex';
+                    }
+                });
+            }
+            
+            // View risk assessment
+            function viewRiskAssessment(riskId) {
+                // Show modal
+                if (viewAssessmentModal) {
+                    viewAssessmentModal.style.display = 'block';
+                }
+                
+                // Load risk details
+                database.ref('riskmanagement/' + riskId).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const risk = snapshot.val();
+                            
+                            // Update modal title
+                            document.getElementById('view-assessment-title').textContent = risk.title || 'Risk Assessment Details';
+                            
+                            // Update modal content
+                            const modalBody = document.getElementById('view-assessment-body');
+                            if (modalBody) {
+                                // Clear existing content
+                                modalBody.innerHTML = '';
+                                
+                                // Basic info section
+                                const basicSection = document.createElement('div');
+                                basicSection.className = 'risk-detail-section';
+                                
+                                const basicGrid = document.createElement('div');
+                                basicGrid.className = 'risk-detail-grid';
+                                
+                                const col1 = document.createElement('div');
+                                col1.innerHTML = `
+                                    <p><strong>Assessment Title:</strong> ${risk.title || 'N/A'}</p>
+                                    <p><strong>Area/Location:</strong> ${risk.location || 'N/A'}</p>
+                                    <p><strong>Department:</strong> ${risk.department || 'N/A'}</p>
+                                    <p><strong>Assessed By:</strong> ${risk.createdBy?.name || 'N/A'}</p>
+                                `;
+                                
+                                const col2 = document.createElement('div');
+                                col2.innerHTML = `
+                                    <p><strong>Risk ID:</strong> ${risk.id || 'N/A'}</p>
+                                    <p><strong>Assessment Date:</strong> ${formatDate(risk.dateIdentified) || 'N/A'}</p>
+                                    <p><strong>Review Date:</strong> ${calculateReviewDate(risk.dateIdentified) || 'N/A'}</p>
+                                    <p><strong>Status:</strong> ${formatString(risk.status) || 'N/A'}</p>
+                                    <p><strong>Overall Risk Level:</strong> <span class="risk-tag risk-${(risk.residualAssessment?.level || risk.inherentAssessment?.level || 'low').toLowerCase()}">${risk.residualAssessment?.level || risk.inherentAssessment?.level || 'Low'}</span></p>
+                                `;
+                                
+                                basicGrid.appendChild(col1);
+                                basicGrid.appendChild(col2);
+                                basicSection.appendChild(basicGrid);
+                                modalBody.appendChild(basicSection);
+                                
+                                // Hazard section - Move hazard to its own section with more prominence
+                                if (risk.hazard) {
+                                    const hazardSection = document.createElement('div');
+                                    hazardSection.className = 'risk-detail-section';
+                                    
+                                    const hazardTitle = document.createElement('h3');
+                                    hazardTitle.textContent = 'Identified Hazard';
+                                    hazardSection.appendChild(hazardTitle);
+                                    
+                                    const hazardText = document.createElement('p');
+                                    hazardText.textContent = risk.hazard;
+                                    hazardSection.appendChild(hazardText);
+                                    
+                                    modalBody.appendChild(hazardSection);
+                                }
+                                
+                                // Description section
+                                if (risk.description) {
+                                    const descSection = document.createElement('div');
+                                    descSection.className = 'risk-detail-section';
+                                    
+                                    const descTitle = document.createElement('h3');
+                                    descTitle.textContent = 'Risk Description';
+                                    descSection.appendChild(descTitle);
+                                    
+                                    const descText = document.createElement('p');
+                                    descText.textContent = risk.description;
+                                    descSection.appendChild(descText);
+                                    
+                                    modalBody.appendChild(descSection);
+                                }
+                                
+                                // Inherent risk assessment
+                                if (risk.inherentAssessment) {
+                                    const inherentSection = document.createElement('div');
+                                    inherentSection.className = 'risk-detail-section';
+                                    
+                                    const inherentTitle = document.createElement('h3');
+                                    inherentTitle.textContent = 'Inherent Risk Assessment (Before Controls)';
+                                    inherentSection.appendChild(inherentTitle);
+                                    
+                                    const inherentGrid = document.createElement('div');
+                                    inherentGrid.className = 'risk-detail-grid';
+                                    
+                                    const inherentCol1 = document.createElement('div');
+                                    inherentCol1.innerHTML = `
+                                        <p><strong>Likelihood:</strong> ${getLikelihoodText(risk.inherentAssessment.likelihood)}</p>
+                                        <p><strong>Impact:</strong> ${getImpactText(risk.inherentAssessment.consequence)}</p>
+                                    `;
+                                    
+                                    const inherentCol2 = document.createElement('div');
+                                    inherentCol2.innerHTML = `
+                                        <p><strong>Risk Rating:</strong> ${risk.inherentAssessment.rating || 'N/A'}</p>
+                                        <p><strong>Risk Level:</strong> <span class="risk-tag risk-${(risk.inherentAssessment.level || 'low').toLowerCase()}">${risk.inherentAssessment.level || 'Low'}</span></p>
+                                    `;
+                                    
+                                    inherentGrid.appendChild(inherentCol1);
+                                    inherentGrid.appendChild(inherentCol2);
+                                    inherentSection.appendChild(inherentGrid);
+                                    
+                                    modalBody.appendChild(inherentSection);
+                                }
+                                
+                                // Controls and mitigation
+                                if (risk.controls) {
+                                    const controlsSection = document.createElement('div');
+                                    controlsSection.className = 'risk-detail-section';
+                                    
+                                    const controlsTitle = document.createElement('h3');
+                                    controlsTitle.textContent = 'Controls and Mitigation';
+                                    controlsSection.appendChild(controlsTitle);
+                                    
+                                    const controlsContent = document.createElement('div');
+                                    controlsContent.classList.add('risk-control-item');
+                                    
+                                    // Strategy
+                                    if (risk.controls.strategy) {
+                                        const strategyPara = document.createElement('p');
+                                        strategyPara.innerHTML = `<strong>Risk Strategy:</strong> ${formatString(risk.controls.strategy)}`;
+                                        controlsContent.appendChild(strategyPara);
+                                    }
+                                    
+                                    // Existing controls
+                                    if (risk.controls.existing) {
+                                        const existingTitle = document.createElement('p');
+                                        existingTitle.innerHTML = '<strong>Existing Controls:</strong>';
+                                        controlsContent.appendChild(existingTitle);
+                                        
+                                        const existingText = document.createElement('p');
+                                        existingText.textContent = risk.controls.existing;
+                                        controlsContent.appendChild(existingText);
+                                    }
+                                    
+                                    // Mitigation actions
+                                    if (risk.controls.proposed) {
+                                        const proposedTitle = document.createElement('p');
+                                        proposedTitle.innerHTML = '<strong>Proposed Mitigation Actions:</strong>';
+                                        controlsContent.appendChild(proposedTitle);
+                                        
+                                        const proposedText = document.createElement('p');
+                                        proposedText.textContent = risk.controls.proposed;
+                                        controlsContent.appendChild(proposedText);
+                                    }
+                                    
+                                    // Responsibility and timeline
+                                    const respGrid = document.createElement('div');
+                                    respGrid.className = 'risk-detail-grid';
+                                    
+                                    const respCol1 = document.createElement('div');
+                                    respCol1.innerHTML = `
+                                        <p><strong>Responsible Person:</strong> ${risk.controls.responsiblePerson || 'N/A'}</p>
+                                        <p><strong>Line Manager:</strong> ${risk.controls.lineManager || 'N/A'}</p>
+                                    `;
+                                    
+                                    const respCol2 = document.createElement('div');
+                                    respCol2.innerHTML = `
+                                        <p><strong>Target Completion Date:</strong> ${formatDate(risk.controls.targetDate) || 'N/A'}</p>
+                                    `;
+                                    
+                                    respGrid.appendChild(respCol1);
+                                    respGrid.appendChild(respCol2);
+                                    controlsContent.appendChild(respGrid);
+                                    
+                                    controlsSection.appendChild(controlsContent);
+                                    modalBody.appendChild(controlsSection);
+                                }
+                                
+                                // Residual risk assessment
+                                if (risk.residualAssessment) {
+                                    const residualSection = document.createElement('div');
+                                    residualSection.className = 'risk-detail-section';
+                                    
+                                    const residualTitle = document.createElement('h3');
+                                    residualTitle.textContent = 'Residual Risk Assessment (After Controls)';
+                                    residualSection.appendChild(residualTitle);
+                                    
+                                    const residualGrid = document.createElement('div');
+                                    residualGrid.className = 'risk-detail-grid';
+                                    
+                                    const residualCol1 = document.createElement('div');
+                                    residualCol1.innerHTML = `
+                                        <p><strong>Likelihood:</strong> ${getLikelihoodText(risk.residualAssessment.likelihood)}</p>
+                                        <p><strong>Impact:</strong> ${getImpactText(risk.residualAssessment.consequence)}</p>
+                                    `;
+                                    
+                                    const residualCol2 = document.createElement('div');
+                                    residualCol2.innerHTML = `
+                                        <p><strong>Risk Rating:</strong> ${risk.residualAssessment.rating || 'N/A'}</p>
+                                        <p><strong>Risk Level:</strong> <span class="risk-tag risk-${(risk.residualAssessment.level || 'low').toLowerCase()}">${risk.residualAssessment.level || 'Low'}</span></p>
+                                    `;
+                                    
+                                    residualGrid.appendChild(residualCol1);
+                                    residualGrid.appendChild(residualCol2);
+                                    residualSection.appendChild(residualGrid);
+                                    
+                                    modalBody.appendChild(residualSection);
+                                }
+                                
+                                // Additional information
+                                if (risk.additionalNotes) {
+                                    const notesSection = document.createElement('div');
+                                    notesSection.className = 'risk-detail-section';
+                                    
+                                    const notesTitle = document.createElement('h3');
+                                    notesTitle.textContent = 'Additional Information';
+                                    notesSection.appendChild(notesTitle);
+                                    
+                                    const notesText = document.createElement('p');
+                                    notesText.textContent = risk.additionalNotes;
+                                    notesSection.appendChild(notesText);
+                                    
+                                    modalBody.appendChild(notesSection);
+                                }
+                                
+                                // Attachments
+                                if (risk.attachments && risk.attachments.length > 0) {
+                                    const attachmentsSection = document.createElement('div');
+                                    attachmentsSection.className = 'risk-detail-section';
+                                    
+                                    const attachmentsTitle = document.createElement('h3');
+                                    attachmentsTitle.textContent = 'Attachments';
+                                    attachmentsSection.appendChild(attachmentsTitle);
+                                    
+                                    const attachmentsList = document.createElement('ul');
+                                    attachmentsList.style.listStyleType = 'none';
+                                    attachmentsList.style.paddingLeft = '0';
+                                    
+                                    risk.attachments.forEach(attachment => {
+                                        const li = document.createElement('li');
+                                        li.style.marginBottom = '8px';
+                                        li.innerHTML = `<a href="${attachment.url}" target="_blank"><i class="fas fa-file"></i> ${attachment.name}</a>`;
+                                        attachmentsList.appendChild(li);
+                                    });
+                                    
+                                    attachmentsSection.appendChild(attachmentsList);
+                                    modalBody.appendChild(attachmentsSection);
+                                }
+                            }
+                        } else {
+                            alert('Risk assessment not found!');
+                            if (viewAssessmentModal) viewAssessmentModal.style.display = 'none';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading risk data:', error);
+                        alert('Error loading risk assessment data.');
+                        if (viewAssessmentModal) viewAssessmentModal.style.display = 'none';
+                    });
+            }
+            
+            // Get likelihood text from value
+            function getLikelihoodText(value) {
+                const likelihoodMap = {
+                    1: '1 - Rare',
+                    2: '2 - Unlikely',
+                    3: '3 - Possible',
+                    4: '4 - Likely',
+                    5: '5 - Almost Certain'
+                };
+                return likelihoodMap[value] || value || 'N/A';
+            }
+            
+            // Get impact text from value
+            function getImpactText(value) {
+                const impactMap = {
+                    1: '1 - Negligible',
+                    2: '2 - Minor',
+                    3: '3 - Moderate',
+                    4: '4 - Major',
+                    5: '5 - Catastrophic'
+                };
+                return impactMap[value] || value || 'N/A';
+            }
+            
+            // Format string (convert slug to Title Case)
+            function formatString(str) {
+                if (!str) return '';
+                return str
+                    .replace(/-/g, ' ')
+                    .replace(/\w\S*/g, txt => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+            }
+            
+            // Show delete confirmation
+            function showDeleteConfirmation(riskId, riskTitle) {
+                if (!deleteConfirmModal) return;
+                
+                deleteConfirmModal.style.display = 'block';
+                
+                // Set risk title in confirmation
+                const titleElement = document.getElementById('delete-assessment-title');
+                if (titleElement) {
+                    titleElement.textContent = riskTitle;
+                }
+                
+                // Set up delete button
+                if (confirmDeleteBtn) {
+                    // Remove any existing event listeners
+                    const newBtn = confirmDeleteBtn.cloneNode(true);
+                    confirmDeleteBtn.parentNode.replaceChild(newBtn, confirmDeleteBtn);
+                    
+                    // Add new event listener
+                    newBtn.addEventListener('click', function() {
+                        deleteRiskAssessment(riskId);
+                    });
+                }
+            }
+            
+            // Delete risk assessment
+            function deleteRiskAssessment(riskId) {
+                database.ref('riskmanagement/' + riskId).remove()
+                    .then(() => {
+                        if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
+                        alert('Risk assessment deleted successfully!');
+                        // Refresh the table (will happen automatically due to the 'on' event listener)
+                    })
+                    .catch(error => {
+                        console.error('Error deleting risk:', error);
+                        alert('Error deleting risk assessment: ' + error.message);
+                        if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
+                    });
+            }
+            
+            // Set up filters
+            [areaFilter, riskLevelFilter, dateFilter].forEach(filter => {
+                if (filter) {
+                    filter.addEventListener('change', loadRiskAssessments);
+                }
+            });
+            
+            // Set up search
+            if (assessmentSearch) {
+                assessmentSearch.addEventListener('input', function() {
+                    // Debounce search to avoid excessive database queries
+                    clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => {
+                        loadRiskAssessments();
+                    }, 300);
+                });
+            }
+            
+            // Print button
+            if (printAssessmentBtn) {
+                printAssessmentBtn.addEventListener('click', function() {
+                    window.print();
+                });
+            }
+            
+            // Close modals
+            const closeButtons = document.querySelectorAll('.modal-close, .modal-close-btn');
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (viewAssessmentModal) viewAssessmentModal.style.display = 'none';
+                    if (deleteConfirmModal) deleteConfirmModal.style.display = 'none';
+                });
+            });
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === viewAssessmentModal) {
+                    viewAssessmentModal.style.display = 'none';
+                }
+                if (event.target === deleteConfirmModal) {
+                    deleteConfirmModal.style.display = 'none';
+                }
+            });
+            
+            // Load risk assessments when the page loads
+            auth.onAuthStateChanged(function(user) {
+                if (user) {
+                    loadRiskAssessments();
+                } else {
+                    // No user signed in, redirect to login
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
