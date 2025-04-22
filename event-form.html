@@ -826,115 +826,62 @@
         .selected-factors-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            padding: 12px;
-            background-color: #f9f9f9;
-            border: 1px solid #e0e0e0;
-            border-radius: 8px;
+            gap: 8px;
+            min-height: 42px;
+            padding: 5px 0;
+            margin: 8px 0 15px;
         }
 
         .selected-factor-item {
             display: flex;
-            flex-direction: column;
-            gap: 8px;
-            background-color: #ffffff;
-            border: 1px solid #dcdcdc;
-            border-radius: 8px;
-            padding: 12px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-            transition: box-shadow 0.3s ease, transform 0.3s ease;
-        }
-
-        .factor-header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: space-between;
+            background-color: #f0f7ff;
+            border: 1px solid #cfe2ff;
+            border-radius: 8px;
+            padding: 8px 14px;
             font-size: 14px;
-            font-weight: 600;
-            color: #333;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #f0f0f0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
+            animation: fadeInScale 0.3s ease;
         }
 
-        .factor-header .remove-factor {
-            color: #e74c3c;
+        .selected-factor-item:hover {
+            background-color: #e6f2ff;
+            border-color: #b6d4fe;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        }
+
+        .selected-factor-item .remove-factor {
+            color: #dc3545;
             cursor: pointer;
             border: none;
             background: none;
-            font-size: 16px;
-            padding: 4px;
-            border-radius: 4px;
-            transition: all 0.2s ease;
-        }
-
-        .factor-header .remove-factor:hover {
-            background-color: #fee;
-            color: #c0392b;
-        }
-
-        .factor-details {
+            padding: 0;
+            font-size: 14px;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            align-items: center;
+            transition: all 0.2s;
+            opacity: 0.7;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            justify-content: center;
         }
 
-        .factor-details .form-group {
-            margin: 0;
+        .selected-factor-item .remove-factor:hover {
+            opacity: 1;
+            background-color: #ffeeee;
+            transform: scale(1.1);
         }
 
-        .factor-details label {
+        .selected-factors-container:empty:before {
+            content: 'No contributing factors selected';
+            color: #a0a0a0;
+            font-style: italic;
+            padding: 8px 0;
             display: block;
-            font-size: 12px;
-            font-weight: 500;
-            color: #555;
-            margin-bottom: 4px;
-        }
-
-        .factor-details textarea {
-            width: 100%;
-            padding: 8px;
-            border: 1px solid #dcdcdc;
-            border-radius: 6px;
-            font-size: 13px;
-            background-color: #fdfdfd;
-            min-height: 52px;
-            resize: vertical;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .factor-details textarea:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-            outline: none;
-        }
-
-        .factor-details .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin: 0;
-        }
-
-        .factor-details .form-row .form-group {
-            width: 100%;
-        }
-
-        .factor-details input[type="date"],
-        .factor-details select {
-            width: 100%;
-            padding: 6px 8px;
-            border: 1px solid #dcdcdc;
-            border-radius: 6px;
-            font-size: 13px;
-            background-color: #fdfdfd;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .factor-details input[type="date"]:focus,
-        .factor-details select:focus {
-            border-color: #3498db;
-            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.1);
-            outline: none;
         }
     </style>
 </head>
@@ -967,8 +914,7 @@
                             <option value="incident">Incident</option>
                             <option value="near-miss">Near Miss</option>
                             <option value="observation">Safety Observation</option>
-                            <option value="inspection">Inspection</option>
-                            <option value="audit">Audit</option>
+                            <!-- Removed inspection and audit options -->
                         </select>
                     </div>
                     <div class="form-group">
@@ -1422,15 +1368,10 @@
                     case 'near-miss':
                         document.getElementById('incidentDetails').style.display = 'block';
                         break;
-                    case 'inspection':
-                        document.getElementById('inspectionDetails').style.display = 'block';
-                        break;
                     case 'observation':
                         document.getElementById('observationDetails').style.display = 'block';
                         break;
-                    case 'audit':
-                        document.getElementById('auditDetails').style.display = 'block';
-                        break;
+                    // Removed inspection and audit cases
                 }
                 
                 // Ensure users are loaded correctly when switching event types
@@ -1723,16 +1664,32 @@
                             document.getElementById('dueDate').value = eventData.dueDate || '';
                             document.getElementById('assignedTo').value = eventData.assignedTo || '';
 
+                            // Load existing attachments if available
+                            if (eventData.attachments && Array.isArray(eventData.attachments)) {
+                                // Clear existing attachments array
+                                attachedFiles.length = 0;
+                                
+                                // Add each attachment to the list
+                                eventData.attachments.forEach(attachment => {
+                                    const fileItem = {
+                                        name: attachment.name,
+                                        size: attachment.size || 'Unknown size',
+                                        url: attachment.url,
+                                        isExisting: true
+                                    };
+                                    attachedFiles.push(fileItem);
+                                });
+                                
+                                // Update the file list UI
+                                renderFileList();
+                            }
+
                             // Load contributing factors if they exist
                             if (eventData.contributingFactors && Array.isArray(eventData.contributingFactors)) {
                                 selectedFactorItems = eventData.contributingFactors.map(factor => ({
                                     value: factor.value,
                                     label: factor.label,
-                                    color: factor.color || '#000000', // Default color if not specified
-                                    description: factor.description || '',
-                                    correctiveAction: factor.correctiveAction || '',
-                                    deadline: factor.deadline || '',
-                                    responsiblePerson: factor.responsiblePerson || ''
+                                    color: factor.color || '#000000' // Default color if not specified
                                 }));
                                 renderSelectedFactors();
                             }
@@ -1796,32 +1753,11 @@
                             eventData.workRelated = document.getElementById('workRelated').value;
                             break;
                             
-                        case 'inspection':
-                            eventData.inspectionArea = document.getElementById('inspectionArea').value;
-                            eventData.inspectionType = document.getElementById('inspectionType').value;
-                            eventData.checklistUsed = document.getElementById('checklistUsed').value;
-                            eventData.inspectionFrequency = document.getElementById('inspectionFrequency').value;
-                            eventData.inspectionFindings = document.getElementById('inspectionFindings').value;
-                            eventData.totalItems = document.getElementById('totalItems').value;
-                            eventData.nonConformities = document.getElementById('nonConformities').value;
-                            eventData.selectedEquipment = selectedEquipmentItems; // Add selected equipment
-                            break;
-                            
                         case 'observation':
                             eventData.observationType = document.getElementById('observationType').value;
                             eventData.behaviorCategory = document.getElementById('behaviorCategory').value;
                             eventData.observationFeedback = document.getElementById('observationFeedback').value;
                             eventData.observationResponse = document.getElementById('observationResponse').value;
-                            break;
-                            
-                        case 'audit':
-                            eventData.auditScope = document.getElementById('auditScope').value;
-                            eventData.auditStandard = document.getElementById('auditStandard').value;
-                            eventData.auditType = document.getElementById('auditType').value;
-                            eventData.leadAuditor = document.getElementById('leadAuditor').value;
-                            eventData.auditTeam = document.getElementById('auditTeam').value;
-                            eventData.majorFindings = document.getElementById('majorFindings').value;
-                            eventData.minorFindings = document.getElementById('minorFindings').value;
                             break;
                     }
                     
@@ -2805,18 +2741,16 @@
                 const factor = {
                     value: select.value,
                     label: selectedOption.textContent,
-                    color: selectedOption.style.color,
-                    description: '',
-                    correctiveAction: '',
-                    deadline: '',
-                    responsiblePerson: ''
+                    color: selectedOption.style.color
                 };
                 
+                // Check if factor is already selected
                 if (!selectedFactorItems.some(item => item.value === factor.value)) {
                     selectedFactorItems.push(factor);
                     renderSelectedFactors();
                 }
                 
+                // Reset select to default option
                 select.selectedIndex = 0;
             }
         });
@@ -2830,86 +2764,20 @@
                 const factorElement = document.createElement('div');
                 factorElement.className = 'selected-factor-item';
                 factorElement.innerHTML = `
-                    <div class="factor-header">
-                        <span style="color: ${factor.color}">${factor.label}</span>
-                        <button type="button" class="remove-factor" data-value="${factor.value}">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="factor-details">
-                        <div class="form-group">
-                            <label>Description</label>
-                            <textarea class="form-control factor-description" placeholder="Describe the contributing factor">${factor.description || ''}</textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Corrective Action</label>
-                            <textarea class="form-control factor-corrective-action" placeholder="Describe the corrective action">${factor.correctiveAction || ''}</textarea>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label>Deadline</label>
-                                <input type="date" class="form-control factor-deadline" value="${factor.deadline || ''}">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label>Responsible Person</label>
-                                <select class="form-control factor-responsible">
-                                    <option value="">Select Person</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
+                    <span style="color: ${factor.color}">${factor.label}</span>
+                    <button type="button" class="remove-factor" data-value="${factor.value}">
+                        <i class="fas fa-times"></i>
+                    </button>
                 `;
                 
-                container.appendChild(factorElement);
-
-                // Add event listeners for the new fields
-                const descriptionField = factorElement.querySelector('.factor-description');
-                const correctiveActionField = factorElement.querySelector('.factor-corrective-action');
-                const deadlineField = factorElement.querySelector('.factor-deadline');
-                const responsibleField = factorElement.querySelector('.factor-responsible');
-
-                // Populate the responsible person dropdown
-                const responsibleSelect = factorElement.querySelector('.factor-responsible');
-                database.ref('users').once('value').then(snapshot => {
-                    if (snapshot.exists()) {
-                        snapshot.forEach(userSnapshot => {
-                            const user = userSnapshot.val();
-                            const option = document.createElement('option');
-                            option.value = userSnapshot.key;
-                            option.textContent = user.firstName && user.lastName ? 
-                                `${user.firstName} ${user.lastName}` : user.email || userSnapshot.key;
-                            responsibleSelect.appendChild(option);
-                        });
-                        // Set the selected value if it exists
-                        if (factor.responsiblePerson) {
-                            responsibleSelect.value = factor.responsiblePerson;
-                        }
-                    }
-                });
-
-                // Update the factor object when fields change
-                descriptionField.addEventListener('change', function() {
-                    factor.description = this.value;
-                });
-
-                correctiveActionField.addEventListener('change', function() {
-                    factor.correctiveAction = this.value;
-                });
-
-                deadlineField.addEventListener('change', function() {
-                    factor.deadline = this.value;
-                });
-
-                responsibleField.addEventListener('change', function() {
-                    factor.responsiblePerson = this.value;
-                });
-
                 // Add event listener for remove button
                 factorElement.querySelector('.remove-factor').addEventListener('click', function() {
                     const value = this.getAttribute('data-value');
                     selectedFactorItems = selectedFactorItems.filter(item => item.value !== value);
                     renderSelectedFactors();
                 });
+                
+                container.appendChild(factorElement);
             });
         }
 
@@ -2917,12 +2785,7 @@
         function getSelectedFactors() {
             return selectedFactorItems.map(item => ({
                 value: item.value,
-                label: item.label,
-                color: item.color,
-                description: item.description,
-                correctiveAction: item.correctiveAction,
-                deadline: item.deadline,
-                responsiblePerson: item.responsiblePerson
+                label: item.label
             }));
         }
     </script>

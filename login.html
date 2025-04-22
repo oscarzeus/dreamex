@@ -1050,6 +1050,42 @@
             const errorMessage = document.getElementById('error-message');
             const loginSpinner = document.getElementById('login-spinner');
             
+            // Check if domain is authorized for Firebase authentication
+            function checkDomainAuthStatus() {
+                // Default test email that should always fail but help diagnose domain auth issues
+                const testEmail = "test@example.com";
+                const testPassword = "test123456";
+                
+                return firebase.auth().signInWithEmailAndPassword(testEmail, testPassword)
+                    .then(() => {
+                        // This should never succeed with fake credentials
+                        return { authorized: true };
+                    })
+                    .catch(error => {
+                        // We expect an auth error, but we're looking for a specific one
+                        // If we get "auth/invalid-credential", the domain is authorized
+                        // If we get "auth/unauthorized-domain", the domain isn't authorized
+                        if (error.code === "auth/unauthorized-domain") {
+                            console.error("Domain not authorized for Firebase authentication:", window.location.hostname);
+                            return { 
+                                authorized: false, 
+                                error: error,
+                                message: `This domain (${window.location.hostname}) is not authorized for authentication. Please contact your administrator to add this domain to Firebase authorized domains.`
+                            };
+                        } else {
+                            // Any other error code is expected and means domain is authorized
+                            return { authorized: true };
+                        }
+                    });
+            }
+            
+            // Check domain authorization on page load
+            checkDomainAuthStatus().then(result => {
+                if (!result.authorized) {
+                    showError(result.message);
+                }
+            });
+            
             loginForm.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
@@ -1082,30 +1118,41 @@
                 // Hide any previous error
                 errorMessage.style.display = 'none';
                 
-                // Set persistence based on "Remember me" checkbox
-                const persistence = rememberMe ? 
-                    firebase.auth.Auth.Persistence.LOCAL : 
-                    firebase.auth.Auth.Persistence.SESSION;
-                
-                firebase.auth().setPersistence(persistence)
-                    .then(() => {
-                        // Sign in with email and password
-                        return firebase.auth().signInWithEmailAndPassword(email, password);
-                    })
-                    .then(function() {
-                        // Success - redirect to dashboard
-                        window.location.href = 'dashboard.html';
-                    })
-                    .catch(function(error) {
-                        // Handle errors
-                        showError(error.message);
-                        shakeForm();
-                        
-                        // Reset button
+                // First check domain authorization
+                checkDomainAuthStatus().then(result => {
+                    if (!result.authorized) {
+                        showError(result.message);
                         loginBtn.textContent = 'Sign In';
                         loginForm.querySelector('.btn-login').disabled = false;
                         loginSpinner.style.display = 'none';
-                    });
+                        return;
+                    }
+                    
+                    // Set persistence based on "Remember me" checkbox
+                    const persistence = rememberMe ? 
+                        firebase.auth.Auth.Persistence.LOCAL : 
+                        firebase.auth.Auth.Persistence.SESSION;
+                    
+                    firebase.auth().setPersistence(persistence)
+                        .then(() => {
+                            // Sign in with email and password
+                            return firebase.auth().signInWithEmailAndPassword(email, password);
+                        })
+                        .then(function() {
+                            // Success - redirect to dashboard
+                            window.location.href = 'dashboard.html';
+                        })
+                        .catch(function(error) {
+                            // Handle errors
+                            showError(error.message);
+                            shakeForm();
+                            
+                            // Reset button
+                            loginBtn.textContent = 'Sign In';
+                            loginForm.querySelector('.btn-login').disabled = false;
+                            loginSpinner.style.display = 'none';
+                        });
+                });
             });
             
             // Password strength meter

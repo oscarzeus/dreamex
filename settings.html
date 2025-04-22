@@ -505,6 +505,19 @@
                     <div class="field-configuration">
                         <div class="field-config-header">
                             <select id="fieldTypeSelector" class="form-control">
+                                <!-- Audit Section -->
+                                <optgroup label="Audit Management">
+                                    <option value="audit-type">Audit Type</option>
+                                    <option value="audit-status">Audit Status</option>
+                                    <option value="audit-finding-type">Audit Finding Type</option>
+                                    <option value="audit-priority">Audit Priority</option>
+                                    <option value="audit-area">Audit Area</option>
+                                    <option value="audit-evidence-type">Audit Evidence Type</option>
+                                    <option value="corrective-action-status">Corrective Action Status</option>
+                                    <option value="compliance-standard">Compliance Standard</option>
+                                    <option value="audit-frequency">Audit Frequency</option>
+                                </optgroup>
+                                <!-- User Management -->
                                 <optgroup label="User Management">
                                     <option value="user-gender">Gender</option>
                                     <option value="user-role">User Role</option>
@@ -530,7 +543,6 @@
                                 <optgroup label="Job Safety Analysis Form">
                                     <option value="job-type">Job Types</option>
                                     <option value="job-step">Job Steps</option>
-                                    <option value="department">Departments</option>
                                 </optgroup>
                                 
                                 <!-- Event Form Options -->
@@ -572,7 +584,6 @@
                                 <!-- Common Options -->
                                 <optgroup label="Common Fields">
                                     <option value="area">Work Areas</option>
-                                    <option value="department">Departments</option>
                                     <option value="equipment">Equipment</option>
                                     <option value="ppe">Personal Protective Equipment</option>
                                 </optgroup>
@@ -913,6 +924,74 @@
             
             // Default options for dropdown fields
             const defaultFieldOptions = {
+                // Audit Management Section
+                'audit-type': [
+                    { label: 'Internal Audit', value: 'internal', color: '#0d6efd', enabled: true },
+                    { label: 'External Audit', value: 'external', color: '#dc3545', enabled: true },
+                    { label: 'Compliance Audit', value: 'compliance', color: '#198754', enabled: true },
+                    { label: 'System Audit', value: 'system', color: '#6610f2', enabled: true },
+                    { label: 'Process Audit', value: 'process', color: '#fd7e14', enabled: true },
+                    { label: 'Management Review', value: 'management', color: '#6f42c1', enabled: true }
+                ],
+                'audit-status': [
+                    { label: 'Planned', value: 'planned', color: '#0d6efd', enabled: true },
+                    { label: 'In Progress', value: 'in-progress', color: '#fd7e14', enabled: true },
+                    { label: 'Completed', value: 'completed', color: '#198754', enabled: true },
+                    { label: 'Delayed', value: 'delayed', color: '#dc3545', enabled: true },
+                    { label: 'Cancelled', value: 'cancelled', color: '#6c757d', enabled: true }
+                ],
+                'audit-finding-type': [
+                    { label: 'Non-Conformity Major', value: 'ncr-major', color: '#dc3545', enabled: true },
+                    { label: 'Non-Conformity Minor', value: 'ncr-minor', color: '#fd7e14', enabled: true },
+                    { label: 'Observation', value: 'observation', color: '#0d6efd', enabled: true },
+                    { label: 'Opportunity for Improvement', value: 'ofi', color: '#198754', enabled: true },
+                    { label: 'Good Practice', value: 'good-practice', color: '#6f42c1', enabled: true }
+                ],
+                'audit-priority': [
+                    { label: 'Critical', value: 'critical', color: '#dc3545', enabled: true },
+                    { label: 'High', value: 'high', color: '#fd7e14', enabled: true },
+                    { label: 'Medium', value: 'medium', color: '#ffc107', enabled: true },
+                    { label: 'Low', value: 'low', color: '#198754', enabled: true }
+                ],
+                'audit-area': [
+                    { label: 'Health & Safety', value: 'health-safety', color: '#dc3545', enabled: true },
+                    { label: 'Environmental', value: 'environmental', color: '#198754', enabled: true },
+                    { label: 'Quality', value: 'quality', color: '#0d6efd', enabled: true },
+                    { label: 'Security', value: 'security', color: '#6f42c1', enabled: true },
+                    { label: 'Operations', value: 'operations', color: '#fd7e14', enabled: true },
+                    { label: 'Documentation', value: 'documentation', color: '#6c757d', enabled: true }
+                ],
+                'audit-evidence-type': [
+                    { label: 'Document Review', value: 'document', color: '#0d6efd', enabled: true },
+                    { label: 'Interview', value: 'interview', color: '#6f42c1', enabled: true },
+                    { label: 'Observation', value: 'observation', color: '#198754', enabled: true },
+                    { label: 'Testing', value: 'testing', color: '#fd7e14', enabled: true },
+                    { label: 'Sampling', value: 'sampling', color: '#17a2b8', enabled: true }
+                ],
+                'corrective-action-status': [
+                    { label: 'Open', value: 'open', color: '#dc3545', enabled: true },
+                    { label: 'In Progress', value: 'in-progress', color: '#fd7e14', enabled: true },
+                    { label: 'Completed', value: 'completed', color: '#198754', enabled: true },
+                    { label: 'Verified', value: 'verified', color: '#0d6efd', enabled: true },
+                    { label: 'Overdue', value: 'overdue', color: '#6c757d', enabled: true }
+                ],
+                'compliance-standard': [
+                    { label: 'OSHA', value: 'osha', color: '#dc3545', enabled: true },
+                    { label: 'ISO 45001', value: 'iso-45001', color: '#0d6efd', enabled: true },
+                    { label: 'ISO 14001', value: 'iso-14001', color: '#198754', enabled: true },
+                    { label: 'ISO 9001', value: 'iso-9001', color: '#6f42c1', enabled: true },
+                    { label: 'EPA', value: 'epa', color: '#28a745', enabled: true },
+                    { label: 'Internal Standard', value: 'internal', color: '#6f42c1', enabled: true },
+                    { label: 'Client Requirement', value: 'client', color: '#fd7e14', enabled: true },
+                    { label: 'Local Regulation', value: 'local', color: '#20c997', enabled: true }
+                ],
+                'audit-frequency': [
+                    { label: 'Annual', value: 'annual', color: '#0d6efd', enabled: true },
+                    { label: 'Semi-Annual', value: 'semi-annual', color: '#198754', enabled: true },
+                    { label: 'Quarterly', value: 'quarterly', color: '#fd7e14', enabled: true },
+                    { label: 'Monthly', value: 'monthly', color: '#6f42c1', enabled: true },
+                    { label: 'Ad-hoc', value: 'ad-hoc', color: '#dc3545', enabled: true }
+                ],
                 // Add User Management Form default options before medical assessment options
                 'user-gender': [
                     { label: 'Male', value: 'male', color: '#0d6efd', enabled: true },
@@ -1125,12 +1204,6 @@
                     { label: 'Warehouse', value: 'warehouse', color: '#6f42c1', enabled: true },
                     { label: 'Laboratory', value: 'laboratory', color: '#fd7e14', enabled: true },
                     { label: 'Office', value: 'office', color: '#198754', enabled: true }
-                ],
-                'department': [
-                    { label: 'Operations', value: 'operations', color: '#0d6efd', enabled: true },
-                    { label: 'Maintenance', value: 'maintenance', color: '#fd7e14', enabled: true },
-                    { label: 'HSE', value: 'hse', color: '#198754', enabled: true },
-                    { label: 'Quality Control', value: 'quality-control', color: '#6f42c1', enabled: true }
                 ],
                 'equipment': [
                     { label: 'Forklift', value: 'forklift', color: '#fd7e14', enabled: true },
