@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permit to Work System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .permit-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .section-header {
+            border-bottom: 2px solid var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .permit-type-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .permit-type-card:hover {
+            background: #f8f9fa;
+            border-color: var(--primary-color);
+        }
+
+        .permit-type-card.selected {
+            background: #e3f2fd;
+            border-color: var(--primary-color);
+        }
+
+        .permit-type-card i {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .hazard-checklist {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px;
+        }
+
+        .control-measures {
+            margin-top: 15px;
+        }
+
+        .control-measure-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .signatures {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .signature-box {
+            border: 1px dashed #ddd;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .permit-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .status-draft { background: #e9ecef; color: #495057; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-approved { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+
+        .conditional-section {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .signatures {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header placeholder -->
+    <div id="header-placeholder"></div>
+
+    <main class="form-container">
+        <h1>Permit to Work Application</h1>
+        
+        <form id="ptwForm">
+            <!-- Basic Information Section -->
+            <div class="permit-section">
+                <h2 class="section-header">Basic Information</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="permitNumber">Permit Number</label>
+                        <input type="text" id="permitNumber" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="requestDate">Request Date</label>
+                        <input type="date" id="requestDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="validFrom">Valid From</label>
+                        <input type="datetime-local" id="validFrom" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="validTo">Valid To</label>
+                        <input type="datetime-local" id="validTo" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Permit Type Selection -->
+            <div class="permit-section">
+                <h2 class="section-header">Permit Type</h2>
+                <div class="form-grid">
+                    <div class="permit-type-card" data-type="hot-work">
+                        <i class="fas fa-fire"></i>
+                        <h3>Hot Work Permit</h3>
+                        <p>For welding, cutting, grinding, etc.</p>
+                    </div>
+                    <div class="permit-type-card" data-type="cold-work">
+                        <i class="fas fa-tools"></i>
+                        <h3>Cold Work Permit</h3>
+                        <p>For mechanical/maintenance work</p>
+                    </div>
+                    <div class="permit-type-card" data-type="electrical">
+                        <i class="fas fa-bolt"></i>
+                        <h3>Electrical Work Permit</h3>
+                        <p>For electrical systems work</p>
+                    </div>
+                    <div class="permit-type-card" data-type="confined-space">
+                        <i class="fas fa-door-closed"></i>
+                        <h3>Confined Space Entry</h3>
+                        <p>For work in confined spaces</p>
+                    </div>
+                    <!-- More permit types -->
+                    <div class="permit-type-card" data-type="height">
+                        <i class="fas fa-arrow-up"></i>
+                        <h3>Work at Height</h3>
+                        <p>For work above 1.8 meters</p>
+                    </div>
+                    <div class="permit-type-card" data-type="excavation">
+                        <i class="fas fa-dig"></i>
+                        <h3>Excavation/Trenching</h3>
+                        <p>For digging operations</p>
+                    </div>
+                    <!-- Add more permit types as needed -->
+                </div>
+            </div>
+
+            <!-- Work Details -->
+            <div class="permit-section">
+                <h2 class="section-header">Work Details</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="location">Work Location</label>
+                        <input type="text" id="location" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="description">Work Description</label>
+                        <textarea id="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="contractor">Contractor/Company</label>
+                        <input type="text" id="contractor" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="supervisorName">Supervisor Name</label>
+                        <input type="text" id="supervisorName" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Person in Charge (PIC) Information -->
+            <div class="permit-section">
+                <h2 class="section-header">Person in Charge (PIC) Information</h2>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="picName">PIC Name</label>
+                        <input type="text" id="picName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="picPosition">Position</label>
+                        <input type="text" id="picPosition" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="picPhone">Contact Number</label>
+                        <input type="tel" id="picPhone" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="picEmail">Email</label>
+                        <input type="email" id="picEmail" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Worker Information -->
+            <div class="permit-section">
+                <h2 class="section-header">Worker Information</h2>
+                <p>List all workers who will be involved in this work:</p>
+                
+                <div id="workers-list" class="worker-list">
+                    <!-- Workers will be added here dynamically -->
+                </div>
+                
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <input type="text" id="worker-name" placeholder="Worker Name" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="worker-position" placeholder="Position/Role" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <select id="worker-training" class="form-control">
+                            <option value="">Required Training Status</option>
+                            <option value="complete">Complete</option>
+                            <option value="incomplete">Incomplete</option>
+                            <option value="not-required">Not Required</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="add-worker-btn">
+                        <i class="fas fa-plus"></i> Add Worker
+                    </button>
+                </div>
+            </div>
+
+            <!-- Hazard Identification -->
+            <div class="permit-section">
+                <h2 class="section-header">Hazard Identification & Risk Assessment</h2>
+                <div class="hazard-checklist">
+                    <!-- Dynamic hazard checkboxes will be inserted here -->
+                </div>
+                
+                <h3 style="margin-top: 20px;">Custom Hazards</h3>
+                <div id="custom-hazards-list" class="custom-hazards-list" style="margin-bottom: 15px;">
+                    <!-- Custom hazards will be added here dynamically -->
+                </div>
+                
+                <div class="form-row" style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <input type="text" id="custom-hazard-description" placeholder="Hazard Description" class="form-control">
+                    </div>
+                    <div class="form-group" style="width: 200px;">
+                        <select id="custom-hazard-severity" class="form-control">
+                            <option value="">Severity</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="add-custom-hazard-btn">
+                        <i class="fas fa-plus"></i> Add Hazard
+                    </button>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="additional-hazards">Additional Notes on Hazards</label>
+                    <textarea id="additional-hazards" class="form-control" rows="2" placeholder="Any additional notes about hazards"></textarea>
+                </div>
+                
+                <div class="risk-assessment-section" style="margin-top: 20px;">
+                    <h3>Initial Risk Assessment</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="initial-likelihood">Likelihood</label>
+                            <select id="initial-likelihood" class="form-control" required>
+                                <option value="">Select</option>
+                                <option value="1">1 - Rare</option>
+                                <option value="2">2 - Unlikely</option>
+                                <option value="3">3 - Possible</option>
+                                <option value="4">4 - Likely</option>
+                                <option value="5">5 - Almost Certain</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="initial-severity">Severity</label>
+                            <select id="initial-severity" class="form-control" required>
+                                <option value="">Select</option>
+                                <option value="1">1 - Negligible</option>
+                                <option value="2">2 - Minor</option>
+                                <option value="3">3 - Moderate</option>
+                                <option value="4">4 - Major</option>
+                                <option value="5">5 - Catastrophic</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="initial-risk-score">Risk Score</label>
+                            <input type="text" id="initial-risk-score" class="form-control" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Protective Equipment (PPE) -->
+            <div class="permit-section">
+                <h2 class="section-header">Personal Protective Equipment (PPE)</h2>
+                <p>Select all PPE required for this work:</p>
+                
+                <div class="ppe-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-hard-hat" name="ppe-hard-hat">
+                        <label for="ppe-hard-hat">Hard Hat</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-safety-glasses" name="ppe-safety-glasses">
+                        <label for="ppe-safety-glasses">Safety Glasses</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-face-shield" name="ppe-face-shield">
+                        <label for="ppe-face-shield">Face Shield</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-ear-protection" name="ppe-ear-protection">
+                        <label for="ppe-ear-protection">Hearing Protection</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-safety-boots" name="ppe-safety-boots">
+                        <label for="ppe-safety-boots">Safety Boots</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-gloves" name="ppe-gloves">
+                        <label for="ppe-gloves">Gloves</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-respirator" name="ppe-respirator">
+                        <label for="ppe-respirator">Respirator</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-high-vis" name="ppe-high-vis">
+                        <label for="ppe-high-vis">High Visibility Clothing</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-fall-protection" name="ppe-fall-protection">
+                        <label for="ppe-fall-protection">Fall Protection</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-chemical-suit" name="ppe-chemical-suit">
+                        <label for="ppe-chemical-suit">Chemical Protective Clothing</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-arc-flash" name="ppe-arc-flash">
+                        <label for="ppe-arc-flash">Arc Flash Protection</label>
+                    </div>
+                    <div class="checklist-item">
+                        <input type="checkbox" id="ppe-life-jacket" name="ppe-life-jacket">
+                        <label for="ppe-life-jacket">Life Jacket</label>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="additional-ppe">Additional PPE Requirements</label>
+                    <textarea id="additional-ppe" class="form-control" rows="2" placeholder="List any additional PPE requirements"></textarea>
+                </div>
+            </div>
+
+            <!-- Control Measures -->
+            <div class="permit-section">
+                <h2 class="section-header">Control Measures</h2>
+                <div class="control-measures">
+                    <!-- Dynamic control measures will be inserted here -->
+                </div>
+                
+                <h3 style="margin-top: 20px;">Custom Control Measures</h3>
+                <div id="custom-controls-list" class="custom-controls-list" style="margin-bottom: 15px;">
+                    <!-- Custom control measures will be added here dynamically -->
+                </div>
+                
+                <div class="form-row" style="display: flex; gap: 10px; margin-top: 15px; margin-bottom: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <input type="text" id="custom-control-description" placeholder="Control Measure Description" class="form-control">
+                    </div>
+                    <div class="form-group" style="width: 200px;">
+                        <select id="custom-control-type" class="form-control">
+                            <option value="">Control Type</option>
+                            <option value="elimination">Elimination</option>
+                            <option value="substitution">Substitution</option>
+                            <option value="engineering">Engineering</option>
+                            <option value="administrative">Administrative</option>
+                            <option value="ppe">PPE</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="add-custom-control-btn">
+                        <i class="fas fa-plus"></i> Add Control
+                    </button>
+                </div>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="additional-controls">Additional Notes on Controls</label>
+                    <textarea id="additional-controls" class="form-control" rows="3" placeholder="Any additional notes about control measures"></textarea>
+                </div>
+                
+                <div class="risk-assessment-section" style="margin-top: 20px;">
+                    <h3>Residual Risk Assessment (After Controls)</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="residual-likelihood">Likelihood</label>
+                            <select id="residual-likelihood" class="form-control" required>
+                                <option value="">Select</option>
+                                <option value="1">1 - Rare</option>
+                                <option value="2">2 - Unlikely</option>
+                                <option value="3">3 - Possible</option>
+                                <option value="4">4 - Likely</option>
+                                <option value="5">5 - Almost Certain</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="residual-severity">Severity</label>
+                            <select id="residual-severity" class="form-control" required>
+                                <option value="">Select</option>
+                                <option value="1">1 - Negligible</option>
+                                <option value="2">2 - Minor</option>
+                                <option value="3">3 - Moderate</option>
+                                <option value="4">4 - Major</option>
+                                <option value="5">5 - Catastrophic</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="residual-risk-score">Residual Risk Score</label>
+                            <input type="text" id="residual-risk-score" class="form-control" readonly>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Energy Isolation -->
+            <div class="permit-section" id="energy-isolation-section">
+                <h2 class="section-header">Energy Isolation</h2>
+                <p>List all energy sources that need to be isolated:</p>
+                
+                <div id="isolation-points-list" class="isolation-points-list">
+                    <!-- Isolation points will be added here dynamically -->
+                </div>
+                
+                <div class="form-row" style="margin-top: 15px;">
+                    <div class="form-group">
+                        <select id="isolation-type" class="form-control">
+                            <option value="">Isolation Type</option>
+                            <option value="electrical">Electrical</option>
+                            <option value="mechanical">Mechanical</option>
+                            <option value="hydraulic">Hydraulic</option>
+                            <option value="pneumatic">Pneumatic</option>
+                            <option value="thermal">Thermal</option>
+                            <option value="chemical">Chemical</option>
+                            <option value="radiation">Radiation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" id="isolation-location" placeholder="Location/Description" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <select id="isolation-method" class="form-control">
+                            <option value="">Isolation Method</option>
+                            <option value="lock-out">Lock-out</option>
+                            <option value="tag-out">Tag-out</option>
+                            <option value="lock-tag">Lock & Tag</option>
+                            <option value="disconnection">Disconnection</option>
+                            <option value="blanking">Blanking/Blinding</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="add-isolation-btn">
+                        <i class="fas fa-plus"></i> Add
+                    </button>
+                </div>
+                
+                <div class="form-group" style="margin-top: 15px;">
+                    <label>
+                        <input type="checkbox" id="isolation-verification" required>
+                        I confirm that all energy sources have been identified and properly isolated
+                    </label>
+                </div>
+            </div>
+
+            <!-- Emergency Response -->
+            <div class="permit-section">
+                <h2 class="section-header">Emergency Response Plan</h2>
+                
+                <div class="form-group">
+                    <label for="emergency-contacts">Emergency Contacts</label>
+                    <textarea id="emergency-contacts" class="form-control" rows="2" required placeholder="List emergency contact numbers (e.g., Supervisor, Safety Officer, First Aid, Fire Services)"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="emergency-procedures">Emergency Procedures</label>
+                    <textarea id="emergency-procedures" class="form-control" rows="3" required placeholder="Detail the emergency procedures specific to this work"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="emergency-equipment">Emergency Equipment</label>
+                    <div class="ppe-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                        <div class="checklist-item">
+                            <input type="checkbox" id="emerg-first-aid" name="emerg-first-aid">
+                            <label for="emerg-first-aid">First Aid Kit</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="emerg-fire-extinguisher" name="emerg-fire-extinguisher">
+                            <label for="emerg-fire-extinguisher">Fire Extinguisher</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="emerg-eye-wash" name="emerg-eye-wash">
+                            <label for="emerg-eye-wash">Eye Wash Station</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="emerg-emergency-shower" name="emerg-emergency-shower">
+                            <label for="emerg-emergency-shower">Emergency Shower</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="emerg-spill-kit" name="emerg-spill-kit">
+                            <label for="emerg-spill-kit">Spill Kit</label>
+                        </div>
+                        <div class="checklist-item">
+                            <input type="checkbox" id="emerg-rescue-equipment" name="emerg-rescue-equipment">
+                            <label for="emerg-rescue-equipment">Rescue Equipment</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="nearest-hospital">Nearest Medical Facility</label>
+                    <input type="text" id="nearest-hospital" class="form-control" required placeholder="Name and location of nearest medical facility">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="emergency-plan-verification" required>
+                        I confirm that all workers have been briefed on these emergency procedures
+                    </label>
+                </div>
+            </div>
+
+            <!-- Authorization -->
+            <div class="permit-section">
+                <h2 class="section-header">Authorization</h2>
+                <div class="signatures">
+                    <div class="signature-box">
+                        <h4>Permit Requestor</h4>
+                        <p id="requestorName"></p>
+                        <p id="requestorDate"></p>
+                    </div>
+                    <div class="signature-box">
+                        <h4>Safety Officer</h4>
+                        <p id="safetyOfficerName"></p>
+                        <p id="safetyOfficerDate"></p>
+                    </div>
+                    <div class="signature-box">
+                        <h4>Area Owner</h4>
+                        <p id="areaOwnerName"></p>
+                        <p id="areaOwnerDate"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">Submit Permit</button>
+                <button type="button" class="btn btn-secondary">Save Draft</button>
+            </div>
+        </form>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 HSE System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/permit.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Load permit type options from settings
+        const permitTypeSelect = document.getElementById('permit-type');
+        
+        // First check if options are defined in settings
+        database.ref('fieldOptions/job-type').once('value')
+            .then(snapshot => {
+                if (snapshot.exists()) {
+                    // Use options defined in settings
+                    snapshot.forEach(optionSnapshot => {
+                        const option = optionSnapshot.val();
+                        if (option.enabled) {
+                            const selectOption = document.createElement('option');
+                            selectOption.value = option.value;
+                            selectOption.textContent = option.label;
+                            permitTypeSelect.appendChild(selectOption);
+                        }
+                    });
+                } else {
+                    // Use default options if none exist in settings
+                    const defaultPermitTypes = [
+                        { value: 'hot-work', label: 'Hot Work' },
+                        { value: 'confined-space', label: 'Confined Space Entry' },
+                        { value: 'excavation', label: 'Excavation' },
+                        { value: 'working-at-height', label: 'Working at Height' },
+                        { value: 'electrical', label: 'Electrical Work' },
+                        { value: 'chemical-handling', label: 'Chemical Handling' },
+                        { value: 'lifting-operation', label: 'Lifting Operation' },
+                        { value: 'other', label: 'Other' }
+                    ];
+                    
+                    defaultPermitTypes.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type.value;
+                        option.textContent = type.label;
+                        permitTypeSelect.appendChild(option);
+                    });
+                }
+            });
+            
+        // Listen for field options changes from settings.html
+        document.addEventListener('fieldOptionsChanged', function(event) {
+            if (event.detail && event.detail.fieldType === 'job-type') {
+                // Reload permit type options
+                permitTypeSelect.innerHTML = '<option value="">Select Permit Type</option>';
+                
+                // Fetch updated options
+                database.ref('fieldOptions/job-type').once('value')
+                    .then(fieldSnapshot => {
+                        if (fieldSnapshot.exists()) {
+                            // Use options defined in the settings page
+                            fieldSnapshot.forEach(optionSnapshot => {
+                                const option = optionSnapshot.val();
+                                if (option.enabled) {
+                                    const selectOption = document.createElement('option');
+                                    selectOption.value = option.value;
+                                    selectOption.textContent = option.label;
+                                    permitTypeSelect.appendChild(selectOption);
+                                }
+                            });
+                        }
+                    });
+            }
+        });
+        
+        // Check localStorage for updates from settings page
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'fieldOptionsUpdated') {
+                try {
+                    const data = JSON.parse(event.newValue);
+                    if (data && data.fieldType === 'job-type') {
+                        // Reload permit type options
+                        permitTypeSelect.innerHTML = '<option value="">Select Permit Type</option>';
+                        
+                        // Fetch updated options
+                        database.ref('fieldOptions/job-type').once('value')
+                            .then(fieldSnapshot => {
+                                if (fieldSnapshot.exists()) {
+                                    // Use options defined in the settings page
+                                    fieldSnapshot.forEach(optionSnapshot => {
+                                        const option = optionSnapshot.val();
+                                        if (option.enabled) {
+                                            const selectOption = document.createElement('option');
+                                            selectOption.value = option.value;
+                                            selectOption.textContent = option.label;
+                                            permitTypeSelect.appendChild(selectOption);
+                                        }
+                                    });
+                                }
+                            });
+                    }
+                } catch (e) {
+                    console.error('Error parsing localStorage update:', e);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
