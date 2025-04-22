@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibration Analysis Report - HSE Online System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .parameter-input {
+            margin-bottom: 15px;
+        }
+
+        .photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        .photo-item {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .remove-photo {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-spinner {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .loading-text {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .parameter-section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .parameter-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        .parameter-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .parameter-controls {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .reference-select {
+            min-width: 150px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 38px;
+        }
+
+        .parameter-value {
+            flex: 1;
+            min-width: 200px;
+            height: 38px;
+        }
+
+        .form-control {
+            min-width: 300px;
+            padding: 8px 12px;
+        }
+
+        textarea.form-control {
+            min-width: 100%;
+        }
+
+        .vibration-type-section {
+            background-color: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #0ea5e9;
+        }
+
+        .exposure-calculator {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .calculator-result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .acceptable {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .moderate {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .high {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .exposure-points {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .info-icon {
+            color: #0ea5e9;
+            margin-left: 5px;
+            cursor: help;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="form-container">
+        <div class="form-header">
+            <h1>New Vibration Analysis Report</h1>
+        </div>
+
+        <form id="vibration-analysis-form" class="form-section">
+            <!-- Standard Selection Section -->
+            <div class="form-group">
+                <label for="vibration-standard">Vibration Standard</label>
+                <select id="vibration-standard" name="vibrationStandard" class="form-control" required>
+                    <option value="">Select Vibration Standard</option>
+                    <option value="ISO5349">ISO 5349 - Hand-Arm Vibration</option>
+                    <option value="ISO2631">ISO 2631 - Whole Body Vibration</option>
+                    <option value="EU_DIRECTIVE">EU Directive 2002/44/EC</option>
+                    <option value="ACGIH">ACGIH TLVs for Hand-Arm Vibration</option>
+                    <option value="HSE_UK">HSE UK Guidelines</option>
+                </select>
+            </div>
+
+            <!-- Vibration Type Selection -->
+            <div class="form-group">
+                <label for="vibration-type">Vibration Type</label>
+                <select id="vibration-type" name="vibrationType" class="form-control" required>
+                    <option value="">Select Vibration Type</option>
+                    <option value="hand_arm">Hand-Arm Vibration (HAV)</option>
+                    <option value="whole_body">Whole Body Vibration (WBV)</option>
+                </select>
+            </div>
+
+            <div class="sampling-details">
+                <div class="form-group">
+                    <label for="location">Measurement Location</label>
+                    <input type="text" id="location" name="location" class="form-control" placeholder="e.g., Construction Site A, Manufacturing Line 2, Vehicle Operator Seat" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sampling-date">Measurement Date & Time</label>
+                    <input type="datetime-local" id="sampling-date" name="samplingDate" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="measurement-duration">Measurement Duration (minutes)</label>
+                    <input type="number" id="measurement-duration" name="measurementDuration" class="form-control" placeholder="e.g., 15" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="equipment-used">Equipment/Tool Being Measured</label>
+                    <input type="text" id="equipment-used" name="equipmentUsed" class="form-control" placeholder="e.g., Jackhammer, Forklift, Drill">
+                </div>
+
+                <div class="form-group">
+                    <label for="equipment-condition">Equipment Condition</label>
+                    <select id="equipment-condition" name="equipmentCondition" class="form-control">
+                        <option value="">Select Condition</option>
+                        <option value="new">New</option>
+                        <option value="good">Good</option>
+                        <option value="fair">Fair</option>
+                        <option value="poor">Poor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="operator-details">Operator Details</label>
+                    <input type="text" id="operator-details" name="operatorDetails" class="form-control" placeholder="e.g., Job role, experience level, height/weight if relevant">
+                </div>
+            </div>
+
+            <!-- Vibration type specific sections -->
+            <div id="hand-arm-section" class="vibration-type-section" style="display: none;">
+                <h3>Hand-Arm Vibration Parameters</h3>
+                <p>Please enter the vibration measurements for each axis.</p>
+
+                <div class="parameter-row">
+                    <label for="hav-x">X-Axis Acceleration (m/s²)</label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="hav-x" name="havX" class="form-control parameter-value" placeholder="Enter X-axis value">
+                    </div>
+                </div>
+
+                <div class="parameter-row">
+                    <label for="hav-y">Y-Axis Acceleration (m/s²)</label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="hav-y" name="havY" class="form-control parameter-value" placeholder="Enter Y-axis value">
+                    </div>
+                </div>
+
+                <div class="parameter-row">
+                    <label for="hav-z">Z-Axis Acceleration (m/s²)</label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="hav-z" name="havZ" class="form-control parameter-value" placeholder="Enter Z-axis value">
+                    </div>
+                </div>
+
+                <div class="parameter-row">
+                    <label for="hav-combined">Combined Acceleration (m/s²)
+                        <span class="tooltip">
+                            <i class="fas fa-info-circle info-icon"></i>
+                            <span class="tooltiptext">Optional: This will be calculated automatically if X, Y, Z values are provided.</span>
+                        </span>
+                    </label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="hav-combined" name="havCombined" class="form-control parameter-value" placeholder="Enter combined value if known">
+                    </div>
+                </div>
+
+                <div class="exposure-calculator">
+                    <h4>Daily Exposure Calculator</h4>
+                    <p>Calculate the daily vibration exposure value A(8).</p>
+
+                    <div class="parameter-row">
+                        <label for="hav-exposure-time">Daily Exposure Time (hours)</label>
+                        <div class="parameter-controls">
+                            <input type="number" step="0.25" id="hav-exposure-time" name="havExposureTime" class="form-control parameter-value" placeholder="Enter daily usage time">
+                            <button type="button" id="calculate-hav" class="btn btn-secondary">Calculate</button>
+                        </div>
+                    </div>
+
+                    <div id="hav-result" class="calculator-result">
+                        <p>Daily Vibration Exposure A(8): <span id="hav-a8-value">0</span> m/s²</p>
+                        <p>Exposure Points: <span id="hav-points" class="exposure-points">0</span></p>
+                        <p>Status: <span id="hav-status">Not calculated</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="whole-body-section" class="vibration-type-section" style="display: none;">
+                <h3>Whole Body Vibration Parameters</h3>
+                <p>Please enter the vibration measurements for each axis.</p>
+
+                <div class="parameter-row">
+                    <label for="wbv-x">X-Axis Acceleration (m/s²)</label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="wbv-x" name="wbvX" class="form-control parameter-value" placeholder="Enter X-axis value">
+                    </div>
+                </div>
+
+                <div class="parameter-row">
+                    <label for="wbv-y">Y-Axis Acceleration (m/s²)</label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="wbv-y" name="wbvY" class="form-control parameter-value" placeholder="Enter Y-axis value">
+                    </div>
+                </div>
+
+                <div class="parameter-row">
+                    <label for="wbv-z">Z-Axis Acceleration (m/s²)</label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="wbv-z" name="wbvZ" class="form-control parameter-value" placeholder="Enter Z-axis value">
+                    </div>
+                </div>
+
+                <div class="parameter-row">
+                    <label for="wbv-combined">Highest Weighted Acceleration (m/s²)
+                        <span class="tooltip">
+                            <i class="fas fa-info-circle info-icon"></i>
+                            <span class="tooltiptext">Optional: This will be calculated as the highest of the axis values with appropriate weighting factors.</span>
+                        </span>
+                    </label>
+                    <div class="parameter-controls">
+                        <input type="number" step="0.01" id="wbv-combined" name="wbvCombined" class="form-control parameter-value" placeholder="Enter highest weighted value if known">
+                    </div>
+                </div>
+
+                <div class="parameter-row">
+                    <label for="vibration-dominant-axis">Dominant Axis</label>
+                    <div class="parameter-controls">
+                        <select id="vibration-dominant-axis" name="dominantAxis" class="form-control parameter-value">
+                            <option value="">Select Dominant Axis</option>
+                            <option value="x">X-Axis</option>
+                            <option value="y">Y-Axis</option>
+                            <option value="z">Z-Axis</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="exposure-calculator">
+                    <h4>Daily Exposure Calculator</h4>
+                    <p>Calculate the daily vibration exposure value A(8).</p>
+
+                    <div class="parameter-row">
+                        <label for="wbv-exposure-time">Daily Exposure Time (hours)</label>
+                        <div class="parameter-controls">
+                            <input type="number" step="0.25" id="wbv-exposure-time" name="wbvExposureTime" class="form-control parameter-value" placeholder="Enter daily exposure time">
+                            <button type="button" id="calculate-wbv" class="btn btn-secondary">Calculate</button>
+                        </div>
+                    </div>
+
+                    <div id="wbv-result" class="calculator-result">
+                        <p>Daily Vibration Exposure A(8): <span id="wbv-a8-value">0</span> m/s²</p>
+                        <p>Exposure Points: <span id="wbv-points" class="exposure-points">0</span></p>
+                        <p>Status: <span id="wbv-status">Not calculated</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="parameters-container">
+                <!-- Parameters will be loaded dynamically based on selected standard -->
+            </div>
+
+            <div class="form-group">
+                <label for="control-measures">Current Control Measures</label>
+                <textarea id="control-measures" name="controlMeasures" class="form-control" rows="3" placeholder="Enter any current control measures in place..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="observations">Additional Observations</label>
+                <textarea id="observations" name="observations" class="form-control" rows="3" placeholder="Enter any observations about the vibration levels..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="recommendations">Recommendations</label>
+                <textarea id="recommendations" name="recommendations" class="form-control" rows="3" placeholder="Enter any recommendations based on the measurements..."></textarea>
+            </div>
+
+            <div class="photos-section">
+                <label>Photos</label>
+                <input type="file" id="photo-upload" accept="image/*" multiple style="display: none;">
+                <button type="button" id="upload-photo-btn" class="btn btn-secondary">
+                    <i class="fas fa-camera"></i> Upload Photos
+                </button>
+                <div class="photo-preview" id="photo-preview"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Report</button>
+        </form>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <span class="loading-text">Saving report...</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+
+    <script>
+        // Vibration Standards Configuration
+        const vibrationStandards = {
+            ISO5349: {
+                name: "ISO 5349 - Hand-Arm Vibration",
+                description: "International standard for measurement and evaluation of human exposure to hand-transmitted vibration",
+                limits: {
+                    action: 2.5, // m/s²
+                    limit: 5.0   // m/s²
+                }
+            },
+            ISO2631: {
+                name: "ISO 2631 - Whole Body Vibration",
+                description: "International standard for evaluation of human exposure to whole-body vibration",
+                limits: {
+                    action: 0.5, // m/s²
+                    limit: 1.15  // m/s²
+                },
+                weightingFactors: {
+                    x: 1.4,
+                    y: 1.4,
+                    z: 1.0
+                }
+            },
+            EU_DIRECTIVE: {
+                name: "EU Directive 2002/44/EC",
+                description: "European legal requirements for protecting workers from vibration risks",
+                limits: {
+                    hav_action: 2.5,  // m/s²
+                    hav_limit: 5.0,   // m/s²
+                    wbv_action: 0.5,  // m/s²
+                    wbv_limit: 1.15   // m/s²
+                }
+            },
+            ACGIH: {
+                name: "ACGIH TLVs for Hand-Arm Vibration",
+                description: "American Conference of Governmental Industrial Hygienists Threshold Limit Values",
+                limits: {
+                    tlv_4h: 4.0,  // 4-hour TLV m/s²
+                    tlv_8h: 2.8   // 8-hour TLV m/s²
+                }
+            },
+            HSE_UK: {
+                name: "HSE UK Guidelines",
+                description: "Health and Safety Executive UK guidelines for vibration at work",
+                limits: {
+                    hav_action: 2.5,  // m/s²
+                    hav_limit: 5.0,   // m/s²
+                    wbv_action: 0.5,  // m/s²
+                    wbv_limit: 1.15   // m/s²
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const standardSelect = document.getElementById('vibration-standard');
+            const vibrationType = document.getElementById('vibration-type');
+            const handArmSection = document.getElementById('hand-arm-section');
+            const wholeBodySection = document.getElementById('whole-body-section');
+            const parametersContainer = document.getElementById('parameters-container');
+            const calculateHavButton = document.getElementById('calculate-hav');
+            const calculateWbvButton = document.getElementById('calculate-wbv');
+
+            // Set default sampling date and time
+            document.getElementById('sampling-date').value = new Date().toISOString().slice(0, 16);
+
+            // Add vibration type selection handler
+            vibrationType.addEventListener('change', function() {
+                if (this.value === 'hand_arm') {
+                    handArmSection.style.display = 'block';
+                    wholeBodySection.style.display = 'none';
+                } else if (this.value === 'whole_body') {
+                    handArmSection.style.display = 'none';
+                    wholeBodySection.style.display = 'block';
+                } else {
+                    handArmSection.style.display = 'none';
+                    wholeBodySection.style.display = 'none';
+                }
+            });
+
+            // Add standard selection handler
+            standardSelect.addEventListener('change', function() {
+                const selectedStandard = vibrationStandards[this.value];
+                if (!selectedStandard) {
+                    parametersContainer.innerHTML = '';
+                    return;
+                }
+
+                // Generate standard information section
+                let html = `
+                    <div class="standard-info parameter-section">
+                        <h3>${selectedStandard.name}</h3>
+                        <p>${selectedStandard.description}</p>
+                `;
+
+                // Add limits based on standard
+                html += '<div class="limits-section">';
+                if (this.value === 'ISO5349' || this.value === 'HSE_UK' || this.value === 'EU_DIRECTIVE') {
+                    html += `
+                        <p><strong>Hand-Arm Vibration:</strong></p>
+                        <ul>
+                            <li>Exposure Action Value (EAV): ${selectedStandard.limits.hav_action || selectedStandard.limits.action} m/s²</li>
+                            <li>Exposure Limit Value (ELV): ${selectedStandard.limits.hav_limit || selectedStandard.limits.limit} m/s²</li>
+                        </ul>
+                    `;
+                }
+
+                if (this.value === 'ISO2631' || this.value === 'HSE_UK' || this.value === 'EU_DIRECTIVE') {
+                    html += `
+                        <p><strong>Whole Body Vibration:</strong></p>
+                        <ul>
+                            <li>Exposure Action Value (EAV): ${selectedStandard.limits.wbv_action || selectedStandard.limits.action} m/s²</li>
+                            <li>Exposure Limit Value (ELV): ${selectedStandard.limits.wbv_limit || selectedStandard.limits.limit} m/s²</li>
+                        </ul>
+                    `;
+                }
+
+                if (this.value === 'ACGIH') {
+                    html += `
+                        <p><strong>ACGIH Threshold Limit Values:</strong></p>
+                        <ul>
+                            <li>4-hour TLV: ${selectedStandard.limits.tlv_4h} m/s²</li>
+                            <li>8-hour TLV: ${selectedStandard.limits.tlv_8h} m/s²</li>
+                        </ul>
+                    `;
+                }
+                
+                html += '</div></div>';
+                parametersContainer.innerHTML = html;
+                
+                // Update calculation references based on selected standard
+                updateHavCalculator(this.value);
+                updateWbvCalculator(this.value);
+            });
+
+            // Calculate Hand-Arm Vibration A(8)
+            calculateHavButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Get values
+                const xAxis = parseFloat(document.getElementById('hav-x').value) || 0;
+                const yAxis = parseFloat(document.getElementById('hav-y').value) || 0;
+                const zAxis = parseFloat(document.getElementById('hav-z').value) || 0;
+                let combinedValue = parseFloat(document.getElementById('hav-combined').value);
+                const exposureTime = parseFloat(document.getElementById('hav-exposure-time').value);
+                
+                if (!exposureTime) {
+                    alert('Please enter the daily exposure time');
+                    return;
+                }
+                
+                // Calculate combined value if not provided
+                if (!combinedValue) {
+                    if (xAxis === 0 && yAxis === 0 && zAxis === 0) {
+                        alert('Please enter at least one axis value or the combined value');
+                        return;
+                    }
+                    combinedValue = Math.sqrt(xAxis*xAxis + yAxis*yAxis + zAxis*zAxis);
+                    document.getElementById('hav-combined').value = combinedValue.toFixed(2);
+                }
+                
+                // Calculate A(8) value
+                const a8Value = combinedValue * Math.sqrt(exposureTime / 8);
+                
+                // Calculate exposure points (100 points = EAV, 400 points = ELV)
+                const points = Math.round(a8Value * a8Value * 100);
+                
+                // Get selected standard
+                const selectedStandard = vibrationStandards[standardSelect.value] || vibrationStandards.ISO5349;
+                
+                // Get limits based on standard
+                let actionLimit = selectedStandard.limits.hav_action || selectedStandard.limits.action || 2.5;
+                let exposureLimit = selectedStandard.limits.hav_limit || selectedStandard.limits.limit || 5.0;
+                
+                // Determine status
+                let status;
+                let statusClass;
+                if (a8Value <= actionLimit) {
+                    status = "Acceptable - Below action value";
+                    statusClass = "acceptable";
+                } else if (a8Value <= exposureLimit) {
+                    status = "Moderate - Above action value but below limit value";
+                    statusClass = "moderate";
+                } else {
+                    status = "High Risk - Above exposure limit value";
+                    statusClass = "high";
+                }
+                
+                // Display result
+                const resultElement = document.getElementById('hav-result');
+                document.getElementById('hav-a8-value').textContent = a8Value.toFixed(2);
+                document.getElementById('hav-points').textContent = points;
+                document.getElementById('hav-status').textContent = status;
+                
+                resultElement.className = 'calculator-result ' + statusClass;
+                resultElement.style.display = 'block';
+            });
+            
+            // Calculate Whole Body Vibration A(8)
+            calculateWbvButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Get values
+                let xAxis = parseFloat(document.getElementById('wbv-x').value) || 0;
+                let yAxis = parseFloat(document.getElementById('wbv-y').value) || 0;
+                let zAxis = parseFloat(document.getElementById('wbv-z').value) || 0;
+                const exposureTime = parseFloat(document.getElementById('wbv-exposure-time').value);
+                const dominantAxis = document.getElementById('vibration-dominant-axis').value;
+                let highestValue = parseFloat(document.getElementById('wbv-combined').value);
+                
+                if (!exposureTime) {
+                    alert('Please enter the daily exposure time');
+                    return;
+                }
+                
+                // Get selected standard
+                const selectedStandard = vibrationStandards[standardSelect.value] || vibrationStandards.ISO2631;
+                
+                // Apply weighting factors based on standard
+                if (selectedStandard.weightingFactors) {
+                    xAxis *= selectedStandard.weightingFactors.x;
+                    yAxis *= selectedStandard.weightingFactors.y;
+                    zAxis *= selectedStandard.weightingFactors.z;
+                }
+                
+                // Calculate combined value if not provided
+                if (!highestValue) {
+                    if (xAxis === 0 && yAxis === 0 && zAxis === 0) {
+                        alert('Please enter at least one axis value or the highest weighted value');
+                        return;
+                    }
+                    
+                    if (dominantAxis === 'x') {
+                        highestValue = xAxis;
+                    } else if (dominantAxis === 'y') {
+                        highestValue = yAxis;
+                    } else if (dominantAxis === 'z') {
+                        highestValue = zAxis;
+                    } else {
+                        highestValue = Math.max(xAxis, yAxis, zAxis);
+                    }
+                    document.getElementById('wbv-combined').value = highestValue.toFixed(2);
+                }
+                
+                // Calculate A(8) value
+                const a8Value = highestValue * Math.sqrt(exposureTime / 8);
+                
+                // Calculate exposure points (100 points = EAV, 400 points = ELV)
+                const points = Math.round(a8Value * a8Value * 100);
+                
+                // Get limits based on standard
+                let actionLimit = selectedStandard.limits.wbv_action || selectedStandard.limits.action || 0.5;
+                let exposureLimit = selectedStandard.limits.wbv_limit || selectedStandard.limits.limit || 1.15;
+                
+                // Determine status
+                let status;
+                let statusClass;
+                if (a8Value <= actionLimit) {
+                    status = "Acceptable - Below action value";
+                    statusClass = "acceptable";
+                } else if (a8Value <= exposureLimit) {
+                    status = "Moderate - Above action value but below limit value";
+                    statusClass = "moderate";
+                } else {
+                    status = "High Risk - Above exposure limit value";
+                    statusClass = "high";
+                }
+                
+                // Display result
+                const resultElement = document.getElementById('wbv-result');
+                document.getElementById('wbv-a8-value').textContent = a8Value.toFixed(2);
+                document.getElementById('wbv-points').textContent = points;
+                document.getElementById('wbv-status').textContent = status;
+                
+                resultElement.className = 'calculator-result ' + statusClass;
+                resultElement.style.display = 'block';
+            });
+            
+            function updateHavCalculator(standardName) {
+                // Update HAV calculator information based on selected standard
+                // This could be expanded to show more specific information based on the standard
+            }
+            
+            function updateWbvCalculator(standardName) {
+                // Update WBV calculator information based on selected standard
+                // This could be expanded to show more specific information based on the standard
+            }
+
+            // Handle photo upload
+            const photoUpload = document.getElementById('photo-upload');
+            const uploadPhotoBtn = document.getElementById('upload-photo-btn');
+            const photoPreview = document.getElementById('photo-preview');
+            const photos = new Set();
+            
+            uploadPhotoBtn.addEventListener('click', () => {
+                photoUpload.click();
+            });
+            
+            photoUpload.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        photos.add(file);
+                        
+                        const reader = new FileReader();
+                        reader.onload = (function(theFile) {
+                            return function(e) {
+                                const photoItem = createPhotoPreview(e.target.result, theFile);
+                                photoPreview.appendChild(photoItem);
+                            };
+                        })(file);
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+                
+                photoUpload.value = '';
+            });
+            
+            // Create photo preview element
+            function createPhotoPreview(src, file) {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-photo';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = () => {
+                    div.remove();
+                    photos.delete(file);
+                };
+                
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                return div;
+            }
+            
+            // Check if we're in edit mode by looking for an ID in the URL
+            let editMode = false;
+            let reportId = null;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('id')) {
+                reportId = urlParams.get('id');
+                editMode = true;
+                // Load existing report data
+                loadExistingReport(reportId);
+            }
+            
+            // Load existing report data for editing
+            function loadExistingReport(id) {
+                const loadingOverlay = document.getElementById('loading-overlay');
+                loadingOverlay.style.display = 'flex';
+                
+                firebase.database().ref('vibration-analysis-reports/' + id).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const report = snapshot.val();
+                            
+                            // Update page title to show we're editing
+                            document.querySelector('.form-header h1').textContent = 'Edit Vibration Analysis Report';
+                            
+                            // Set standard and vibration type
+                            document.getElementById('vibration-standard').value = report.standard || '';
+                            document.getElementById('vibration-type').value = report.vibrationType || '';
+                            
+                            // Trigger change events
+                            const standardEvent = new Event('change');
+                            document.getElementById('vibration-standard').dispatchEvent(standardEvent);
+                            
+                            const typeEvent = new Event('change');
+                            document.getElementById('vibration-type').dispatchEvent(typeEvent);
+                            
+                            // Set general fields
+                            document.getElementById('location').value = report.location || '';
+                            document.getElementById('equipment-used').value = report.equipmentUsed || '';
+                            document.getElementById('equipment-condition').value = report.equipmentCondition || '';
+                            document.getElementById('operator-details').value = report.operatorDetails || '';
+                            document.getElementById('measurement-duration').value = report.measurementDuration || '';
+                            
+                            // Set sampling date
+                            if (report.samplingDate) {
+                                const date = new Date(report.samplingDate);
+                                if (!isNaN(date.getTime())) {
+                                    document.getElementById('sampling-date').value = date.toISOString().slice(0, 16);
+                                }
+                            }
+                            
+                            // Set type-specific fields
+                            setTimeout(() => {
+                                if (report.vibrationType === 'hand_arm') {
+                                    document.getElementById('hav-x').value = report.parameters?.havX || '';
+                                    document.getElementById('hav-y').value = report.parameters?.havY || '';
+                                    document.getElementById('hav-z').value = report.parameters?.havZ || '';
+                                    document.getElementById('hav-combined').value = report.parameters?.havCombined || '';
+                                    document.getElementById('hav-exposure-time').value = report.parameters?.havExposureTime || '';
+                                } else if (report.vibrationType === 'whole_body') {
+                                    document.getElementById('wbv-x').value = report.parameters?.wbvX || '';
+                                    document.getElementById('wbv-y').value = report.parameters?.wbvY || '';
+                                    document.getElementById('wbv-z').value = report.parameters?.wbvZ || '';
+                                    document.getElementById('wbv-combined').value = report.parameters?.wbvCombined || '';
+                                    document.getElementById('wbv-exposure-time').value = report.parameters?.wbvExposureTime || '';
+                                    document.getElementById('vibration-dominant-axis').value = report.parameters?.dominantAxis || '';
+                                }
+                                
+                                // Set observations and recommendations
+                                document.getElementById('control-measures').value = report.controlMeasures || '';
+                                document.getElementById('observations').value = report.observations || '';
+                                document.getElementById('recommendations').value = report.recommendations || '';
+                                
+                                // Load photos
+                                if (report.photoUrls && Array.isArray(report.photoUrls)) {
+                                    report.photoUrls.forEach(url => {
+                                        if (url) {
+                                            const file = new File([new Blob()], 'report-photo.jpg', { type: 'image/jpeg' });
+                                            file.url = url;
+                                            photos.add(file);
+                                            
+                                            const photoItem = createPhotoPreview(url, file);
+                                            photoPreview.appendChild(photoItem);
+                                        }
+                                    });
+                                }
+                                
+                                loadingOverlay.style.display = 'none';
+                            }, 500);
+                        } else {
+                            alert('Report not found. Redirecting to create new report.');
+                            window.location.href = 'vibration.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading report:', error);
+                        alert('Error loading report. Redirecting to create new report.');
+                        window.location.href = 'vibration.html';
+                    });
+            }
+            
+            // Form submission
+            const vibrationForm = document.getElementById('vibration-analysis-form');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            vibrationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate required fields
+                const location = document.getElementById('location').value;
+                const samplingDate = document.getElementById('sampling-date').value;
+                const selectedStandard = document.getElementById('vibration-standard').value;
+                const selectedType = document.getElementById('vibration-type').value;
+                
+                if (!location || !samplingDate || !selectedStandard || !selectedType) {
+                    alert('Please fill in all required fields and select a standard and vibration type.');
+                    return;
+                }
+                
+                // Show loading overlay
+                loadingOverlay.style.display = 'flex';
+                
+                try {
+                    // Collect parameters based on vibration type
+                    const parameters = {};
+                    
+                    if (selectedType === 'hand_arm') {
+                        parameters.havX = document.getElementById('hav-x').value;
+                        parameters.havY = document.getElementById('hav-y').value;
+                        parameters.havZ = document.getElementById('hav-z').value;
+                        parameters.havCombined = document.getElementById('hav-combined').value;
+                        parameters.havExposureTime = document.getElementById('hav-exposure-time').value;
+                        
+                        // Add A(8) value if calculated
+                        const a8Element = document.getElementById('hav-a8-value');
+                        if (a8Element.textContent !== '0') {
+                            parameters.havA8 = a8Element.textContent;
+                            parameters.havPoints = document.getElementById('hav-points').textContent;
+                            parameters.havStatus = document.getElementById('hav-status').textContent;
+                        }
+                    } else if (selectedType === 'whole_body') {
+                        parameters.wbvX = document.getElementById('wbv-x').value;
+                        parameters.wbvY = document.getElementById('wbv-y').value;
+                        parameters.wbvZ = document.getElementById('wbv-z').value;
+                        parameters.wbvCombined = document.getElementById('wbv-combined').value;
+                        parameters.wbvExposureTime = document.getElementById('wbv-exposure-time').value;
+                        parameters.dominantAxis = document.getElementById('vibration-dominant-axis').value;
+                        
+                        // Add A(8) value if calculated
+                        const a8Element = document.getElementById('wbv-a8-value');
+                        if (a8Element.textContent !== '0') {
+                            parameters.wbvA8 = a8Element.textContent;
+                            parameters.wbvPoints = document.getElementById('wbv-points').textContent;
+                            parameters.wbvStatus = document.getElementById('wbv-status').textContent;
+                        }
+                    }
+                    
+                    // Calculate status based on parameters
+                    let status;
+                    if (selectedType === 'hand_arm' && parameters.havStatus) {
+                        status = parameters.havStatus.startsWith('Acceptable') ? 'acceptable' : 
+                               parameters.havStatus.startsWith('Moderate') ? 'moderate' : 'high';
+                    } else if (selectedType === 'whole_body' && parameters.wbvStatus) {
+                        status = parameters.wbvStatus.startsWith('Acceptable') ? 'acceptable' : 
+                               parameters.wbvStatus.startsWith('Moderate') ? 'moderate' : 'high';
+                    } else {
+                        // Default to moderate if no calculation was done
+                        status = 'moderate';
+                    }
+                    
+                    // Create report object
+                    const report = {
+                        standard: selectedStandard,
+                        vibrationType: selectedType,
+                        location: location,
+                        samplingDate: new Date(samplingDate).toISOString(),
+                        measurementDuration: document.getElementById('measurement-duration').value,
+                        equipmentUsed: document.getElementById('equipment-used').value,
+                        equipmentCondition: document.getElementById('equipment-condition').value,
+                        operatorDetails: document.getElementById('operator-details').value,
+                        status: status,
+                        parameters: parameters,
+                        controlMeasures: document.getElementById('control-measures').value,
+                        observations: document.getElementById('observations').value,
+                        recommendations: document.getElementById('recommendations').value,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    // If it's a new report, add created timestamp and user ID
+                    if (!editMode) {
+                        report.timestamp = new Date().toISOString();
+                        report.createdBy = firebase.auth().currentUser?.uid;
+                        if (!report.createdBy) {
+                            throw new Error('User not authenticated');
+                        }
+                    }
+                    
+                    // Upload photos if any
+                    if (photos.size > 0) {
+                        const photoUrls = [];
+                        
+                        for (const file of photos) {
+                            if (file.url) {
+                                photoUrls.push(file.url);
+                                continue;
+                            }
+                            
+                            const storageRef = firebase.storage().ref('vibration-analysis-reports/' + 
+                                                    new Date().getTime() + '-' + file.name);
+                            
+                            try {
+                                const uploadTask = await storageRef.put(file);
+                                const downloadUrl = await uploadTask.ref.getDownloadURL();
+                                photoUrls.push(downloadUrl);
+                            } catch (uploadError) {
+                                console.error('Photo upload error:', uploadError);
+                                throw new Error('Failed to upload photos');
+                            }
+                        }
+                        
+                        if (photoUrls.length > 0) {
+                            report.photoUrls = photoUrls;
+                        }
+                    }
+                    
+                    // Save report to Firebase
+                    let dbRef;
+                    if (editMode && reportId) {
+                        dbRef = firebase.database().ref('vibration-analysis-reports/' + reportId);
+                        await dbRef.update(report);
+                        alert('Vibration analysis report updated successfully!');
+                    } else {
+                        dbRef = firebase.database().ref('vibration-analysis-reports').push();
+                        await dbRef.set(report);
+                        alert('Vibration analysis report created successfully!');
+                    }
+                    
+                    // Redirect to board page after successful submission
+                    window.location.href = 'vibrationboard.html';
+                    
+                } catch (error) {
+                    console.error('Error saving report:', error);
+                    alert(`Error saving report: ${error.message || 'Please try again.'}`);
+                } finally {
+                    // Hide loading overlay
+                    loadingOverlay.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

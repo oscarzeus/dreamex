@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Medical Visit Requests</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .board-container {
+            max-width: 100%;
+            margin: 80px auto 0; /* Keep top margin to create gap below navbar */
+            padding: 2rem;
+        }
+
+        .board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .board-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .board-title h1 {
+            margin: 0;
+        }
+
+        .board-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .board-filter {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .board-filter select,
+        .board-filter input {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-width: 200px;
+        }
+
+        .board-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .board-table th,
+        .board-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .board-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .board-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .board-table tr:hover {
+            background-color: #f1f8ff;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.approved {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-badge.rescheduled {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-badge.completed {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6c757d;
+            font-size: 1rem;
+            padding: 0.25rem;
+            transition: color 0.2s;
+        }
+
+        .action-btn:hover {
+            color: #0d6efd;
+        }
+
+        .action-btn.approve:hover {
+            color: #198754;
+        }
+
+        .action-btn.reject:hover {
+            color: #dc3545;
+        }
+
+        .action-btn.reschedule:hover {
+            color: #0dcaf0;
+        }
+
+        .action-btn.view:hover {
+            color: #0d6efd;
+        }
+
+        .no-requests {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .request-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: white;
+            margin: 10% auto;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            color: #6c757d;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close-modal:hover {
+            color: #495057;
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f1f1f1;
+        }
+
+        .modal-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-section h3 {
+            color: #495057;
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-field {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .modal-label {
+            font-weight: 500;
+            width: 200px;
+            color: #6c757d;
+        }
+
+        .modal-value {
+            flex-grow: 1;
+            color: #212529;
+            font-weight: 500;
+        }
+
+        .status-update-form {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f1f1f1;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        .btn-success {
+            background-color: #198754;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #157347;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5c636a;
+        }
+
+        .documents-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .document-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .document-item:hover {
+            background-color: #e9ecef;
+        }
+
+        .document-item i {
+            margin-right: 0.5rem;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 1.5rem;
+            gap: 0.5rem;
+        }
+
+        .page-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .page-item:hover {
+            background-color: #f1f8ff;
+        }
+
+        .page-item.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        .page-item.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            display: none;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .loading-text {
+            margin-left: 1rem;
+            font-weight: 500;
+            color: #495057;
+        }
+
+        @media (max-width: 768px) {
+            .board-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .board-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .board-table {
+                font-size: 0.9rem;
+            }
+
+            .board-table th,
+            .board-table td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                gap: 0.25rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="board-container">
+        <div class="board-header">
+            <div class="board-title">
+                <h1>Medical Visit Requests</h1>
+                <div class="request-count">
+                    <span class="badge bg-primary" id="pending-count">0</span> Pending
+                </div>
+            </div>
+            <div class="board-actions">
+                <button class="btn btn-primary" onclick="window.location.href='medicalrequest.html'">
+                    <i class="fas fa-plus"></i> New Request
+                </button>
+                <button class="btn btn-secondary" onclick="refreshBoard()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="board-filter">
+            <div>
+                <label for="status-filter">Status</label>
+                <select id="status-filter" class="form-control">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="rescheduled">Rescheduled</option>
+                    <option value="completed">Completed</option>
+                </select>
+            </div>
+            <div>
+                <label for="department-filter">Department</label>
+                <select id="department-filter" class="form-control">
+                    <option value="all">All Departments</option>
+                </select>
+            </div>
+            <div>
+                <label for="date-filter">Date Range</label>
+                <input type="date" id="date-from" class="form-control">
+                <input type="date" id="date-to" class="form-control">
+            </div>
+            <div>
+                <label for="search-filter">Search</label>
+                <input type="text" id="search-filter" class="form-control" placeholder="Search by name or ID...">
+            </div>
+        </div>
+
+        <div id="board-content">
+            <table class="board-table">
+                <thead>
+                    <tr>
+                        <th>Request Date</th>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Visit Type</th>
+                        <th>Preferred Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="requests-table-body">
+                    <!-- Requests will be loaded here dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="no-requests" class="no-requests" style="display: none;">
+            <i class="fas fa-file-medical fa-3x"></i>
+            <h3>No Medical Visit Requests Found</h3>
+            <p>No requests match your current search criteria or there are no requests submitted yet.</p>
+        </div>
+
+        <div class="pagination" id="pagination">
+            <!-- Pagination will be added dynamically -->
+        </div>
+    </main>
+
+    <!-- Request Detail Modal -->
+    <div id="request-modal" class="request-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2>Medical Visit Request Details</h2>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Request details will be loaded here dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <span class="loading-text">Please wait...</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded');
+                return;
+            }
+
+            // Check if user is authenticated
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    // Load user permissions and then load data
+                    checkUserPermissions(user.uid).then(permissions => {
+                        // Initialize the board
+                        initializeBoard();
+                    });
+                } else {
+                    // Redirect to login page if not authenticated
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        // Global variables
+        let allRequests = [];
+        let filteredRequests = [];
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let userPermissions = {
+            canApprove: false,
+            canReject: false,
+            departments: []
+        };
+        let departmentNames = {};
+
+        // Function to check user permissions
+        async function checkUserPermissions(userId) {
+            try {
+                const userSnapshot = await firebase.database().ref('users/' + userId).once('value');
+                const userData = userSnapshot.val();
+                
+                if (userData) {
+                    // Check if user is admin or has medical approver role
+                    userPermissions.canApprove = userData.role === 'admin' || 
+                                             userData.role === 'medical-approver' ||
+                                             userData.permissions?.medicalApprover === true;
+                    
+                    userPermissions.canReject = userPermissions.canApprove;
+                    
+                    // If user is department head, add department to permissions
+                    if (userData.isDepartmentHead && userData.department) {
+                        userPermissions.departments.push(userData.department);
+                    }
+                    
+                    return userPermissions;
+                }
+            } catch (error) {
+                console.error('Error checking permissions:', error);
+                return userPermissions;
+            }
+        }
+
+        // Function to initialize the board
+        function initializeBoard() {
+            // Load departments
+            loadDepartments();
+            
+            // Set up event listeners for filters
+            document.getElementById('status-filter').addEventListener('change', applyFilters);
+            document.getElementById('department-filter').addEventListener('change', applyFilters);
+            document.getElementById('date-from').addEventListener('change', applyFilters);
+            document.getElementById('date-to').addEventListener('change', applyFilters);
+            document.getElementById('search-filter').addEventListener('input', applyFilters);
+            
+            // Load requests
+            loadRequests();
+        }
+
+        // Function to load departments
+        function loadDepartments() {
+            firebase.database().ref('departments').once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        const departmentFilter = document.getElementById('department-filter');
+                        
+                        // Clear existing options except "All Departments"
+                        while (departmentFilter.options.length > 1) {
+                            departmentFilter.remove(1);
+                        }
+                        
+                        // Store departments for later use
+                        snapshot.forEach(deptSnapshot => {
+                            const deptId = deptSnapshot.key;
+                            const deptName = deptSnapshot.val().name || deptId;
+                            
+                            // Add to department names mapping
+                            departmentNames[deptId] = deptName;
+                            
+                            // Add to department filter
+                            const option = document.createElement('option');
+                            option.value = deptId;
+                            option.textContent = deptName;
+                            departmentFilter.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading departments:', error);
+                });
+        }
+
+        // Function to load requests
+        function loadRequests() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            
+            firebase.database().ref('medical-visit-requests').once('value')
+                .then(snapshot => {
+                    // Clear existing requests
+                    allRequests = [];
+                    
+                    if (snapshot.exists()) {
+                        snapshot.forEach(childSnapshot => {
+                            const request = childSnapshot.val();
+                            request.id = childSnapshot.key;
+                            
+                            // Add request date from timestamp if available
+                            if (request.timestamp) {
+                                request.requestDate = new Date(request.timestamp);
+                            }
+                            
+                            allRequests.push(request);
+                        });
+                        
+                        // Sort requests by timestamp (newest first)
+                        allRequests.sort((a, b) => {
+                            return (b.timestamp || 0) - (a.timestamp || 0);
+                        });
+                    }
+                    
+                    // Apply filters and display
+                    applyFilters();
+                    updatePendingCount();
+                    loadingOverlay.style.display = 'none';
+                })
+                .catch(error => {
+                    console.error('Error loading requests:', error);
+                    loadingOverlay.style.display = 'none';
+                    alert('Error loading medical visit requests. Please try refreshing the page.');
+                });
+        }
+
+        // Function to apply filters
+        function applyFilters() {
+            const statusFilter = document.getElementById('status-filter').value;
+            const departmentFilter = document.getElementById('department-filter').value;
+            const dateFromFilter = document.getElementById('date-from').value ? new Date(document.getElementById('date-from').value) : null;
+            const dateToFilter = document.getElementById('date-to').value ? new Date(document.getElementById('date-to').value) : null;
+            const searchFilter = document.getElementById('search-filter').value.toLowerCase();
+            
+            // Filter requests
+            filteredRequests = allRequests.filter(request => {
+                // Status filter
+                if (statusFilter !== 'all' && request.status !== statusFilter) {
+                    return false;
+                }
+                
+                // Department filter
+                if (departmentFilter !== 'all' && request.department !== departmentFilter) {
+                    return false;
+                }
+                
+                // Date range filter - use preferredDate
+                if (request.preferredDate) {
+                    const preferredDate = new Date(request.preferredDate);
+                    if (dateFromFilter && preferredDate < dateFromFilter) {
+                        return false;
+                    }
+                    if (dateToFilter) {
+                        // Include the entire day for the end date
+                        const endOfDay = new Date(dateToFilter);
+                        endOfDay.setHours(23, 59, 59, 999);
+                        if (preferredDate > endOfDay) {
+                            return false;
+                        }
+                    }
+                }
+                
+                // Search filter - check employee name and ID
+                if (searchFilter) {
+                    const employeeName = (request.employeeName || '').toLowerCase();
+                    const employeeId = (request.employeeId || '').toLowerCase();
+                    
+                    return employeeName.includes(searchFilter) || employeeId.includes(searchFilter);
+                }
+                
+                return true;
+            });
+            
+            // Reset pagination to first page
+            currentPage = 1;
+            
+            // Display filtered requests
+            displayRequests();
+            updatePagination();
+        }
+
+        // Function to display requests
+        function displayRequests() {
+            const tableBody = document.getElementById('requests-table-body');
+            const noRequestsContainer = document.getElementById('no-requests');
+            const boardContent = document.getElementById('board-content');
+            
+            // Clear existing rows
+            tableBody.innerHTML = '';
+            
+            if (filteredRequests.length === 0) {
+                // Show no requests message
+                noRequestsContainer.style.display = 'block';
+                boardContent.style.display = 'none';
+                return;
+            }
+            
+            // Show table
+            boardContent.style.display = 'block';
+            noRequestsContainer.style.display = 'none';
+            
+            // Calculate pagination
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredRequests.length);
+            
+            // Display paginated results
+            for (let i = startIndex; i < endIndex; i++) {
+                const request = filteredRequests[i];
+                
+                // Format dates
+                const requestDate = request.requestDate ? request.requestDate.toLocaleDateString() : 'N/A';
+                const preferredDate = request.preferredDate ? new Date(request.preferredDate).toLocaleDateString() : 'N/A';
+                
+                // Create row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${requestDate}</td>
+                    <td>${request.employeeName || 'N/A'}<br><small class="text-muted">${request.employeeId || ''}</small></td>
+                    <td>${request.department || 'N/A'}</td>
+                    <td>${formatVisitType(request.visitType, request.otherVisitType)}</td>
+                    <td>${preferredDate}<br><small>${formatPreferredTime(request.preferredTime)}</small></td>
+                    <td><span class="status-badge ${request.status || 'pending'}">${capitalizeFirstLetter(request.status || 'pending')}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn view" onclick="viewRequest('${request.id}')" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            ${request.status === 'pending' && userPermissions.canApprove ? `
+                                <button class="action-btn approve" onclick="approveRequest('${request.id}')" title="Approve">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            ` : ''}
+                            ${request.status === 'pending' && userPermissions.canReject ? `
+                                <button class="action-btn reject" onclick="rejectRequest('${request.id}')" title="Reject">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            ` : ''}
+                            ${request.status === 'pending' || request.status === 'approved' ? `
+                                <button class="action-btn reschedule" onclick="rescheduleRequest('${request.id}')" title="Reschedule">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Function to update pagination
+        function updatePagination() {
+            const paginationContainer = document.getElementById('pagination');
+            paginationContainer.innerHTML = '';
+            
+            if (filteredRequests.length === 0) return;
+            
+            const totalPages = Math.ceil(filteredRequests.length / itemsPerPage);
+            
+            // Previous button
+            const prevButton = document.createElement('div');
+            prevButton.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            if (currentPage > 1) {
+                prevButton.addEventListener('click', () => {
+                    currentPage--;
+                    displayRequests();
+                    updatePagination();
+                });
+            }
+            paginationContainer.appendChild(prevButton);
+            
+            // Page number buttons
+            const maxButtonsToShow = 5;
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + maxButtonsToShow - 1);
+            
+            if (endPage - startPage < maxButtonsToShow - 1) {
+                startPage = Math.max(1, endPage - maxButtonsToShow + 1);
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('div');
+                pageButton.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                pageButton.textContent = i;
+                
+                if (i !== currentPage) {
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        displayRequests();
+                        updatePagination();
+                    });
+                }
+                
+                paginationContainer.appendChild(pageButton);
+            }
+            
+            // Next button
+            const nextButton = document.createElement('div');
+            nextButton.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            if (currentPage < totalPages) {
+                nextButton.addEventListener('click', () => {
+                    currentPage++;
+                    displayRequests();
+                    updatePagination();
+                });
+            }
+            paginationContainer.appendChild(nextButton);
+        }
+
+        // Function to update pending count
+        function updatePendingCount() {
+            const pendingCount = allRequests.filter(request => request.status === 'pending').length;
+            document.getElementById('pending-count').textContent = pendingCount;
+        }
+
+        // Function to refresh the board
+        function refreshBoard() {
+            loadRequests();
+        }
+
+        // Function to view request details
+        function viewRequest(requestId) {
+            const request = allRequests.find(req => req.id === requestId);
+            if (!request) return;
+            
+            const modal = document.getElementById('request-modal');
+            const modalBody = document.getElementById('modal-body');
+            
+            // Format request details
+            const requestDate = request.requestDate ? request.requestDate.toLocaleDateString() : 'N/A';
+            const preferredDate = request.preferredDate ? new Date(request.preferredDate).toLocaleDateString() : 'N/A';
+            
+            // Build modal content
+            let modalContent = `
+                <div class="modal-section">
+                    <h3>Request Information</h3>
+                    <div class="modal-field">
+                        <div class="modal-label">Status:</div>
+                        <div class="modal-value"><span class="status-badge ${request.status}">${capitalizeFirstLetter(request.status || 'pending')}</span></div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Request Date:</div>
+                        <div class="modal-value">${requestDate}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Visit Type:</div>
+                        <div class="modal-value">${formatVisitType(request.visitType, request.otherVisitType)}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Preferred Date:</div>
+                        <div class="modal-value">${preferredDate}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Preferred Time:</div>
+                        <div class="modal-value">${formatPreferredTime(request.preferredTime)}</div>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>Employee Information</h3>
+                    <div class="modal-field">
+                        <div class="modal-label">Employee Name:</div>
+                        <div class="modal-value">${request.employeeName || 'N/A'}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Employee ID:</div>
+                        <div class="modal-value">${request.employeeId || 'N/A'}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Department:</div>
+                        <div class="modal-value">${request.department || 'N/A'}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Job Title:</div>
+                        <div class="modal-value">${request.jobTitle || 'N/A'}</div>
+                    </div>
+                </div>
+
+                <div class="modal-section">
+                    <h3>Visit Details</h3>
+                    <div class="modal-field">
+                        <div class="modal-label">Reason for Visit:</div>
+                        <div class="modal-value">${request.reason || 'N/A'}</div>
+                    </div>
+                    <div class="modal-field">
+                        <div class="modal-label">Workplace Related:</div>
+                        <div class="modal-value">${request.workplaceRelated === 'yes' ? 'Yes' : 'No'}</div>
+                    </div>
+                    ${request.workplaceRelated === 'yes' && request.incidentDetails ? `
+                        <div class="modal-field">
+                            <div class="modal-label">Incident Details:</div>
+                            <div class="modal-value">${request.incidentDetails}</div>
+                        </div>
+                    ` : ''}
+                    <div class="modal-field">
+                        <div class="modal-label">Previous Consultation:</div>
+                        <div class="modal-value">${request.previousConsultation === 'yes' ? 'Yes' : 'No'}</div>
+                    </div>
+                    ${request.previousConsultation === 'yes' && request.previousConsultationDetails ? `
+                        <div class="modal-field">
+                            <div class="modal-label">Previous Consultation Details:</div>
+                            <div class="modal-value">${request.previousConsultationDetails}</div>
+                        </div>
+                    ` : ''}
+                    ${request.additionalNotes ? `
+                        <div class="modal-field">
+                            <div class="modal-label">Additional Notes:</div>
+                            <div class="modal-value">${request.additionalNotes}</div>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            // Add documents section if available
+            if (request.documentUrls && request.documentUrls.length > 0) {
+                modalContent += `
+                    <div class="modal-section">
+                        <h3>Supporting Documents</h3>
+                        <div class="documents-list">
+                `;
+                
+                request.documentUrls.forEach(url => {
+                    const isPdf = url.toLowerCase().endsWith('.pdf');
+                    modalContent += `
+                        <a href="${url}" target="_blank" class="document-item">
+                            <i class="fas fa-${isPdf ? 'file-pdf' : 'file-image'}"></i>
+                            ${isPdf ? 'View PDF' : 'View Image'}
+                        </a>
+                    `;
+                });
+                
+                modalContent += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Add status update form if request is pending and user has permissions
+            if (request.status === 'pending' && userPermissions.canApprove) {
+                modalContent += `
+                    <div class="status-update-form">
+                        <h3>Update Request Status</h3>
+                        <div class="form-row">
+                            <button class="btn btn-success" onclick="updateRequestStatus('${requestId}', 'approved')">Approve</button>
+                            <button class="btn btn-danger" onclick="updateRequestStatus('${requestId}', 'rejected')">Reject</button>
+                            <button class="btn btn-secondary" onclick="showRescheduleForm('${requestId}')">Reschedule</button>
+                        </div>
+                        <div id="reschedule-form-${requestId}" style="display: none;">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="reschedule-date-${requestId}">New Date</label>
+                                    <input type="date" id="reschedule-date-${requestId}" class="form-control" required min="${new Date().toISOString().split('T')[0]}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="reschedule-time-${requestId}">New Time</label>
+                                    <select id="reschedule-time-${requestId}" class="form-control" required>
+                                        <option value="">Select Time</option>
+                                        <option value="morning">Morning (9:00 AM - 12:00 PM)</option>
+                                        <option value="afternoon">Afternoon (1:00 PM - 5:00 PM)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="reschedule-reason-${requestId}">Reason for Rescheduling</label>
+                                <textarea id="reschedule-reason-${requestId}" class="form-control" rows="3" required placeholder="Enter reason for rescheduling..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="submitReschedule('${requestId}')">Submit Reschedule</button>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Set modal content
+            modalBody.innerHTML = modalContent;
+            
+            // Show modal
+            modal.style.display = 'block';
+        }
+
+        // Function to close the modal
+        function closeModal() {
+            document.getElementById('request-modal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('request-modal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Function to update request status
+        function updateRequestStatus(requestId, status) {
+            if (!confirm(`Are you sure you want to ${status} this request?`)) return;
+            
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            
+            const requestRef = firebase.database().ref(`medical-visit-requests/${requestId}`);
+            
+            // Get current user
+            const user = firebase.auth().currentUser;
+            
+            requestRef.update({
+                status: status,
+                statusUpdatedAt: firebase.database.ServerValue.TIMESTAMP,
+                statusUpdatedBy: user ? user.uid : null,
+                statusUpdatedByEmail: user ? user.email : null
+            })
+            .then(() => {
+                loadingOverlay.style.display = 'none';
+                closeModal();
+                
+                // Update the request in our local arrays
+                const request = allRequests.find(req => req.id === requestId);
+                if (request) request.status = status;
+                
+                // Refresh the display
+                displayRequests();
+                updatePendingCount();
+                
+                alert(`Request has been ${status} successfully.`);
+            })
+            .catch(error => {
+                console.error('Error updating request status:', error);
+                loadingOverlay.style.display = 'none';
+                alert(`Error updating request status: ${error.message}`);
+            });
+        }
+
+        // Function to show reschedule form
+        function showRescheduleForm(requestId) {
+            const rescheduleForm = document.getElementById(`reschedule-form-${requestId}`);
+            rescheduleForm.style.display = 'block';
+        }
+
+        // Function to submit reschedule
+        function submitReschedule(requestId) {
+            const dateInput = document.getElementById(`reschedule-date-${requestId}`);
+            const timeInput = document.getElementById(`reschedule-time-${requestId}`);
+            const reasonInput = document.getElementById(`reschedule-reason-${requestId}`);
+            
+            // Validate inputs
+            if (!dateInput.value || !timeInput.value || !reasonInput.value) {
+                alert('Please fill in all reschedule fields');
+                return;
+            }
+            
+            if (!confirm('Are you sure you want to reschedule this request?')) return;
+            
+            const loadingOverlay = document.getElementById('loading-overlay');
+            loadingOverlay.style.display = 'flex';
+            
+            const requestRef = firebase.database().ref(`medical-visit-requests/${requestId}`);
+            
+            // Get current user
+            const user = firebase.auth().currentUser;
+            
+            requestRef.update({
+                status: 'rescheduled',
+                statusUpdatedAt: firebase.database.ServerValue.TIMESTAMP,
+                statusUpdatedBy: user ? user.uid : null,
+                statusUpdatedByEmail: user ? user.email : null,
+                rescheduledDate: dateInput.value,
+                rescheduledTime: timeInput.value,
+                rescheduledReason: reasonInput.value
+            })
+            .then(() => {
+                loadingOverlay.style.display = 'none';
+                closeModal();
+                
+                // Update the request in our local arrays
+                const request = allRequests.find(req => req.id === requestId);
+                if (request) {
+                    request.status = 'rescheduled';
+                    request.rescheduledDate = dateInput.value;
+                    request.rescheduledTime = timeInput.value;
+                }
+                
+                // Refresh the display
+                displayRequests();
+                updatePendingCount();
+                
+                alert('Request has been rescheduled successfully.');
+            })
+            .catch(error => {
+                console.error('Error rescheduling request:', error);
+                loadingOverlay.style.display = 'none';
+                alert(`Error rescheduling request: ${error.message}`);
+            });
+        }
+
+        // Helper function to format visit type
+        function formatVisitType(type, otherType) {
+            if (type === 'other' && otherType) {
+                return otherType;
+            }
+            
+            const typeMap = {
+                'routine-checkup': 'Routine Checkup',
+                'specialized-examination': 'Specialized Examination',
+                'follow-up': 'Follow-up Visit',
+                'emergency': 'Emergency Visit',
+                'vaccination': 'Vaccination',
+                'occupational-health': 'Occupational Health Assessment'
+            };
+            
+            return typeMap[type] || 'Other';
+        }
+
+        // Helper function to format preferred time
+        function formatPreferredTime(time) {
+            if (time === 'morning') {
+                return 'Morning (9:00 AM - 12:00 PM)';
+            } else if (time === 'afternoon') {
+                return 'Afternoon (1:00 PM - 5:00 PM)';
+            }
+            return 'Not specified';
+        }
+
+        // Helper function to capitalize first letter
+        function capitalizeFirstLetter(string) {
+            if (!string) return '';
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+        // Shortcut functions for request actions
+        function approveRequest(requestId) {
+            updateRequestStatus(requestId, 'approved');
+        }
+
+        function rejectRequest(requestId) {
+            updateRequestStatus(requestId, 'rejected');
+        }
+
+        function rescheduleRequest(requestId) {
+            viewRequest(requestId);
+            setTimeout(() => {
+                showRescheduleForm(requestId);
+            }, 200);
+        }
+    </script>
+</body>
+</html>

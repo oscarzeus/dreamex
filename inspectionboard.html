@@ -1,0 +1,1619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>HSE System - Inspection Board</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .inspection-board-container {
+            width: 100%;
+            margin: 90px auto 0;
+            padding: 0 20px;
+        }
+        
+        .inspection-board-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .inspection-board-title h2 {
+            margin-bottom: 5px;
+        }
+        
+        .inspection-board-title p {
+            color: #6c757d;
+            margin-top: 0;
+        }
+        
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            align-items: flex-end;
+        }
+        
+        .filter-group {
+            flex: 1 1 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .view-toggle {
+            display: flex;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .view-btn {
+            background-color: #f8f9fa;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .view-btn:hover {
+            background-color: #e9ecef;
+        }
+        
+        .view-btn.active {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        /* Inspection Card Grid View */
+        .inspection-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .inspection-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .inspection-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .inspection-card-header {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .inspection-card-header h3 {
+            margin: 0;
+            font-size: 18px;
+            color: #343a40;
+        }
+        
+        .inspection-card-body {
+            padding: 15px;
+            flex-grow: 1;
+        }
+        
+        .inspection-meta {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+        }
+        
+        .inspection-meta i {
+            margin-right: 5px;
+        }
+        
+        .inspection-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-in-progress {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-overdue {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-draft {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status-cancelled {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+        
+        .priority-indicator {
+            margin-right: 10px;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .priority-low {
+            background-color: #28a745;
+        }
+        
+        .priority-medium {
+            background-color: #ffc107;
+        }
+        
+        .priority-high {
+            background-color: #fd7e14;
+        }
+        
+        .priority-critical {
+            background-color: #dc3545;
+        }
+        
+        .inspection-card-footer {
+            padding: 10px 15px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .inspection-details {
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        
+        .inspection-details div {
+            margin-bottom: 5px;
+            display: flex;
+        }
+        
+        .detail-label {
+            font-weight: 500;
+            width: 100px;
+            color: #495057;
+            flex-shrink: 0;
+        }
+        
+        .detail-value {
+            color: #212529;
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-sm {
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+        
+        /* Inspection Table View */
+        .inspection-table-container {
+            margin-top: 20px;
+            display: none; /* Hidden by default */
+        }
+        
+        .inspection-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .inspection-table th {
+            text-align: left;
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #dee2e6;
+            font-weight: 600;
+        }
+        
+        .inspection-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        
+        .inspection-table tr:hover {
+            background-color: rgba(0,123,255,0.05);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .action-btn {
+            padding: 6px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+        
+        .view-btn {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .edit-btn {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .delete-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .approve-btn {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .reject-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+        
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .modal-header {
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #555;
+        }
+        
+        .modal-body {
+            padding: 20px 0;
+        }
+        
+        .modal-section {
+            margin-bottom: 20px;
+        }
+        
+        .modal-section h3 {
+            color: #495057;
+            font-size: 18px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f1f1f1;
+            padding-bottom: 8px;
+        }
+        
+        .modal-field {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        
+        .modal-label {
+            font-weight: 500;
+            width: 200px;
+            color: #6c757d;
+        }
+        
+        .modal-value {
+            flex-grow: 1;
+            color: #212529;
+        }
+        
+        .modal-footer {
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .status-update-form {
+            border-top: 1px solid #e9ecef;
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+        
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            flex: 1 1 300px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        
+        .attachment-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0;
+        }
+        
+        .attachment-item {
+            padding: 8px 12px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .attachment-icon {
+            margin-right: 10px;
+            color: #6c757d;
+        }
+        
+        .attachment-name {
+            flex-grow: 1;
+        }
+        
+        .attachment-size {
+            color: #6c757d;
+            margin-right: 10px;
+            font-size: 12px;
+        }
+        
+        .download-btn {
+            color: #007bff;
+            cursor: pointer;
+        }
+        
+        .download-btn:hover {
+            text-decoration: underline;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+            display: none; /* Hidden by default */
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            color: #dee2e6;
+        }
+        
+        .loading-indicator {
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .filters {
+                flex-direction: column;
+            }
+            
+            .filter-group {
+                min-width: 100%;
+            }
+            
+            .inspection-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder - will be replaced by the header component -->
+    <div id="header-placeholder"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <main class="inspection-board-container">
+        <div class="inspection-board-header">
+            <div class="inspection-board-title">
+                <h2>Inspection Board</h2>
+                <p>Manage inspection requests and view inspection results</p>
+            </div>
+            <a href="./inspection.html" class="btn btn-primary" id="createInspectionBtn">
+                <i class="fas fa-plus"></i> Request New Inspection
+            </a>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label for="statusFilter">Status</label>
+                <select id="statusFilter" class="form-control">
+                    <option value="all">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                    <option value="overdue">Overdue</option>
+                    <option value="draft">Draft</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="typeFilter">Type</label>
+                <select id="typeFilter" class="form-control">
+                    <option value="all">All Types</option>
+                    <option value="routine">Routine</option>
+                    <option value="planned">Planned</option>
+                    <option value="follow-up">Follow-up</option>
+                    <option value="regulatory">Regulatory</option>
+                    <option value="pre-operational">Pre-Operational</option>
+                    <option value="safety-walk">Safety Walk</option>
+                    <option value="housekeeping">Housekeeping</option>
+                    <option value="equipment-specific">Equipment-Specific</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="priorityFilter">Priority</label>
+                <select id="priorityFilter" class="form-control">
+                    <option value="all">All Priorities</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="departmentFilter">Department</label>
+                <select id="departmentFilter" class="form-control">
+                    <option value="all">All Departments</option>
+                    <!-- Departments will be populated from Firebase -->
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="searchInput">Search</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="Search inspections...">
+            </div>
+            <div class="filter-buttons">
+                <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
+                <button id="resetFiltersBtn" class="btn btn-secondary">Reset</button>
+            </div>
+        </div>
+
+        <!-- View Toggle -->
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+            <div class="view-toggle">
+                <button id="gridViewBtn" class="view-btn active"><i class="fas fa-th"></i> Grid</button>
+                <button id="tableViewBtn" class="view-btn"><i class="fas fa-list"></i> Table</button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="loading-indicator">
+            <div class="spinner"></div>
+            <p>Loading inspections...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state">
+            <div class="empty-state-icon"><i class="fas fa-search"></i></div>
+            <h3>No inspections found</h3>
+            <p>There are no inspection requests matching your criteria.</p>
+        </div>
+
+        <!-- Grid View -->
+        <div id="inspectionCardsContainer" class="inspection-cards">
+            <!-- Inspection cards will be generated here -->
+        </div>
+
+        <!-- Table View -->
+        <div id="inspectionTableContainer" class="inspection-table-container">
+            <table class="inspection-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Priority</th>
+                        <th>Location</th>
+                        <th>Requested Date</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Requested By</th>
+                        <th>Last Modified</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inspectionTableBody">
+                    <!-- Inspection rows will be generated here -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Inspection Detail Modal -->
+    <div id="inspectionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Inspection Details</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Modal content will be generated here -->
+            </div>
+            <div class="modal-footer">
+                <button id="close-modal-btn" class="btn btn-secondary">Close</button>
+                <button id="edit-inspection-btn" class="btn btn-primary">Edit</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <!-- Moment.js for date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/datetime-utils.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // UI Elements
+            const inspectionCardsContainer = document.getElementById('inspectionCardsContainer');
+            const inspectionTableContainer = document.getElementById('inspectionTableContainer');
+            const inspectionTableBody = document.getElementById('inspectionTableBody');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const emptyState = document.getElementById('emptyState');
+            const gridViewBtn = document.getElementById('gridViewBtn');
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            const statusFilter = document.getElementById('statusFilter');
+            const typeFilter = document.getElementById('typeFilter');
+            const priorityFilter = document.getElementById('priorityFilter');
+            const departmentFilter = document.getElementById('departmentFilter');
+            const searchInput = document.getElementById('searchInput');
+            const applyFiltersBtn = document.getElementById('applyFiltersBtn');
+            const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+            
+            // Modal elements
+            const modal = document.getElementById('inspectionModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            const closeBtn = document.querySelector('.close');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const editInspectionBtn = document.getElementById('edit-inspection-btn');
+            
+            // Track current view mode (grid or table)
+            let currentView = 'grid';
+            
+            // Load departments for filter dropdown
+            loadDepartments();
+            
+            // Load all inspections initially
+            loadInspections();
+            
+            // Event listeners for filters
+            applyFiltersBtn.addEventListener('click', loadInspections);
+            resetFiltersBtn.addEventListener('click', resetFilters);
+            
+            // Event listeners for view toggle
+            gridViewBtn.addEventListener('click', () => toggleView('grid'));
+            tableViewBtn.addEventListener('click', () => toggleView('table'));
+            
+            // Event listeners for modal
+            closeBtn.addEventListener('click', closeModal);
+            closeModalBtn.addEventListener('click', closeModal);
+            editInspectionBtn.addEventListener('click', function() {
+                const inspectionId = this.getAttribute('data-id');
+                window.location.href = `inspection.html?id=${inspectionId}`;
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+            
+            function loadDepartments() {
+                database.ref('departments').once('value')
+                    .then(snapshot => {
+                        // Clear existing options except the first one
+                        while (departmentFilter.options.length > 1) {
+                            departmentFilter.remove(1);
+                        }
+                        
+                        if (snapshot.exists()) {
+                            snapshot.forEach(deptSnapshot => {
+                                const dept = deptSnapshot.val();
+                                const option = document.createElement('option');
+                                option.value = deptSnapshot.key;
+                                option.textContent = dept.name || deptSnapshot.key;
+                                departmentFilter.appendChild(option);
+                            });
+                        } else {
+                            // Add default departments if none exist
+                            const defaultDepts = ['Operations', 'Warehouse', 'Manufacturing', 'Logistics', 'Maintenance', 'Administration', 'HR', 'IT'];
+                            defaultDepts.forEach(dept => {
+                                const option = document.createElement('option');
+                                option.value = dept.toLowerCase();
+                                option.textContent = dept;
+                                departmentFilter.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error loading departments:", error);
+                    });
+            }
+            
+            function loadInspections() {
+                // Show loading indicator
+                loadingIndicator.style.display = 'block';
+                inspectionCardsContainer.style.display = 'none';
+                inspectionTableContainer.style.display = 'none';
+                emptyState.style.display = 'none';
+                
+                // Get filter values
+                const status = statusFilter.value;
+                const type = typeFilter.value;
+                const priority = priorityFilter.value;
+                const department = departmentFilter.value;
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                database.ref('inspections').once('value')
+                    .then(snapshot => {
+                        // Hide loading indicator
+                        loadingIndicator.style.display = 'none';
+                        
+                        // Clear existing content
+                        inspectionCardsContainer.innerHTML = '';
+                        inspectionTableBody.innerHTML = '';
+                        
+                        if (snapshot.exists()) {
+                            const inspections = [];
+                            
+                            snapshot.forEach(childSnapshot => {
+                                const inspection = childSnapshot.val();
+                                inspection.id = childSnapshot.key;
+                                
+                                // Apply filters
+                                const statusMatch = status === 'all' || inspection.status === status;
+                                const typeMatch = type === 'all' || inspection.inspectionType === type;
+                                const priorityMatch = priority === 'all' || inspection.priority === priority;
+                                const departmentMatch = department === 'all' || inspection.department === department;
+                                
+                                // Search term match in title or description
+                                const searchMatch = !searchTerm || 
+                                    (inspection.title && inspection.title.toLowerCase().includes(searchTerm)) ||
+                                    (inspection.description && inspection.description.toLowerCase().includes(searchTerm));
+                                
+                                if (statusMatch && typeMatch && priorityMatch && departmentMatch && searchMatch) {
+                                    inspections.push(inspection);
+                                }
+                            });
+                            
+                            // Sort by requested date, with newest first
+                            inspections.sort((a, b) => {
+                                return new Date(b.requestedDate || b.createdAt) - new Date(a.requestedDate || a.createdAt);
+                            });
+                            
+                            if (inspections.length > 0) {
+                                // Render inspections based on current view
+                                if (currentView === 'grid') {
+                                    inspectionCardsContainer.style.display = 'grid';
+                                    renderInspectionCards(inspections);
+                                } else {
+                                    inspectionTableContainer.style.display = 'block';
+                                    renderInspectionTable(inspections);
+                                }
+                            } else {
+                                // Show empty state
+                                emptyState.style.display = 'block';
+                            }
+                        } else {
+                            // No inspections found
+                            emptyState.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error loading inspections:", error);
+                        loadingIndicator.style.display = 'none';
+                        emptyState.style.display = 'block';
+                        emptyState.querySelector('h3').textContent = 'Error loading inspections';
+                        emptyState.querySelector('p').textContent = 'Please try again later.';
+                    });
+            }
+            
+            function renderInspectionCards(inspections) {
+                inspections.forEach(inspection => {
+                    const card = document.createElement('div');
+                    card.className = 'inspection-card';
+                    
+                    // Format dates for display
+                    const requestedDate = inspection.requestedDate ? formatDate(inspection.requestedDate) : 'Not specified';
+                    const dueDate = inspection.dueDate ? formatDate(inspection.dueDate) : 'Not specified';
+                    
+                    // Status and priority display
+                    const statusDisplay = {
+                        'pending': 'Pending',
+                        'in-progress': 'In Progress',
+                        'completed': 'Completed',
+                        'overdue': 'Overdue',
+                        'draft': 'Draft',
+                        'cancelled': 'Cancelled'
+                    };
+                    
+                    const priorityDisplay = {
+                        'low': 'Low',
+                        'medium': 'Medium',
+                        'high': 'High',
+                        'critical': 'Critical'
+                    };
+                    
+                    card.innerHTML = `
+                        <div class="inspection-card-header">
+                            <h3>${inspection.title || 'Untitled Inspection'}</h3>
+                        </div>
+                        <div class="inspection-card-body">
+                            <div class="inspection-meta">
+                                <i class="far fa-calendar-alt"></i> ${requestedDate}
+                            </div>
+                            <div class="inspection-status status-${inspection.status || 'pending'}">
+                                ${statusDisplay[inspection.status] || 'Pending'}
+                            </div>
+                            <div class="inspection-details">
+                                <div>
+                                    <span class="detail-label">Type:</span>
+                                    <span class="detail-value">${formatLabel(inspection.inspectionType)}</span>
+                                </div>
+                                <div>
+                                    <span class="detail-label">Priority:</span>
+                                    <span class="detail-value">
+                                        <span class="priority-indicator priority-${inspection.priority || 'medium'}"></span>
+                                        ${priorityDisplay[inspection.priority] || 'Medium'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span class="detail-label">Location:</span>
+                                    <span class="detail-value">${inspection.location || 'Not specified'}</span>
+                                </div>
+                                <div>
+                                    <span class="detail-label">Department:</span>
+                                    <span class="detail-value">${inspection.department || 'Not specified'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="inspection-card-footer">
+                            <span>By: ${inspection.requestedByName || 'Unknown'}</span>
+                            <div class="card-actions">
+                                <button class="btn btn-sm view-btn" data-id="${inspection.id}">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-sm edit-btn" data-id="${inspection.id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add event listeners
+                    card.querySelector('.view-btn').addEventListener('click', function() {
+                        const inspectionId = this.getAttribute('data-id');
+                        showInspectionDetails(inspectionId);
+                    });
+                    
+                    card.querySelector('.edit-btn').addEventListener('click', function() {
+                        const inspectionId = this.getAttribute('data-id');
+                        window.location.href = `inspection.html?id=${inspectionId}`;
+                    });
+                    
+                    inspectionCardsContainer.appendChild(card);
+                });
+            }
+            
+            function renderInspectionTable(inspections) {
+                // First get all locations to map IDs to names
+                database.ref('locations').once('value')
+                    .then(locSnapshot => {
+                        const locationMap = {};
+                        
+                        // Create a mapping of location IDs to names
+                        if (locSnapshot.exists()) {
+                            locSnapshot.forEach(childSnapshot => {
+                                const loc = childSnapshot.val();
+                                locationMap[childSnapshot.key] = loc.name || childSnapshot.key;
+                            });
+                        }
+                        
+                        // Create a mapping for default locations
+                        const defaultLocations = {
+                            'main-building': 'Main Building',
+                            'warehouse': 'Warehouse',
+                            'production-floor': 'Production Floor',
+                            'office-area': 'Office Area',
+                            'loading-dock': 'Loading Dock',
+                            'laboratory': 'Laboratory',
+                            'outdoor-yard': 'Outdoor Yard'
+                        };
+                        
+                        // Now render each inspection with proper location names
+                        inspections.forEach(inspection => {
+                            const row = document.createElement('tr');
+                            
+                            // Format dates for display
+                            const requestedDate = inspection.requestedDate ? formatDate(inspection.requestedDate) : 'Not specified';
+                            const dueDate = inspection.dueDate ? formatDate(inspection.dueDate) : 'Not specified';
+                            const updatedAt = inspection.updatedAt ? formatDateTime(inspection.updatedAt) : 'Not modified';
+                            
+                            // Get location name from either the location map or fall back to defaults
+                            let locationName = 'Not specified';
+                            if (inspection.location) {
+                                locationName = locationMap[inspection.location] || 
+                                              defaultLocations[inspection.location] || 
+                                              inspection.location;
+                            }
+                            
+                            // Status badge
+                            const statusBadge = document.createElement('span');
+                            statusBadge.className = `inspection-status status-${inspection.status || 'pending'}`;
+                            statusBadge.textContent = inspection.status ? 
+                                (inspection.status.charAt(0).toUpperCase() + inspection.status.slice(1)).replace('-', ' ') : 
+                                'Pending';
+                            
+                            // Priority indicator
+                            const priorityIndicator = document.createElement('span');
+                            priorityIndicator.className = `priority-indicator priority-${inspection.priority || 'medium'}`;
+                            
+                            const priorityDisplay = document.createElement('span');
+                            priorityDisplay.style.display = 'flex';
+                            priorityDisplay.style.alignItems = 'center';
+                            priorityDisplay.appendChild(priorityIndicator);
+                            priorityDisplay.appendChild(document.createTextNode(
+                                inspection.priority ? 
+                                    inspection.priority.charAt(0).toUpperCase() + inspection.priority.slice(1) : 
+                                    'Medium'
+                            ));
+                            
+                            row.innerHTML = `
+                                <td>${inspection.title || 'Untitled Inspection'}</td>
+                                <td>${formatLabel(inspection.inspectionType)}</td>
+                                <td></td>
+                                <td>${locationName}</td>
+                                <td>${requestedDate}</td>
+                                <td>${dueDate}</td>
+                                <td></td>
+                                <td>${inspection.requestedByName || 'Unknown'}</td>
+                                <td>${updatedAt}</td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button class="action-btn view-btn" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="action-btn edit-btn" title="Edit Inspection">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="action-btn delete-btn" title="Delete Inspection">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            `;
+                            
+                            // Add status badge and priority indicator to their cells
+                            row.querySelector('td:nth-child(7)').appendChild(statusBadge);
+                            row.querySelector('td:nth-child(3)').appendChild(priorityDisplay);
+                            
+                            // Add event listeners to buttons
+                            const viewBtn = row.querySelector('.view-btn');
+                            viewBtn.addEventListener('click', function() {
+                                showInspectionDetails(inspection.id);
+                            });
+                            
+                            const editBtn = row.querySelector('.edit-btn');
+                            editBtn.addEventListener('click', function() {
+                                window.location.href = `inspection.html?id=${inspection.id}`;
+                            });
+                            
+                            const deleteBtn = row.querySelector('.delete-btn');
+                            deleteBtn.addEventListener('click', function() {
+                                if (confirm('Are you sure you want to delete this inspection request?')) {
+                                    deleteInspection(inspection.id);
+                                }
+                            });
+                            
+                            inspectionTableBody.appendChild(row);
+                        });
+                    })
+                    .catch(error => {
+                        console.error("Error loading locations for display:", error);
+                        // If there's an error, still render the table with IDs
+                        renderInspectionTablesWithIds(inspections);
+                    });
+            }
+
+            // Fallback function if location loading fails
+            function renderInspectionTablesWithIds(inspections) {
+                inspections.forEach(inspection => {
+                    const row = document.createElement('tr');
+                    
+                    // Format dates for display
+                    const requestedDate = inspection.requestedDate ? formatDate(inspection.requestedDate) : 'Not specified';
+                    const dueDate = inspection.dueDate ? formatDate(inspection.dueDate) : 'Not specified';
+                    const updatedAt = inspection.updatedAt ? formatDateTime(inspection.updatedAt) : 'Not modified';
+                    
+                    // Status badge
+                    const statusBadge = document.createElement('span');
+                    statusBadge.className = `inspection-status status-${inspection.status || 'pending'}`;
+                    statusBadge.textContent = inspection.status ? 
+                        (inspection.status.charAt(0).toUpperCase() + inspection.status.slice(1)).replace('-', ' ') : 
+                        'Pending';
+                    
+                    // Priority indicator
+                    const priorityIndicator = document.createElement('span');
+                    priorityIndicator.className = `priority-indicator priority-${inspection.priority || 'medium'}`;
+                    
+                    const priorityDisplay = document.createElement('span');
+                    priorityDisplay.style.display = 'flex';
+                    priorityDisplay.style.alignItems = 'center';
+                    priorityDisplay.appendChild(priorityIndicator);
+                    priorityDisplay.appendChild(document.createTextNode(
+                        inspection.priority ? 
+                            inspection.priority.charAt(0).toUpperCase() + inspection.priority.slice(1) : 
+                            'Medium'
+                    ));
+                    
+                    row.innerHTML = `
+                        <td>${inspection.title || 'Untitled Inspection'}</td>
+                        <td>${formatLabel(inspection.inspectionType)}</td>
+                        <td></td>
+                        <td>${inspection.location || 'Not specified'}</td>
+                        <td>${requestedDate}</td>
+                        <td>${dueDate}</td>
+                        <td></td>
+                        <td>${inspection.requestedByName || 'Unknown'}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="action-btn edit-btn" title="Edit Inspection">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="action-btn delete-btn" title="Delete Inspection">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    
+                    // Add status badge and priority indicator to their cells
+                    row.querySelector('td:nth-child(7)').appendChild(statusBadge);
+                    row.querySelector('td:nth-child(3)').appendChild(priorityDisplay);
+                    
+                    // Add event listeners to buttons
+                    const viewBtn = row.querySelector('.view-btn');
+                    viewBtn.addEventListener('click', function() {
+                        showInspectionDetails(inspection.id);
+                    });
+                    
+                    const editBtn = row.querySelector('.edit-btn');
+                    editBtn.addEventListener('click', function() {
+                        window.location.href = `inspection.html?id=${inspection.id}`;
+                    });
+                    
+                    const deleteBtn = row.querySelector('.delete-btn');
+                    deleteBtn.addEventListener('click', function() {
+                        if (confirm('Are you sure you want to delete this inspection request?')) {
+                            deleteInspection(inspection.id);
+                        }
+                    });
+                    
+                    inspectionTableBody.appendChild(row);
+                });
+            }
+            
+            function showInspectionDetails(inspectionId) {
+                database.ref(`inspections/${inspectionId}`).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const inspection = snapshot.val();
+                            inspection.id = inspectionId;
+                            
+                            // Update modal title
+                            modalTitle.textContent = inspection.title || 'Inspection Details';
+                            
+                            // Format dates for display
+                            const requestedDate = inspection.requestedDate ? formatDate(inspection.requestedDate) : 'Not specified';
+                            const dueDate = inspection.dueDate ? formatDate(inspection.dueDate) : 'Not specified';
+                            const createdAt = inspection.createdAt ? formatDateTime(inspection.createdAt) : 'Unknown';
+                            const updatedAt = inspection.updatedAt ? formatDateTime(inspection.updatedAt) : 'Not updated';
+                            
+                            // Prepare status display
+                            const statusDisplay = {
+                                'pending': 'Pending',
+                                'in-progress': 'In Progress',
+                                'completed': 'Completed',
+                                'overdue': 'Overdue',
+                                'draft': 'Draft',
+                                'cancelled': 'Cancelled'
+                            };
+                            
+                            // Prepare priority display
+                            const priorityDisplay = {
+                                'low': 'Low',
+                                'medium': 'Medium',
+                                'high': 'High',
+                                'critical': 'Critical'
+                            };
+                            
+                            // Prepare modal content
+                            let modalContent = `
+                                <div class="modal-section">
+                                    <h3>Basic Information</h3>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Title:</div>
+                                        <div class="modal-value">${inspection.title || 'Untitled'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Type:</div>
+                                        <div class="modal-value">${formatLabel(inspection.inspectionType)}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Status:</div>
+                                        <div class="modal-value">
+                                            <span class="inspection-status status-${inspection.status || 'pending'}">
+                                                ${statusDisplay[inspection.status] || 'Pending'}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Priority:</div>
+                                        <div class="modal-value">
+                                            <span class="priority-indicator priority-${inspection.priority || 'medium'}"></span>
+                                            ${priorityDisplay[inspection.priority] || 'Medium'}
+                                        </div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Department:</div>
+                                        <div class="modal-value">${inspection.department || 'Not specified'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Location:</div>
+                                        <div class="modal-value">${inspection.location || 'Not specified'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Requested Date:</div>
+                                        <div class="modal-value">${requestedDate}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Due Date:</div>
+                                        <div class="modal-value">${dueDate}</div>
+                                    </div>
+                                </div>
+                                <div class="modal-section">
+                                    <h3>Inspection Details</h3>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Description:</div>
+                                        <div class="modal-value">${inspection.description || 'No description provided'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Specific Areas:</div>
+                                        <div class="modal-value">${inspection.area || 'No specific areas specified'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Regulatory Requirements:</div>
+                                        <div class="modal-value">${inspection.regulatoryRequirements || 'None specified'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Estimated Duration:</div>
+                                        <div class="modal-value">${inspection.estimatedDuration ? `${inspection.estimatedDuration} hours` : 'Not specified'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Frequency:</div>
+                                        <div class="modal-value">${formatLabel(inspection.frequency) || 'One-Time'}</div>
+                                    </div>
+                                </div>
+                                <div class="modal-section">
+                                    <h3>Assignment</h3>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Requested By:</div>
+                                        <div class="modal-value">${inspection.requestedByName || 'Unknown'}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Assigned To:</div>
+                                        <div class="modal-value">${inspection.assignedTo ? getUserName(inspection.assignedTo) : 'Not assigned'}</div>
+                                    </div>
+                                </div>`;
+
+                            // Add attachments section if there are attachments
+                            if (inspection.attachments && inspection.attachments.length > 0) {
+                                modalContent += `
+                                    <div class="modal-section">
+                                        <h3>Attachments</h3>
+                                        <ul class="attachment-list">`;
+                                
+                                inspection.attachments.forEach(attachment => {
+                                    // Determine file icon based on file type
+                                    let iconClass = 'fa-file';
+                                    const fileExt = attachment.name.split('.').pop().toLowerCase();
+                                    
+                                    if (['jpg', 'jpeg', 'png', 'gif'].includes(fileExt)) {
+                                        iconClass = 'fa-file-image';
+                                    } else if (fileExt === 'pdf') {
+                                        iconClass = 'fa-file-pdf';
+                                    } else if (['doc', 'docx'].includes(fileExt)) {
+                                        iconClass = 'fa-file-word';
+                                    } else if (['xls', 'xlsx'].includes(fileExt)) {
+                                        iconClass = 'fa-file-excel';
+                                    } else if (['ppt', 'pptx'].includes(fileExt)) {
+                                        iconClass = 'fa-file-powerpoint';
+                                    } else if (['zip', 'rar'].includes(fileExt)) {
+                                        iconClass = 'fa-file-archive';
+                                    }
+                                    
+                                    modalContent += `
+                                        <li class="attachment-item">
+                                            <i class="fas ${iconClass} attachment-icon"></i>
+                                            <span class="attachment-name">${attachment.name}</span>
+                                            <span class="attachment-size">${attachment.size || ''}</span>
+                                            <a class="download-btn" href="${attachment.url}" target="_blank" download="${attachment.name}">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </li>`;
+                                });
+                                
+                                modalContent += `
+                                        </ul>
+                                    </div>`;
+                            }
+                            
+                            // Add meta information section
+                            modalContent += `
+                                <div class="modal-section">
+                                    <h3>Meta Information</h3>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Created:</div>
+                                        <div class="modal-value">${createdAt}</div>
+                                    </div>
+                                    <div class="modal-field">
+                                        <div class="modal-label">Last Updated:</div>
+                                        <div class="modal-value">${updatedAt}</div>
+                                    </div>
+                                </div>`;
+                            
+                            // Add status update form if user has permissions and inspection is not completed or cancelled
+                            if (inspection.status !== 'completed' && inspection.status !== 'cancelled') {
+                                modalContent += `
+                                    <div class="status-update-form">
+                                        <h3>Update Status</h3>
+                                        <div class="form-row">
+                                            <div class="form-group">
+                                                <label for="status-update">New Status</label>
+                                                <select id="status-update" class="form-control">
+                                                    <option value="pending" ${inspection.status === 'pending' ? 'selected' : ''}>Pending</option>
+                                                    <option value="in-progress" ${inspection.status === 'in-progress' ? 'selected' : ''}>In Progress</option>
+                                                    <option value="completed" ${inspection.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                                    <option value="cancelled" ${inspection.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="status-comments">Comments</label>
+                                                <textarea id="status-comments" class="form-control" placeholder="Add comments about this status change"></textarea>
+                                            </div>
+                                        </div>
+                                        <button id="update-status-btn" class="btn btn-primary" data-id="${inspectionId}">Update Status</button>
+                                    </div>`;
+                            }
+                            
+                            // Update modal body content
+                            modalBody.innerHTML = modalContent;
+                            
+                            // Add event listener for status update button if it exists
+                            const updateStatusBtn = document.getElementById('update-status-btn');
+                            if (updateStatusBtn) {
+                                updateStatusBtn.addEventListener('click', function() {
+                                    updateInspectionStatus(this.getAttribute('data-id'));
+                                });
+                            }
+                            
+                            // Set edit button data-id
+                            editInspectionBtn.setAttribute('data-id', inspectionId);
+                            
+                            // Show the modal
+                            modal.style.display = 'block';
+                        } else {
+                            alert('Inspection not found!');
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error fetching inspection details:", error);
+                        alert('Error loading inspection details.');
+                    });
+            }
+            
+            function updateInspectionStatus(inspectionId) {
+                const newStatus = document.getElementById('status-update').value;
+                const comments = document.getElementById('status-comments').value;
+                
+                if (!newStatus) {
+                    alert('Please select a status.');
+                    return;
+                }
+                
+                // Get current user
+                const currentUser = auth.currentUser;
+                if (!currentUser) {
+                    alert('You must be signed in to update status.');
+                    return;
+                }
+                
+                // Show loading overlay
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                
+                // First get the current inspection data
+                database.ref(`inspections/${inspectionId}`).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const inspection = snapshot.val();
+                            
+                            // Prepare status update data
+                            const updateData = {
+                                status: newStatus,
+                                updatedAt: new Date().toISOString()
+                            };
+                            
+                            // Add status history if it doesn't exist
+                            if (!inspection.statusHistory) {
+                                inspection.statusHistory = [];
+                            }
+                            
+                            // Add new status history entry
+                            const historyEntry = {
+                                status: newStatus,
+                                timestamp: new Date().toISOString(),
+                                updatedBy: currentUser.uid,
+                                updatedByName: currentUser.displayName || currentUser.email,
+                                comments: comments
+                            };
+                            
+                            updateData.statusHistory = [...inspection.statusHistory, historyEntry];
+                            
+                            // Update inspection in database
+                            return database.ref(`inspections/${inspectionId}`).update(updateData);
+                        } else {
+                            throw new Error('Inspection not found');
+                        }
+                    })
+                    .then(() => {
+                        // Hide loading overlay
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        
+                        // Close modal
+                        closeModal();
+                        
+                        // Reload inspections
+                        loadInspections();
+                        
+                        // Show success message
+                        alert('Inspection status updated successfully.');
+                    })
+                    .catch(error => {
+                        // Hide loading overlay
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        
+                        console.error("Error updating inspection status:", error);
+                        alert('Error updating inspection status.');
+                    });
+            }
+            
+            function deleteInspection(inspectionId) {
+                // Show loading overlay
+                document.getElementById('loadingOverlay').style.display = 'flex';
+                
+                database.ref(`inspections/${inspectionId}`).remove()
+                    .then(() => {
+                        // Hide loading overlay
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        
+                        // Reload inspections
+                        loadInspections();
+                        
+                        // Show success message
+                        alert('Inspection deleted successfully.');
+                    })
+                    .catch(error => {
+                        // Hide loading overlay
+                        document.getElementById('loadingOverlay').style.display = 'none';
+                        
+                        console.error("Error deleting inspection:", error);
+                        alert('Error deleting inspection.');
+                    });
+            }
+            
+            function toggleView(viewMode) {
+                if (currentView === viewMode) return;
+                
+                currentView = viewMode;
+                
+                if (viewMode === 'grid') {
+                    gridViewBtn.classList.add('active');
+                    tableViewBtn.classList.remove('active');
+                    inspectionCardsContainer.style.display = 'grid';
+                    inspectionTableContainer.style.display = 'none';
+                } else {
+                    tableViewBtn.classList.add('active');
+                    gridViewBtn.classList.remove('active');
+                    inspectionTableContainer.style.display = 'block';
+                    inspectionCardsContainer.style.display = 'none';
+                }
+                
+                // Check if we need to reload inspections in the new view
+                if ((viewMode === 'grid' && inspectionCardsContainer.children.length === 0) || 
+                    (viewMode === 'table' && inspectionTableBody.children.length === 0)) {
+                    loadInspections();
+                } else if (inspectionCardsContainer.children.length === 0 && inspectionTableBody.children.length === 0) {
+                    // If there are no inspections showing, make sure the empty state is visible
+                    emptyState.style.display = 'block';
+                }
+            }
+            
+            function resetFilters() {
+                statusFilter.value = 'all';
+                typeFilter.value = 'all';
+                priorityFilter.value = 'all';
+                departmentFilter.value = 'all';
+                searchInput.value = '';
+                
+                loadInspections();
+            }
+            
+            function closeModal() {
+                modal.style.display = 'none';
+            }
+            
+            function formatDate(dateString) {
+                if (!dateString) return 'Not specified';
+                
+                try {
+                    const userId = auth.currentUser?.uid;
+                    if (!userId) return moment(dateString).format('YYYY-MM-DD');
+                    
+                    // Get user's datetime format preference from Firebase
+                    const userPrefs = localStorage.getItem(`userDatetimeFormat_${userId}`);
+                    if (userPrefs) {
+                        const dateFormat = userPrefs.split(' ')[0]; // Get date part of the format
+                        return moment(dateString).format(dateFormat);
+                    }
+                    
+                    // Fallback to firebase if not in localStorage
+                    return database.ref(`userPreferences/${userId}/datetimeFormat`).once('value')
+                        .then(snapshot => {
+                            if (snapshot.exists()) {
+                                const format = snapshot.val();
+                                const dateFormat = format.split(' ')[0]; // Get date part
+                                return moment(dateString).format(dateFormat);
+                            }
+                            return moment(dateString).format('YYYY-MM-DD');
+                        })
+                        .catch(() => moment(dateString).format('YYYY-MM-DD'));
+                } catch (error) {
+                    console.error("Error formatting date:", error);
+                    return moment(dateString).format('YYYY-MM-DD');
+                }
+            }
+            
+            function formatDateTime(dateTimeString) {
+                if (!dateTimeString) return 'Not specified';
+                
+                try {
+                    const userId = auth.currentUser?.uid;
+                    if (!userId) return moment(dateTimeString).format('YYYY-MM-DD HH:mm');
+                    
+                    // Get user's datetime format preference from localStorage
+                    const userPrefs = localStorage.getItem(`userDatetimeFormat_${userId}`);
+                    if (userPrefs) {
+                        return moment(dateTimeString).format(userPrefs);
+                    }
+                    
+                    // Fallback to firebase if not in localStorage
+                    return database.ref(`userPreferences/${userId}/datetimeFormat`).once('value')
+                        .then(snapshot => {
+                            if (snapshot.exists()) {
+                                const format = snapshot.val();
+                                return moment(dateTimeString).format(format);
+                            }
+                            return moment(dateTimeString).format('YYYY-MM-DD HH:mm');
+                        })
+                        .catch(() => moment(dateTimeString).format('YYYY-MM-DD HH:mm'));
+                } catch (error) {
+                    console.error("Error formatting datetime:", error);
+                    return moment(dateTimeString).format('YYYY-MM-DD HH:mm');
+                }
+            }
+            
+            function formatLabel(value) {
+                if (!value) return '';
+                
+                // Convert kebab-case or snake_case to Title Case
+                return value.split(/[-_]/)
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+            }
+            
+            // Function to get user name from ID (placeholder - you would need to implement this)
+            function getUserName(userId) {
+                // In a real implementation, you might fetch this from your users database
+                return `User ${userId}`;
+            }
+
+            // Listen for datetime preference changes
+            document.addEventListener('datetimePreferencesChanged', function(event) {
+                // Reload inspections to update all date/time displays
+                loadInspections();
+            });
+            
+            // Rest of the code
+            // ...
+        });
+
+        // Also fix the header Events dropdown to show correct label for inspections
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fix header menu label if it exists
+            const headerScript = document.createElement('script');
+            headerScript.textContent = `
+                // Wait for header to be loaded
+                setTimeout(() => {
+                    const eventsDropdown = document.querySelector('.navbar-nav .dropdown:nth-child(5) .dropdown-menu');
+                    if (eventsDropdown) {
+                        const inspectionLink = eventsDropdown.querySelector('a[href="inspectionboard.html"]');
+                        if (inspectionLink) {
+                            inspectionLink.textContent = 'Inspections';
+                        }
+                    }
+                }, 500);
+            `;
+            document.body.appendChild(headerScript);
+
+            // Rest of the code
+            // ...
+        });
+    </script>
+</body>
+</html>
