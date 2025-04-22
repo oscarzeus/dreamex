@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Session Management</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sessions-container {
+            width: 100%;
+            margin: 0 auto;
+            padding: 20px;
+            margin-top: 25px; /* Add more space between menu and content */
+        }
+        
+        .card {
+            width: 100%;
+            box-sizing: border-box;
+            max-width: none; /* Remove any max-width constraints */
+        }
+        
+        /* Make the table responsive to fill the available space */
+        .card-body {
+            padding: 0;
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .sessions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        
+        .sessions-title h2 {
+            margin-bottom: 5px;
+        }
+        
+        .sessions-title p {
+            color: #6c757d;
+            margin-top: 0;
+        }
+        
+        .sessions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        
+        .sessions-table th,
+        .sessions-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .sessions-table th {
+            font-weight: 600;
+            color: var(--primary-color);
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+        
+        .session-device {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+        
+        .session-device i {
+            margin-right: 10px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            width: 24px;
+            text-align: center;
+        }
+        
+        .session-current {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .session-current-tag {
+            display: inline-block;
+            margin-left: 8px;
+            font-size: 0.75rem;
+            background-color: #28a745;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            vertical-align: middle;
+        }
+        
+        .gps-coordinates {
+            font-family: monospace;
+            font-size: 0.85rem;
+            padding: 3px 5px;
+            background-color: #f8f9fa;
+            border-radius: 3px;
+            color: #495057;
+            display: inline-block;
+            border: 1px solid #e9ecef;
+        }
+        
+        .btn-terminate {
+            background-color: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            font-size: 0.85rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-terminate:hover {
+            background-color: #c82333;
+        }
+        
+        .session-info-cell {
+            max-width: 250px;
+        }
+        
+        /* Add styles for date/time display */
+        .datetime-display {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .datetime-absolute {
+            font-size: 0.9rem;
+            color: #333;
+        }
+        
+        .datetime-relative {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder - will be replaced by the header component -->
+    <div id="header-placeholder"></div>
+
+    <main>
+        <div class="sessions-container">
+            <div class="sessions-header">
+                <div class="sessions-title">
+                    <h2>Active Sessions</h2>
+                    <p>View and manage active user sessions</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Current Active Sessions</h2>
+                </div>
+                <div class="card-body">
+                    <table class="sessions-table">
+                        <thead>
+                            <tr>
+                                <th>User/Device</th>
+                                <th>Location</th>
+                                <th>GPS Coordinates</th>
+                                <th>Last Activity</th>
+                                <th>IP Address</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="sessionTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 20px;">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading sessions...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    getUserSessionInfo();
+                    // Update relative times every minute
+                    setInterval(updateRelativeTimes, 60000);
+                } else {
+                    // Redirect to login page if not authenticated
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+
+        // Format date and time
+        function formatDateTime(timestamp) {
+            if (!timestamp) return 'Never';
+            
+            const date = new Date(timestamp);
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            
+            return date.toLocaleString(undefined, options);
+        }
+        
+        // Calculate relative time (e.g., "2 minutes ago")
+        function getRelativeTime(timestamp) {
+            if (!timestamp) return '';
+            
+            const now = new Date();
+            const date = new Date(timestamp);
+            
+            // Check if date is valid
+            if (isNaN(date.getTime())) return '';
+            
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            
+            if (diffSec < 60) return 'just now';
+            
+            const diffMin = Math.floor(diffSec / 60);
+            if (diffMin < 60) return `${diffMin} minute${diffMin > 1 ? 's' : ''} ago`;
+            
+            const diffHour = Math.floor(diffMin / 60);
+            if (diffHour < 24) return `${diffHour} hour${diffHour > 1 ? 's' : ''} ago`;
+            
+            const diffDay = Math.floor(diffHour / 24);
+            if (diffDay < 30) return `${diffDay} day${diffDay > 1 ? 's' : ''} ago`;
+            
+            const diffMonth = Math.floor(diffDay / 30);
+            if (diffMonth < 12) return `${diffMonth} month${diffMonth > 1 ? 's' : ''} ago`;
+            
+            const diffYear = Math.floor(diffMonth / 12);
+            return `${diffYear} year${diffYear > 1 ? 's' : ''} ago`;
+        }
+        
+        // Update all relative times on the page
+        function updateRelativeTimes() {
+            const timeCells = document.querySelectorAll('.session-time');
+            timeCells.forEach(cell => {
+                const timestamp = cell.getAttribute('data-time');
+                if (timestamp) {
+                    const relativeTimeElement = cell.querySelector('.datetime-relative');
+                    if (relativeTimeElement) {
+                        relativeTimeElement.textContent = getRelativeTime(timestamp);
+                    }
+                }
+            });
+        }
+
+        // Get user session info and start monitoring
+        function getUserSessionInfo() {
+            const db = firebase.database();
+            const sessionsRef = db.ref('sessions');
+
+            sessionsRef.on('value', (snapshot) => {
+                const sessions = snapshot.val();
+                const sessionTable = document.getElementById('sessionTableBody');
+                sessionTable.innerHTML = '';
+
+                if (!sessions) {
+                    sessionTable.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; padding: 20px;">No active sessions found</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                // Get current session ID
+                const currentSessionId = localStorage.getItem('current_session_id');
+                
+                // Convert to array and sort by last activity (newest first)
+                const sessionsArray = Object.entries(sessions).map(([id, session]) => {
+                    return { id, ...session };
+                });
+                
+                sessionsArray.sort((a, b) => {
+                    // Convert timestamps to numbers for comparison
+                    const timeA = typeof a.lastActivity === 'number' ? a.lastActivity : 0;
+                    const timeB = typeof b.lastActivity === 'number' ? b.lastActivity : 0;
+                    return timeB - timeA;
+                });
+
+                // Display each session
+                sessionsArray.forEach((session) => {
+                    const row = document.createElement('tr');
+                    
+                    // Check if this is the current session
+                    const isCurrent = session.id === currentSessionId;
+                    if (isCurrent) {
+                        row.classList.add('session-current');
+                    }
+                    
+                    // Format timestamp for display
+                    const lastActivityTimestamp = session.lastActivity || '';
+                    const formattedTime = formatDateTime(lastActivityTimestamp);
+                    const relativeTime = getRelativeTime(lastActivityTimestamp);
+
+                    // Format device info
+                    let deviceIcon = 'fa-desktop';
+                    if (session.device && session.device.toLowerCase().includes('mobile') ||
+                        session.device && session.device.toLowerCase().includes('phone')) {
+                        deviceIcon = 'fa-mobile-alt';
+                    } else if (session.device && session.device.toLowerCase().includes('tablet')) {
+                        deviceIcon = 'fa-tablet-alt';
+                    }
+
+                    // Extract GPS coordinates from location string if available
+                    let gpsCoordinates = 'N/A';
+                    if (session.location && session.location.includes(',')) {
+                        const [lat, long] = session.location.split(',');
+                        if (!isNaN(parseFloat(lat)) && !isNaN(parseFloat(long))) {
+                            gpsCoordinates = `${parseFloat(lat).toFixed(6)}, ${parseFloat(long).toFixed(6)}`;
+                        }
+                    }
+
+                    row.innerHTML = `
+                        <td class="session-info-cell">
+                            <div class="session-device">
+                                <i class="fas ${deviceIcon}"></i>
+                                <div>
+                                    <div>
+                                        <strong>${session.userEmail || 'Unknown User'}</strong>
+                                        ${isCurrent ? '<span class="session-current-tag">Current</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 0.85rem; color: #666;">
+                                        ${session.device || 'Unknown'} • ${session.browser || ''} • ${session.os || ''}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>${session.cityCountry || 'Unknown location'}</td>
+                        <td><span class="gps-coordinates">${gpsCoordinates}</span></td>
+                        <td class="session-time" data-time="${lastActivityTimestamp}">
+                            <div class="datetime-display">
+                                <span class="datetime-absolute">${formattedTime}</span>
+                                <span class="datetime-relative">${relativeTime}</span>
+                            </div>
+                        </td>
+                        <td>${session.ip || 'Unknown IP'}</td>
+                        <td>
+                            ${!isCurrent ? 
+                                `<button class="btn-terminate" data-session-id="${session.id}">
+                                    <i class="fas fa-sign-out-alt"></i> Terminate
+                                </button>` : 
+                                '-'
+                            }
+                        </td>
+                    `;
+
+                    sessionTable.appendChild(row);
+                    
+                    // Add event listener to terminate button
+                    if (!isCurrent) {
+                        const terminateBtn = row.querySelector('.btn-terminate');
+                        if (terminateBtn) {
+                            terminateBtn.addEventListener('click', function() {
+                                const sessionId = this.getAttribute('data-session-id');
+                                terminateSession(sessionId);
+                            });
+                        }
+                    }
+                });
+                
+                // Update relative times on initial load
+                updateRelativeTimes();
+            });
+        }
+
+        // Terminate a session
+        function terminateSession(sessionId) {
+            if (!confirm('Are you sure you want to terminate this session?')) {
+                return;
+            }
+            
+            const db = firebase.database();
+            db.ref('sessions/' + sessionId).remove()
+                .then(() => {
+                    // If we have other storage references, handle them as well
+                    const userId = firebase.auth().currentUser?.uid;
+                    if (userId) {
+                        return db.ref(`users/${userId}/sessions/${sessionId}`).remove();
+                    }
+                })
+                .then(() => {
+                    alert('Session terminated successfully');
+                })
+                .catch(error => {
+                    console.error('Error terminating session:', error);
+                    alert('Error terminating session: ' + error.message);
+                });
+        }
+
+        // Add listener for datetime preference changes and update all date/time fields
+        if (window.DateTimeUtils) {
+            document.addEventListener('datetimePreferencesChanged', function(e) {
+                const userId = firebase.auth().currentUser?.uid || '';
+                window.DateTimeUtils.updateAllDateTimeElements(userId);
+            });
+            // Initial update on page load
+            const userId = firebase.auth().currentUser?.uid || '';
+            window.DateTimeUtils.updateAllDateTimeElements(userId);
+        }
+    </script>
+</body>
+</html>

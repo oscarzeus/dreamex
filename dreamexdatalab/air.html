@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality Report - HSE Online System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .parameter-input {
+            margin-bottom: 15px;
+        }
+
+        .photo-preview {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 15px;
+            gap: 10px;
+        }
+
+        .photo-item {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+
+        .remove-photo {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-spinner {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .loading-text {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .parameter-section {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .parameter-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+
+        .parameter-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .parameter-controls {
+            display: flex;
+            gap: 15px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .reference-select {
+            min-width: 150px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            height: 38px;
+        }
+
+        .parameter-value {
+            flex: 1;
+            min-width: 200px;
+            height: 38px;
+        }
+
+        .form-control {
+            min-width: 300px;
+            padding: 8px 12px;
+        }
+
+        textarea.form-control {
+            min-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="form-container">
+        <div class="form-header">
+            <h1>New Air Quality Report</h1>
+        </div>
+
+        <form id="air-quality-form" class="form-section">
+            <!-- Standard Selection Section -->
+            <div class="form-group">
+                <label for="air-standard">Air Quality Standard</label>
+                <select id="air-standard" name="airStandard" class="form-control" required>
+                    <option value="">Select Air Quality Standard</option>
+                    <option value="WHO">WHO Global Air Quality Guidelines (2021)</option>
+                    <option value="ISO">ISO 16000 Series (Indoor)</option>
+                    <option value="EPA">US EPA NAAQS</option>
+                    <option value="EU">EU Directive 2008/50/EC</option>
+                    <option value="ASTM">ASTM D1356</option>
+                    <option value="IFC">IFC/World Bank EHS Guidelines</option>
+                    <option value="NEPM">NEPM Australia</option>
+                    <option value="CAAQS">Canadian Ambient Air Quality Standards</option>
+                </select>
+            </div>
+
+            <div class="sampling-details">
+                <div class="form-group">
+                    <label for="location">Sampling Location</label>
+                    <input type="text" id="location" name="location" class="form-control" placeholder="e.g., Industrial Zone A, City Center, Factory Perimeter" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sampling-date">Sampling Date & Time</label>
+                    <input type="datetime-local" id="sampling-date" name="samplingDate" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="weather-conditions">Weather Conditions</label>
+                    <input type="text" id="weather-conditions" name="weatherConditions" class="form-control" placeholder="e.g., Sunny, 25°C, Light Breeze">
+                </div>
+            </div>
+
+            <div id="parameters-container">
+                <!-- Parameters will be loaded dynamically based on selected standard -->
+            </div>
+
+            <div class="form-group">
+                <label for="observations">Additional Observations</label>
+                <textarea id="observations" name="observations" class="form-control" rows="4" placeholder="Enter any observations about the air quality..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="recommendations">Recommendations</label>
+                <textarea id="recommendations" name="recommendations" class="form-control" rows="4" placeholder="Enter any recommendations based on the test results..."></textarea>
+            </div>
+
+            <div class="photos-section">
+                <label>Photos</label>
+                <input type="file" id="photo-upload" accept="image/*" multiple style="display: none;">
+                <button type="button" id="upload-photo-btn" class="btn btn-secondary">
+                    <i class="fas fa-camera"></i> Upload Photos
+                </button>
+                <div class="photo-preview" id="photo-preview"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Report</button>
+        </form>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <span class="loading-text">Saving report...</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+
+    <script>
+        // Add this before the existing DOMContentLoaded event handler
+        const airQualityStandards = {
+            WHO: {
+                name: "WHO Global Air Quality Guidelines (2021)",
+                description: "World Health Organization's updated guidelines for ambient air quality",
+                parameters: {
+                    pm25: { name: "PM₂.₅", unit: "μg/m³", annual: 5, daily: 15 },
+                    pm10: { name: "PM₁₀", unit: "μg/m³", annual: 15, daily: 45 },
+                    o3: { name: "O₃", unit: "μg/m³", "8hour": 100 },
+                    no2: { name: "NO₂", unit: "μg/m³", annual: 10, daily: 25 },
+                    so2: { name: "SO₂", unit: "μg/m³", daily: 40 },
+                    co: { name: "CO", unit: "mg/m³", daily: 4 }
+                }
+            },
+            ISO: {
+                name: "ISO 16000 Series",
+                description: "International standards for indoor air quality measurement",
+                parameters: {
+                    formaldehyde: { name: "Formaldehyde", unit: "μg/m³", limit: 100, standard: "ISO 16000-3" },
+                    voc: { name: "VOCs", unit: "μg/m³", limit: 500, standard: "ISO 16000-6" },
+                    pm25: { name: "PM₂.₅", unit: "μg/m³", limit: 25, standard: "ISO 16000-34" },
+                    pm10: { name: "PM₁₀", unit: "μg/m³", limit: 50, standard: "ISO 16000-34" },
+                    co2: { name: "CO₂", unit: "ppm", limit: 1000, standard: "ISO 16000-26" },
+                    co: { name: "CO", unit: "mg/m³", limit: 10, standard: "ISO 16000-26" },
+                    mold: { name: "Mold", unit: "cfu/m³", limit: 500, standard: "ISO 16000-17" },
+                    odor: { name: "Odor Intensity", unit: "scale", range: { min: 0, max: 5 }, standard: "ISO 16000-28" }
+                }
+            },
+            EPA: {
+                name: "US EPA NAAQS",
+                description: "US National Ambient Air Quality Standards (40 CFR Part 50)",
+                parameters: {
+                    pm25: { name: "PM₂.₅", unit: "μg/m³", primary: { annual: 12, daily: 35 } },
+                    pm10: { name: "PM₁₀", unit: "μg/m³", primary: { daily: 150 } },
+                    o3: { name: "O₃", unit: "ppb", primary: { "8hour": 70 } },
+                    no2: { name: "NO₂", unit: "ppb", primary: { annual: 53, hourly: 100 } },
+                    so2: { name: "SO₂", unit: "ppb", primary: { hourly: 75 } },
+                    co: { name: "CO", unit: "ppm", primary: { "8hour": 9, hourly: 35 } },
+                    pb: { name: "Lead (Pb)", unit: "μg/m³", primary: { "3month": 0.15 } }
+                }
+            },
+            EU: {
+                name: "EU Directive 2008/50/EC",
+                description: "European Union air quality standards",
+                parameters: {
+                    pm25: { name: "PM₂.₅", unit: "μg/m³", annual: 25, daily: 35 },
+                    pm10: { name: "PM₁₀", unit: "μg/m³", annual: 40, daily: 50 },
+                    no2: { name: "NO₂", unit: "μg/m³", annual: 40, hourly: 200 },
+                    o3: { name: "O₃", unit: "μg/m³", "8hour": 120, hourly: 180 },
+                    so2: { name: "SO₂", unit: "μg/m³", daily: 125, hourly: 350 },
+                    co: { name: "CO", unit: "mg/m³", "8hour": 10 },
+                    pb: { name: "Lead (Pb)", unit: "μg/m³", annual: 0.5 },
+                    benzene: { name: "Benzene", unit: "μg/m³", annual: 5 },
+                    arsenic: { name: "Arsenic", unit: "ng/m³", annual: 6 },
+                    cadmium: { name: "Cadmium", unit: "ng/m³", annual: 5 },
+                    nickel: { name: "Nickel", unit: "ng/m³", annual: 20 }
+                }
+            },
+            ASTM: {
+                name: "ASTM Standards",
+                description: "ASTM air quality measurement methods",
+                parameters: {
+                    so2: { name: "SO₂", unit: "ppm", method: "ASTM D4096" },
+                    o3: { name: "O₃", unit: "ppm", method: "ASTM D5464" },
+                    voc: { name: "VOCs", unit: "ppb", method: "ASTM D6196" },
+                    dust: { name: "Settleable Dust", unit: "mg/m²/day", method: "ASTM D1739" }
+                }
+            },
+            IFC: {
+                name: "IFC/World Bank EHS Guidelines",
+                description: "International Finance Corporation environmental standards",
+                parameters: {
+                    pm25: { name: "PM₂.₅", unit: "μg/m³", "24hour": 25, annual: 10 },
+                    pm10: { name: "PM₁₀", unit: "μg/m³", "24hour": 50, annual: 20 },
+                    nox: { name: "NOx", unit: "μg/m³", "24hour": 200 },
+                    so2: { name: "SO₂", unit: "μg/m³", "24hour": 125 },
+                    co: { name: "CO", unit: "μg/m³", "1hour": 15000 },
+                    o3: { name: "O₃", unit: "μg/m³", "8hour": 160 },
+                    pb: { name: "Lead (Pb)", unit: "μg/m³", annual: 0.5 },
+                    voc: { name: "VOC (non-methane)", unit: "mg/Nm³", "24hour": 150 }
+                }
+            },
+            NEPM: {
+                name: "NEPM Australia",
+                description: "National Environment Protection Measure standards",
+                parameters: {
+                    pm25: { name: "PM₂.₅", unit: "μg/m³", annual: 8, daily: 25 },
+                    pm10: { name: "PM₁₀", unit: "μg/m³", annual: 25, daily: 50 },
+                    co: { name: "CO", unit: "ppm", "8hour": 9.0 },
+                    no2: { name: "NO₂", unit: "ppb", annual: 30, hourly: 120 },
+                    so2: { name: "SO₂", unit: "ppb", annual: 20, daily: 80, hourly: 200 },
+                    o3: { name: "O₃", unit: "ppb", "4hour": 80, hourly: 100 },
+                    pb: { name: "Lead (Pb)", unit: "μg/m³", annual: 0.5 },
+                    visibility: { name: "Visibility", unit: "km", daily: 20 }
+                }
+            },
+            CAAQS: {
+                name: "Canadian Ambient Air Quality Standards",
+                description: "Canadian national air quality objectives",
+                parameters: {
+                    pm25: { name: "PM₂.₅", unit: "μg/m³", annual: 8.8, daily: 27 },
+                    o3: { name: "O₃", unit: "ppb", "8hour": 62 },
+                    no2: { name: "NO₂", unit: "ppb", annual: 17.0, hourly: 60 },
+                    so2: { name: "SO₂", unit: "ppb", annual: 5.0, hourly: 65 }
+                }
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const standardSelect = document.getElementById('air-standard');
+            const parametersContainer = document.getElementById('parameters-container');
+
+            // Add standard selection handler
+            standardSelect.addEventListener('change', function() {
+                const selectedStandard = airQualityStandards[this.value];
+                if (!selectedStandard) {
+                    parametersContainer.innerHTML = '';
+                    return;
+                }
+
+                // Generate parameter sections
+                let html = `
+                    <div class="standard-info">
+                        <h3>${selectedStandard.name}</h3>
+                        <p>${selectedStandard.description}</p>
+                    </div>
+                `;
+
+                // Create sections for parameters
+                const parameters = selectedStandard.parameters;
+                for (const [key, param] of Object.entries(parameters)) {
+                    const availableReferences = [];
+                    if (param.annual) availableReferences.push({ period: 'annual', value: param.annual });
+                    if (param.daily) availableReferences.push({ period: 'daily', value: param.daily });
+                    if (param.hourly) availableReferences.push({ period: 'hourly', value: param.hourly });
+                    if (param['8hour']) availableReferences.push({ period: '8hour', value: param['8hour'] });
+                    if (param['24hour']) availableReferences.push({ period: '24hour', value: param['24hour'] });
+                    if (param.limit) availableReferences.push({ period: 'limit', value: param.limit });
+
+                    let referenceSelect = '';
+                    if (availableReferences.length > 0) {
+                        referenceSelect = `
+                            <select class="reference-select" id="ref-${key}" data-param="${key}">
+                                ${availableReferences.map(ref => `
+                                    <option value="${ref.period}" data-value="${ref.value}">
+                                        ${ref.period.charAt(0).toUpperCase() + ref.period.slice(1)} (${ref.value} ${param.unit})
+                                    </option>
+                                `).join('')}
+                            </select>
+                        `;
+                    }
+
+                    html += `
+                        <div class="parameter-row">
+                            <label for="param-${key}">${param.name} 
+                                <span class="unit">(${param.unit})</span>
+                            </label>
+                            <div class="parameter-controls">
+                                <input type="number" step="0.01" id="param-${key}" 
+                                       name="${key}" class="form-control parameter-value" 
+                                       placeholder="Enter value">
+                                ${referenceSelect}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                parametersContainer.innerHTML = html;
+
+                // Add reference period change handlers
+                document.querySelectorAll('.reference-select').forEach(select => {
+                    select.addEventListener('change', function() {
+                        const paramKey = this.dataset.param;
+                        const selectedOption = this.options[this.selectedIndex];
+                        const referenceValue = selectedOption.dataset.value;
+                        const input = document.getElementById(`param-${paramKey}`);
+                        input.placeholder = `Enter value (Ref: ${referenceValue} ${parameters[paramKey].unit})`;
+                    });
+                });
+            });
+
+            // Update calculateAirQualityStatus function to use standard-specific thresholds
+            function calculateAirQualityStatus(parameters) {
+                const selectedStandard = airQualityStandards[document.getElementById('air-standard').value];
+                if (!selectedStandard) return 'unknown';
+
+                let status = 'good';
+                const standardParams = selectedStandard.parameters;
+
+                for (const [param, value] of Object.entries(parameters)) {
+                    if (!standardParams[param]) continue;
+
+                    const refSelect = document.getElementById(`ref-${param}`);
+                    if (!refSelect) continue;
+
+                    const selectedOption = refSelect.options[refSelect.selectedIndex];
+                    const referenceValue = parseFloat(selectedOption.dataset.value);
+                    const val = parseFloat(value);
+
+                    if (val > referenceValue * 2) return 'hazardous';
+                    if (val > referenceValue * 1.5) status = 'very_unhealthy';
+                    else if (val > referenceValue) status = 'unhealthy';
+                    else if (val > referenceValue * 0.75) status = 'moderate';
+                }
+
+                return status;
+            }
+
+            const airQualityForm = document.getElementById('air-quality-form');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const photoUpload = document.getElementById('photo-upload');
+            const uploadPhotoBtn = document.getElementById('upload-photo-btn');
+            const photoPreview = document.getElementById('photo-preview');
+            const photos = new Set();
+
+            // Set default sampling date and time
+            document.getElementById('sampling-date').value = new Date().toISOString().slice(0, 16);
+
+            // Handle photo upload
+            uploadPhotoBtn.addEventListener('click', () => {
+                photoUpload.click();
+            });
+
+            photoUpload.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        photos.add(file);
+
+                        const reader = new FileReader();
+                        reader.onload = (function(theFile) {
+                            return function(e) {
+                                const photoItem = createPhotoPreview(e.target.result, theFile);
+                                photoPreview.appendChild(photoItem);
+                            };
+                        })(file);
+
+                        reader.readAsDataURL(file);
+                    }
+                });
+
+                photoUpload.value = '';
+            });
+
+            // Create photo preview element
+            function createPhotoPreview(src, file) {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-photo';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = () => {
+                    div.remove();
+                    photos.delete(file);
+                };
+                
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                return div;
+            }
+
+            // Check if we're in edit mode by looking for an ID in the URL
+            let editMode = false;
+            let reportId = null;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('id')) {
+                reportId = urlParams.get('id');
+                editMode = true;
+                // Load existing report data
+                loadExistingReport(reportId);
+            }
+
+            // Load existing report data for editing
+            function loadExistingReport(id) {
+                loadingOverlay.style.display = 'flex';
+                
+                firebase.database().ref('air-quality-reports/' + id).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const report = snapshot.val();
+                            
+                            // Update page title to show we're editing
+                            document.querySelector('.form-header h1').textContent = 'Edit Air Quality Report';
+                            
+                            // Set location and other general fields
+                            document.getElementById('location').value = report.location || '';
+                            
+                            // Set sampling date
+                            if (report.samplingDate) {
+                                const date = new Date(report.samplingDate);
+                                if (!isNaN(date.getTime())) {
+                                    document.getElementById('sampling-date').value = date.toISOString().slice(0, 16);
+                                }
+                            }
+                            
+                            document.getElementById('weather-conditions').value = report.weatherConditions || '';
+                            
+                            // Set parameter values
+                            if (report.parameters) {
+                                Object.entries(report.parameters).forEach(([param, value]) => {
+                                    const input = document.getElementById(`param-${param}`);
+                                    if (input) {
+                                        input.value = value;
+                                    }
+                                });
+                            }
+                            
+                            // Set observations and recommendations
+                            document.getElementById('observations').value = report.observations || '';
+                            document.getElementById('recommendations').value = report.recommendations || '';
+                            
+                            // Load photos
+                            if (report.photoUrls && Array.isArray(report.photoUrls)) {
+                                report.photoUrls.forEach(url => {
+                                    if (url) {
+                                        const file = new File([new Blob()], 'report-photo.jpg', { type: 'image/jpeg' });
+                                        file.url = url;
+                                        photos.add(file);
+                                        
+                                        const photoItem = createPhotoPreview(url, file);
+                                        photoPreview.appendChild(photoItem);
+                                    }
+                                });
+                            }
+                            
+                            loadingOverlay.style.display = 'none';
+                        } else {
+                            alert('Report not found. Redirecting to create new report.');
+                            window.location.href = 'air.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading report:', error);
+                        alert('Error loading report. Redirecting to create new report.');
+                        window.location.href = 'air.html';
+                    });
+            }
+
+            // Form submission
+            airQualityForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate required fields
+                const location = document.getElementById('location').value;
+                const samplingDate = document.getElementById('sampling-date').value;
+                const selectedStandard = document.getElementById('air-standard').value;
+                
+                if (!location || !samplingDate || !selectedStandard) {
+                    alert('Please fill in all required fields and select a standard.');
+                    return;
+                }
+                
+                // Show loading overlay
+                loadingOverlay.style.display = 'flex';
+                
+                try {
+                    // Collect all parameter values - Fix: Use correct selector for parameter rows
+                    const parameters = {};
+                    const parameterRows = document.querySelectorAll('.parameter-row');
+                    
+                    parameterRows.forEach(row => {
+                        const input = row.querySelector('.parameter-value');
+                        const refSelect = row.querySelector('.reference-select');
+                        
+                        if (input && input.value) {
+                            const paramName = input.getAttribute('name');
+                            parameters[paramName] = {
+                                value: input.value,
+                                reference: refSelect ? {
+                                    period: refSelect.value,
+                                    value: refSelect.options[refSelect.selectedIndex].dataset.value
+                                } : null
+                            };
+                        }
+                    });
+                    
+                    if (Object.keys(parameters).length === 0) {
+                        throw new Error('No parameter values entered');
+                    }
+                    
+                    // Calculate air quality status based on parameters
+                    const status = calculateAirQualityStatus(parameters);
+                    
+                    // Create report object
+                    const report = {
+                        standard: selectedStandard,
+                        location: location,
+                        samplingDate: new Date(samplingDate).toISOString(),
+                        weatherConditions: document.getElementById('weather-conditions').value,
+                        status: status,
+                        parameters: parameters,
+                        observations: document.getElementById('observations').value,
+                        recommendations: document.getElementById('recommendations').value,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    // If it's a new report, add created timestamp and user ID
+                    if (!editMode) {
+                        report.timestamp = new Date().toISOString();
+                        report.createdBy = firebase.auth().currentUser?.uid;
+                        if (!report.createdBy) {
+                            throw new Error('User not authenticated');
+                        }
+                    }
+                    
+                    // Upload photos if any
+                    if (photos.size > 0) {
+                        const photoUrls = [];
+                        
+                        for (const file of photos) {
+                            if (file.url) {
+                                photoUrls.push(file.url);
+                                continue;
+                            }
+                            
+                            const storageRef = firebase.storage().ref('air-quality-reports/' + 
+                                                          new Date().getTime() + '-' + file.name);
+                            
+                            try {
+                                const uploadTask = await storageRef.put(file);
+                                const downloadUrl = await uploadTask.ref.getDownloadURL();
+                                photoUrls.push(downloadUrl);
+                            } catch (uploadError) {
+                                console.error('Photo upload error:', uploadError);
+                                throw new Error('Failed to upload photos');
+                            }
+                        }
+                        
+                        if (photoUrls.length > 0) {
+                            report.photoUrls = photoUrls;
+                        }
+                    }
+                    
+                    // Save report to Firebase
+                    let dbRef;
+                    if (editMode && reportId) {
+                        dbRef = firebase.database().ref('air-quality-reports/' + reportId);
+                        await dbRef.update(report);
+                        alert('Air quality report updated successfully!');
+                    } else {
+                        dbRef = firebase.database().ref('air-quality-reports').push();
+                        await dbRef.set(report);
+                        alert('Air quality report created successfully!');
+                    }
+                    
+                    // Redirect to board page after successful submission
+                    window.location.href = 'airboard.html';
+                    
+                } catch (error) {
+                    console.error('Error saving report:', error);
+                    alert(`Error saving report: ${error.message || 'Please try again.'}`);
+                } finally {
+                    // Hide loading overlay
+                    loadingOverlay.style.display = 'none';
+                }
+            });
+
+            // Function to calculate air quality status based on EPA Air Quality Index
+            function calculateAirQualityStatus(parameters) {
+                const selectedStandard = airQualityStandards[document.getElementById('air-standard').value];
+                if (!selectedStandard) return 'unknown';
+
+                let status = 'good';
+                const standardParams = selectedStandard.parameters;
+
+                for (const [param, value] of Object.entries(parameters)) {
+                    if (!standardParams[param]) continue;
+
+                    const refSelect = document.getElementById(`ref-${param}`);
+                    if (!refSelect) continue;
+
+                    const selectedOption = refSelect.options[refSelect.selectedIndex];
+                    const referenceValue = parseFloat(selectedOption.dataset.value);
+                    const val = parseFloat(value);
+
+                    if (val > referenceValue * 2) return 'hazardous';
+                    if (val > referenceValue * 1.5) status = 'very_unhealthy';
+                    else if (val > referenceValue) status = 'unhealthy';
+                    else if (val > referenceValue * 0.75) status = 'moderate';
+                }
+
+                return status;
+            }
+        });
+    </script>
+</body>
+</html>
