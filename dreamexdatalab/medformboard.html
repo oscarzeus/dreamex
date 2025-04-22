@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Medical Records Board</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="board-container" style="margin-top: 20px;">
+        <div class="board-header">
+            <h1>Employee Medical Records</h1>
+            <div class="board-actions">
+                <button class="btn btn-primary" onclick="window.location.href='employeeform.html'">
+                    <i class="fas fa-plus"></i> Add New Employee
+                </button>
+                <button id="refresh-btn" class="btn btn-secondary">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="filters-container">
+            <div class="filter-group">
+                <label for="status-filter">Medical Status</label>
+                <select id="status-filter" class="form-control">
+                    <option value="all">All Status</option>
+                    <option value="fit">Fit for Work</option>
+                    <option value="limited">Limited Duty</option>
+                    <option value="unfit">Temporarily Unfit</option>
+                    <option value="medical-leave">Medical Leave</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="department-filter">Department</label>
+                <select id="department-filter" class="form-control">
+                    <option value="all">All Departments</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="search">Search</label>
+                <input type="text" id="search" class="form-control" placeholder="Search by name or ID...">
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Medical Status</th>
+                        <th>Last Checkup</th>
+                        <th>Next Checkup</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="employees-table-body">
+                    <!-- Table rows will be populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+        </div>
+    </main>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const database = firebase.database();
+            const tableBody = document.getElementById('employees-table-body');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const modal = document.getElementById('employee-modal');
+            const departmentFilter = document.getElementById('department-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const searchInput = document.getElementById('search');
+            
+            // Department name mapping
+            const departmentNames = {};
+            
+            // Load department names
+            function loadDepartments() {
+                return database.ref('departments').once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            snapshot.forEach((deptSnapshot) => {
+                                const deptId = deptSnapshot.key;
+                                const deptData = deptSnapshot.val();
+                                departmentNames[deptId] = deptData.name || deptId;
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error loading departments:', error);
+                    });
+            }
+            
+            // Load and display employee records
+            function loadEmployeeRecords() {
+                loadingOverlay.style.display = 'flex';
+                
+                // First load departments, then load employee records
+                loadDepartments().then(() => {
+                    database.ref('employee-medical-records').once('value')
+                        .then((snapshot) => {
+                            tableBody.innerHTML = '';
+                            const departments = new Set();
+                            
+                            snapshot.forEach((record) => {
+                                const data = record.val();
+                                // Store department name in departments set
+                                const deptId = data.department;
+                                const deptName = departmentNames[deptId] || deptId;
+                                departments.add(deptName);
+                                
+                                if (filterRecord(data)) {
+                                    const row = createTableRow(record.key, data);
+                                    tableBody.appendChild(row);
+                                }
+                            });
+                            
+                            // Update department filter options
+                            updateDepartmentOptions(Array.from(departments));
+                            loadingOverlay.style.display = 'none';
+                        })
+                        .catch((error) => {
+                            console.error('Error loading records:', error);
+                            loadingOverlay.style.display = 'none';
+                        });
+                });
+            }
+
+            // Format employee ID to ensure proper display format (e.g., DX001)
+            function formatEmployeeId(id) {
+                if (!id) return 'N/A';
+                
+                // If it already has the format like "DX001", return as is
+                if (/^[A-Z]{2}\d{3,}$/.test(id)) {
+                    return id;
+                }
+                
+                // If it's just a number, format it as DX followed by padded zeros
+                if (/^\d+$/.test(id)) {
+                    return 'DX' + id.padStart(3, '0');
+                }
+                
+                // Otherwise return as is
+                return id;
+            }
+
+            // Create table row for employee record
+            function createTableRow(key, data) {
+                const row = document.createElement('tr');
+                database.ref(`users/${data.userId}`).once('value')
+                    .then((userSnapshot) => {
+                        const userData = userSnapshot.val() || {};
+                        row.innerHTML = `
+                            <td>${formatEmployeeId(userData.employeeId || data.employeeId)}</td>
+                            <td>${userData.name || `${data.firstName} ${data.lastName}`}</td>
+                            <td>${userData.department || departmentNames[data.department] || data.department}</td>
+                            <td><span class="status-badge status-${data.medicalStatus}">${formatStatus(data.medicalStatus)}</span></td>
+                            <td>${formatDate(data.lastCheckup)}</td>
+                            <td>${formatDate(data.nextCheckup)}</td>
+                            <td>
+                                <button class="btn btn-icon view-btn" data-id="${key}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-icon edit-btn" data-id="${key}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                        `;
+
+                        // Add event listeners for view and edit buttons
+                        row.querySelector('.view-btn').addEventListener('click', () => {
+                            window.location.href = `medicdetails.html?id=${key}`;
+                        });
+                        row.querySelector('.edit-btn').addEventListener('click', () => {
+                            window.location.href = `employeeform.html?id=${key}`;
+                        });
+                    });
+                return row;
+            }
+
+            // Filter records based on current filters
+            function filterRecord(data) {
+                const statusValue = statusFilter.value;
+                const departmentValue = departmentFilter.value;
+                const searchValue = searchInput.value.toLowerCase();
+
+                const matchesStatus = statusValue === 'all' || data.medicalStatus === statusValue;
+                const matchesDepartment = departmentValue === 'all' || departmentNames[data.department] === departmentValue;
+                const matchesSearch = searchValue === '' || 
+                    data.employeeId.toLowerCase().includes(searchValue) ||
+                    `${data.firstName} ${data.lastName}`.toLowerCase().includes(searchValue);
+
+                return matchesStatus && matchesDepartment && matchesSearch;
+            }
+
+            // Update department filter options
+            function updateDepartmentOptions(departments) {
+                const currentValue = departmentFilter.value;
+                departmentFilter.innerHTML = '<option value="all">All Departments</option>';
+                departments.sort().forEach(dept => {
+                    const option = document.createElement('option');
+                    option.value = dept;
+                    option.textContent = dept;
+                    departmentFilter.appendChild(option);
+                });
+                departmentFilter.value = currentValue;
+            }
+
+            // Show employee details in modal
+            function showEmployeeDetails(employeeId) {
+                database.ref(`employee-medical-records/${employeeId}`).once('value')
+                    .then((snapshot) => {
+                        const data = snapshot.val();
+                        const modalBody = modal.querySelector('.modal-body');
+                        
+                        modalBody.innerHTML = `
+                            <div class="detail-section">
+                                <h3>Personal Information</h3>
+                                <p><strong>Employee ID:</strong> ${formatEmployeeId(data.employeeId)}</p>
+                                <p><strong>Name:</strong> ${data.firstName} ${data.lastName}</p>
+                                <p><strong>Date of Birth:</strong> ${formatDate(data.birthDate)}</p>
+                                <p><strong>Department:</strong> ${departmentNames[data.department] || data.department}</p>
+                            </div>
+                            <div class="detail-section">
+                                <h3>Medical Status</h3>
+                                <p><strong>Current Status:</strong> <span class="status-badge status-${data.medicalStatus}">${formatStatus(data.medicalStatus)}</span></p>
+                                <p><strong>Medical Conditions:</strong> ${data.medicalConditions || 'None reported'}</p>
+                            </div>
+                            <div class="detail-section">
+                                <h3>Medical History</h3>
+                                <p><strong>Last Checkup:</strong> ${formatDate(data.lastCheckup)}</p>
+                                <p><strong>Next Checkup:</strong> ${formatDate(data.nextCheckup)}</p>
+                                <p><strong>Vaccinations:</strong> ${data.vaccinations || 'No records'}</p>
+                            </div>
+                            <div class="detail-section">
+                                <h3>Emergency Contact</h3>
+                                <p><strong>Name:</strong> ${data.emergencyContact.name}</p>
+                                <p><strong>Phone:</strong> ${data.emergencyContact.phone}</p>
+                                <p><strong>Relationship:</strong> ${data.emergencyContact.relationship}</p>
+                            </div>
+                            <div class="detail-section">
+                                <h3>Additional Information</h3>
+                                <p><strong>Allergies:</strong> ${data.allergies || 'None reported'}</p>
+                                <p><strong>Medications:</strong> ${data.medications || 'None reported'}</p>
+                                <p><strong>Notes:</strong> ${data.notes || 'No additional notes'}</p>
+                            </div>
+                        `;
+                        
+                        modal.style.display = 'block';
+                        
+                        // Update edit button link
+                        modal.querySelector('#edit-record-btn').onclick = () => {
+                            window.location.href = `employeeform.html?id=${employeeId}`;
+                        };
+                    });
+            }
+
+            // Helper function to format status
+            function formatStatus(status) {
+                return status.split('-')
+                    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(' ');
+            }
+
+            // Helper function to format dates
+            function formatDate(dateStr) {
+                if (!dateStr) return 'Not scheduled';
+                return new Date(dateStr).toLocaleDateString();
+            }
+
+            // Event listeners
+            document.getElementById('refresh-btn').addEventListener('click', loadEmployeeRecords);
+            statusFilter.addEventListener('change', loadEmployeeRecords);
+            departmentFilter.addEventListener('change', loadEmployeeRecords);
+            searchInput.addEventListener('input', loadEmployeeRecords);
+
+            // Modal close buttons
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+            });
+
+            // Close modal when clicking outside
+            window.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+
+            // Check authentication and load initial data
+            firebase.auth().onAuthStateChanged(function(user) {
+                if (user) {
+                    loadEmployeeRecords();
+                } else {
+                    window.location.href = 'login.html';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

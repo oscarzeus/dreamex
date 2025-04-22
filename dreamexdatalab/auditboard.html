@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Audit Management</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .audits-container {
+            width: 100%;
+            margin: 90px auto 0;
+            padding: 0 20px;
+        }
+        
+        .audits-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .audits-title h2 {
+            margin-bottom: 5px;
+        }
+        
+        .audits-title p {
+            color: #6c757d;
+            margin-top: 0;
+        }
+        
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 5px;
+            border-bottom: 1px solid #dee2e6;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+        
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .filter-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            align-items: flex-end;
+        }
+        
+        .filter-group {
+            flex: 1 1 200px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+            color: #495057;
+        }
+        
+        .filter-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .audit-list {
+            margin-bottom: 20px;
+        }
+        
+        .audit-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        .audit-table th {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+        }
+        
+        .audit-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .audit-table tr:hover {
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .priority-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .priority-low {
+            background-color: #28a745;
+        }
+        
+        .priority-medium {
+            background-color: #ffc107;
+        }
+        
+        .priority-high {
+            background-color: #fd7e14;
+        }
+        
+        .priority-urgent {
+            background-color: #dc3545;
+        }
+        
+        .audit-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.875rem;
+        }
+        
+        .btn-view {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .btn-view:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-edit {
+            background-color: #17a2b8;
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background-color: #138496;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            gap: 5px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .pagination button.active {
+            background-color: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
+        
+        .pagination button:hover:not(.active) {
+            background-color: #f8f9fa;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-requested {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+        }
+        
+        .status-planned {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+        
+        .status-in-progress {
+            background-color: #e8f5e9;
+            color: #1b5e20;
+        }
+        
+        .status-completed {
+            background-color: #e1f5fe;
+            color: #01579b;
+        }
+        
+        .status-canceled {
+            background-color: #ffebee;
+            color: #b71c1c;
+        }
+
+        .status-draft {
+            background-color: #f5f5f5;
+            color: #757575;
+        }
+        
+        /* Summary cards */
+        .summary-cards {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .summary-card {
+            flex: 1 1 200px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .summary-card .card-title {
+            font-size: 14px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+        
+        .summary-card .card-value {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .summary-card .card-trend {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .trend-up {
+            color: #dc3545;
+        }
+        
+        .trend-down {
+            color: #28a745;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .tabs {
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+            
+            .tab-btn {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+            
+            .audit-table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header Placeholder - will be replaced by the header component -->
+    <div id="header-placeholder"></div>
+
+    <main class="audits-container">
+        <div class="audits-header">
+            <div class="audits-title">
+                <h2>Audit Management</h2>
+                <p>Request, track, and manage audits across your organization</p>
+            </div>
+            <a href="audit.html" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create New Audit
+            </a>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="card-title">Total Audits</div>
+                <div class="card-value" id="totalAudits">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span>10% from last month</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-title">Planned Audits</div>
+                <div class="card-value" id="plannedAudits">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span>5% from last month</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-title">In Progress</div>
+                <div class="card-value" id="inProgressAudits">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-down trend-down"></i>
+                    <span>3% from last month</span>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="card-title">Completed</div>
+                <div class="card-value" id="completedAudits">0</div>
+                <div class="card-trend">
+                    <i class="fas fa-arrow-up trend-up"></i>
+                    <span>8% from last month</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="all">All Audits</button>
+                <button class="tab-btn" data-tab="requested">Requested</button>
+                <button class="tab-btn" data-tab="planned">Planned</button>
+                <button class="tab-btn" data-tab="in-progress">In Progress</button>
+                <button class="tab-btn" data-tab="completed">Completed</button>
+                <button class="tab-btn" data-tab="draft">Drafts</button>
+            </div>
+
+            <!-- All Audits Tab -->
+            <div id="all" class="tab-content active">
+                <div class="filter-section">
+                    <div class="filter-group">
+                        <label for="dateFrom">From Date</label>
+                        <input type="date" id="dateFrom" class="filter-control">
+                    </div>
+                    <div class="filter-group">
+                        <label for="dateTo">To Date</label>
+                        <input type="date" id="dateTo" class="filter-control">
+                    </div>
+                    <div class="filter-group">
+                        <label for="auditType">Audit Type</label>
+                        <select id="auditType" class="filter-control">
+                            <option value="">All Types</option>
+                            <option value="internal">Internal</option>
+                            <option value="external">External</option>
+                            <option value="regulatory">Regulatory</option>
+                            <option value="certification">Certification</option>
+                            <option value="management">Management System</option>
+                            <option value="process">Process</option>
+                            <option value="compliance">Compliance</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="auditStatus">Status</label>
+                        <select id="auditStatus" class="filter-control">
+                            <option value="">All Statuses</option>
+                            <option value="requested">Requested</option>
+                            <option value="planned">Planned</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="canceled">Canceled</option>
+                            <option value="draft">Draft</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="auditLocation">Location</label>
+                        <select id="auditLocation" class="filter-control">
+                            <option value="">All Locations</option>
+                            <!-- Locations will be populated from Firebase -->
+                        </select>
+                    </div>
+                    <div class="filter-buttons">
+                        <button id="applyFilters" class="btn btn-primary">Apply Filters</button>
+                        <button id="resetFilters" class="btn btn-secondary">Reset</button>
+                    </div>
+                </div>
+
+                <div class="audit-list">
+                    <table class="audit-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Location</th>
+                                <th>Planned Dates</th>
+                                <th>Created At</th>
+                                <th>Lead Auditor</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="auditTableBody">
+                            <!-- Audit rows will be populated from Firebase -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="pagination" id="auditPagination">
+                    <!-- Pagination buttons will be generated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Other tabs will have similar structure -->
+            <div id="requested" class="tab-content">
+                <!-- Content for requested tab -->
+            </div>
+            
+            <div id="planned" class="tab-content">
+                <!-- Content for planned tab -->
+            </div>
+            
+            <div id="in-progress" class="tab-content">
+                <!-- Content for in progress tab -->
+            </div>
+            
+            <div id="completed" class="tab-content">
+                <!-- Content for completed tab -->
+            </div>
+            
+            <div id="draft" class="tab-content">
+                <!-- Content for drafts tab -->
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <!-- Moment.js for date formatting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/datetime-utils.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set today as default for dateTo
+            document.getElementById('dateTo').valueAsDate = new Date();
+            
+            // Set 30 days ago as default for dateFrom
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
+
+            // Listen for date/time preference changes and update all elements
+            if (window.DateTimeUtils) {
+                document.addEventListener('datetimePreferencesChanged', function(e) {
+                    const userId = firebase.auth().currentUser?.uid || '';
+                    window.DateTimeUtils.updateAllDateTimeElements(userId);
+                });
+                
+                // Initial update on page load
+                auth.onAuthStateChanged(user => {
+                    if (user) {
+                        window.DateTimeUtils.updateAllDateTimeElements(user.uid);
+                    }
+                });
+            }
+            
+            // Tab switching functionality
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // Remove active class from all buttons and contents
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked button and corresponding content
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Load audits for the selected tab
+                    loadAudits(tabId);
+                });
+            });
+            
+            // Filter functionality
+            document.getElementById('applyFilters').addEventListener('click', function() {
+                loadAudits(getActiveTabId());
+            });
+            
+            document.getElementById('resetFilters').addEventListener('click', function() {
+                // Reset date filters to defaults
+                document.getElementById('dateTo').valueAsDate = new Date();
+                document.getElementById('dateFrom').valueAsDate = thirtyDaysAgo;
+                
+                // Reset other filters
+                document.getElementById('auditType').value = '';
+                document.getElementById('auditStatus').value = '';
+                document.getElementById('auditLocation').value = '';
+                
+                // Reload audits
+                loadAudits(getActiveTabId());
+            });
+            
+            // Function to get active tab ID
+            function getActiveTabId() {
+                const activeTab = document.querySelector('.tab-btn.active');
+                return activeTab ? activeTab.getAttribute('data-tab') : 'all';
+            }
+            
+            // Load locations for filter dropdown
+            function loadLocations() {
+                const locationSelect = document.getElementById('auditLocation');
+                
+                database.ref('locations').once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            snapshot.forEach(locSnapshot => {
+                                const loc = locSnapshot.val();
+                                const option = document.createElement('option');
+                                option.value = locSnapshot.key;
+                                option.textContent = loc.name || locSnapshot.key;
+                                locationSelect.appendChild(option);
+                            });
+                        } else {
+                            // Add some default locations if none exist
+                            const defaultLocations = [
+                                'Main Building', 'Warehouse', 'Production Floor', 
+                                'Office Area', 'Loading Dock', 'Laboratory', 'Outdoor Yard'
+                            ];
+                            
+                            defaultLocations.forEach(location => {
+                                const option = document.createElement('option');
+                                option.value = location.toLowerCase().replace(/\s+/g, '-');
+                                option.textContent = location;
+                                locationSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading locations:', error);
+                    });
+            }
+            
+            // Load audits from Firebase based on filters - using real-time listener
+            let auditListener = null;
+            
+            function loadAudits(tabId) {
+                const auditTableBody = document.getElementById('auditTableBody');
+                auditTableBody.innerHTML = ''; // Clear existing rows
+                
+                // Remove any existing listener before setting up a new one
+                if (auditListener) {
+                    auditListener.off();
+                }
+                
+                // Get filter values
+                const dateFrom = document.getElementById('dateFrom').value;
+                const dateTo = document.getElementById('dateTo').value;
+                const auditType = document.getElementById('auditType').value;
+                const auditStatus = document.getElementById('auditStatus').value;
+                const auditLocation = document.getElementById('auditLocation').value;
+                
+                // Reference to audits in Firebase
+                const auditsRef = database.ref('audits');
+                
+                // Set up real-time listener
+                auditListener = auditsRef.on('value', snapshot => {
+                    auditTableBody.innerHTML = ''; // Clear existing rows
+                    
+                    if (snapshot.exists()) {
+                        const audits = [];
+                        
+                        snapshot.forEach(auditSnapshot => {
+                            const audit = auditSnapshot.val();
+                            audit.id = auditSnapshot.key;
+                            
+                            // Apply tab filter first
+                            if (tabId !== 'all' && audit.status !== tabId) {
+                                return; // Skip if not matching tab
+                            }
+                            
+                            // Apply other filters
+                            if (auditType && audit.type !== auditType) {
+                                return; // Skip if type doesn't match
+                            }
+                            
+                            if (auditStatus && audit.status !== auditStatus) {
+                                return; // Skip if status doesn't match
+                            }
+                            
+                            if (auditLocation && audit.location !== auditLocation) {
+                                return; // Skip if location doesn't match
+                            }
+                            
+                            // Date filtering (using startDate for comparison)
+                            const auditStartDate = audit.startDate || audit.createdAt;
+                            
+                            if (dateFrom && auditStartDate < dateFrom) {
+                                return; // Skip if before date range
+                            }
+                            
+                            if (dateTo) {
+                                const endDateObj = new Date(dateTo);
+                                endDateObj.setDate(endDateObj.getDate() + 1); // Include the end date
+                                const endDateStr = endDateObj.toISOString().split('T')[0];
+                                
+                                if (auditStartDate > endDateStr) {
+                                    return; // Skip if after date range
+                                }
+                            }
+                            
+                            audits.push(audit);
+                        });
+                        
+                        // Sort audits by date (newest first)
+                        audits.sort((a, b) => {
+                            const dateA = a.startDate || a.createdAt;
+                            const dateB = b.startDate || b.createdAt;
+                            return new Date(dateB) - new Date(dateA);
+                        });
+                        
+                        // Update summary counts
+                        updateAuditCounts(audits);
+                        
+                        // Display audits
+                        if (audits.length > 0) {
+                            audits.forEach(audit => {
+                                addAuditRow(audit);
+                            });
+                        } else {
+                            auditTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="9" style="text-align: center;">No audits found matching the criteria</td>
+                                </tr>
+                            `;
+                        }
+                    } else {
+                        auditTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="9" style="text-align: center;">No audits found</td>
+                            </tr>
+                        `;
+                        
+                        // Update summary cards with zeros
+                        document.getElementById('totalAudits').textContent = '0';
+                        document.getElementById('plannedAudits').textContent = '0';
+                        document.getElementById('inProgressAudits').textContent = '0';
+                        document.getElementById('completedAudits').textContent = '0';
+                    }
+                }, error => {
+                    console.error('Error loading audits:', error);
+                    auditTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="9" style="text-align: center;">Error loading audits: ${error.message}</td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            // Update audit count summary cards
+            function updateAuditCounts(audits) {
+                document.getElementById('totalAudits').textContent = audits.length;
+                
+                const plannedCount = audits.filter(audit => audit.status === 'planned').length;
+                document.getElementById('plannedAudits').textContent = plannedCount;
+                
+                const inProgressCount = audits.filter(audit => audit.status === 'in-progress').length;
+                document.getElementById('inProgressAudits').textContent = inProgressCount;
+                
+                const completedCount = audits.filter(audit => audit.status === 'completed').length;
+                document.getElementById('completedAudits').textContent = completedCount;
+            }
+            
+            // Add audit row to the table
+            function addAuditRow(audit) {
+                const auditTableBody = document.getElementById('auditTableBody');
+                const row = document.createElement('tr');
+                
+                // Get current user ID for date formatting
+                const userId = firebase.auth().currentUser?.uid || '';
+                
+                // Format dates
+                const plannedStartDate = audit.plannedStartDate ? new Date(audit.plannedStartDate).toISOString() : '';
+                const plannedEndDate = audit.plannedEndDate ? new Date(audit.plannedEndDate).toISOString() : '';
+                
+                // Determine priority indicator class
+                let priorityClass = '';
+                let priorityText = audit.priority || 'medium';
+                
+                switch(priorityText.toLowerCase()) {
+                    case 'urgent':
+                        priorityClass = 'priority-urgent';
+                        break;
+                    case 'high':
+                        priorityClass = 'priority-high';
+                        break;
+                    case 'medium':
+                        priorityClass = 'priority-medium';
+                        break;
+                    case 'low':
+                        priorityClass = 'priority-low';
+                        break;
+                }
+                
+                // Determine status badge class
+                let statusClass = '';
+                let statusText = audit.status || 'requested';
+                
+                switch(statusText.toLowerCase()) {
+                    case 'requested':
+                        statusClass = 'status-requested';
+                        break;
+                    case 'planned':
+                        statusClass = 'status-planned';
+                        break;
+                    case 'in-progress':
+                        statusClass = 'status-in-progress';
+                        break;
+                    case 'completed':
+                        statusClass = 'status-completed';
+                        break;
+                    case 'canceled':
+                        statusClass = 'status-canceled';
+                        break;
+                    case 'draft':
+                        statusClass = 'status-draft';
+                        break;
+                }
+                
+                // Capitalize first letter of status and audit type
+                const capitalizedStatus = statusText.charAt(0).toUpperCase() + statusText.slice(1).replace(/-/g, ' ');
+                const auditType = audit.auditType ? audit.auditType.charAt(0).toUpperCase() + audit.auditType.slice(1).replace(/-/g, ' ') : 'N/A';
+                
+                let leadAuditorName = 'Not assigned';
+                if (audit.leadAuditor) {
+                    // Attempt to find the lead auditor's name in the users cache
+                    // For now, just use what we have or a placeholder
+                    leadAuditorName = audit.leadAuditorName || 'Assigned';
+                }
+                
+                // Date range display
+                let dateRangeDisplay = 'Not scheduled';
+                if (plannedStartDate && plannedEndDate) {
+                    const formattedStartDate = window.DateTimeUtils ? window.DateTimeUtils.formatDate(plannedStartDate, userId, 'short') : plannedStartDate.split('T')[0];
+                    const formattedEndDate = window.DateTimeUtils ? window.DateTimeUtils.formatDate(plannedEndDate, userId, 'short') : plannedEndDate.split('T')[0];
+                    dateRangeDisplay = `${formattedStartDate} - ${formattedEndDate}`;
+                }
+                
+                // Create the row with a placeholder for location
+                row.innerHTML = `
+                    <td>${audit.id.substr(0, 8)}</td>
+                    <td>${audit.title || 'Untitled'}</td>
+                    <td>${auditType}</td>
+                    <td class="location-cell">Loading location...</td>
+                    <td>${dateRangeDisplay}</td>
+                    <td class="created-at-cell">${formatDateTime(audit.createdAt)}</td>
+                    <td class="lead-auditor-cell">Loading auditor...</td>
+                    <td>
+                        <span class="priority-indicator ${priorityClass}"></span>
+                        ${priorityText.charAt(0).toUpperCase() + priorityText.slice(1)}
+                    </td>
+                    <td><span class="status-badge ${statusClass}">${capitalizedStatus}</span></td>
+                    <td class="audit-actions">
+                        <button class="btn btn-sm btn-view" data-id="${audit.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-edit" data-id="${audit.id}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-delete" data-id="${audit.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                // Add the row to table
+                auditTableBody.appendChild(row);
+                
+                // Find the location cell that we'll update
+                const locationCell = row.querySelector('.location-cell');
+                
+                // If we have a location ID, fetch the location name
+                if (audit.location) {
+                    database.ref(`locations/${audit.location}`).once('value')
+                        .then(snapshot => {
+                            if (snapshot.exists()) {
+                                const locationData = snapshot.val();
+                                locationCell.textContent = locationData.name || 'Unknown Location';
+                            } else {
+                                // If the location doesn't exist, show ID with a note
+                                locationCell.textContent = audit.location + ' (Not found)';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching location:', error);
+                            locationCell.textContent = 'Error loading location';
+                        });
+                } else {
+                    locationCell.textContent = 'N/A';
+                }
+                
+                // Add event listeners to the buttons
+                const viewBtn = row.querySelector('.btn-view');
+                viewBtn.addEventListener('click', function() {
+                    const auditId = this.getAttribute('data-id');
+                    // View functionality - for now just redirect to edit page
+                    window.location.href = `audit.html?id=${auditId}&view=true`;
+                });
+                
+                const editBtn = row.querySelector('.btn-edit');
+                editBtn.addEventListener('click', function() {
+                    const auditId = this.getAttribute('data-id');
+                    window.location.href = `audit.html?id=${auditId}`;
+                });
+                
+                const deleteBtn = row.querySelector('.btn-delete');
+                deleteBtn.addEventListener('click', function() {
+                    const auditId = this.getAttribute('data-id');
+                    if (confirm('Are you sure you want to delete this audit?')) {
+                        deleteAudit(auditId);
+                    }
+                });
+                
+                // Add lead auditor cell update to the addAuditRow function
+                const leadAuditorCell = row.querySelector('.lead-auditor-cell');
+                
+                // If we have a lead auditor ID, fetch the user's name
+                if (audit.leadAuditor) {
+                    database.ref(`users/${audit.leadAuditor}`).once('value')
+                        .then(snapshot => {
+                            if (snapshot.exists()) {
+                                const userData = snapshot.val();
+                                let displayName = '';
+                                
+                                // If first and last name exist, use them
+                                if (userData.firstName && userData.lastName) {
+                                    displayName = `${userData.firstName} ${userData.lastName}`;
+                                } 
+                                // If display name exists, use it
+                                else if (userData.displayName) {
+                                    displayName = userData.displayName;
+                                } 
+                                // If username exists, use it
+                                else if (userData.username) {
+                                    displayName = userData.username;
+                                }
+                                // Fallback to email or user ID
+                                else {
+                                    displayName = userData.email || audit.leadAuditor;
+                                }
+                                
+                                leadAuditorCell.textContent = displayName;
+                            } else {
+                                leadAuditorCell.textContent = 'User not found';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching lead auditor:', error);
+                            leadAuditorCell.textContent = 'Error loading auditor';
+                        });
+                } else {
+                    leadAuditorCell.textContent = 'Not assigned';
+                }
+            }
+            
+            // Delete audit
+            function deleteAudit(auditId) {
+                database.ref(`audits/${auditId}`).remove()
+                    .then(() => {
+                        alert('Audit deleted successfully');
+                        loadAudits(getActiveTabId()); // Reload audits for current tab
+                    })
+                    .catch(error => {
+                        console.error('Error deleting audit:', error);
+                        alert(`Error deleting audit: ${error.message}`);
+                    });
+            }
+            
+            // Format date and time in a user-friendly way
+            function formatDateTime(dateTimeString) {
+                if (!dateTimeString) return 'N/A';
+                
+                // First try to use the DateTimeUtils utility if available
+                if (window.DateTimeUtils) {
+                    const userId = firebase.auth().currentUser?.uid || '';
+                    return window.DateTimeUtils.formatDateTime(dateTimeString, userId);
+                }
+                
+                // Fallback to using moment.js if available
+                if (window.moment) {
+                    return moment(dateTimeString).format('MMM D, YYYY h:mm A');
+                }
+                
+                // Basic fallback if neither utility is available
+                const date = new Date(dateTimeString);
+                return date.toLocaleString();
+            }
+            
+            // Initialize page
+            loadLocations();
+            loadAudits('all'); // Load all audits initially
+        });
+    </script>
+</body>
+</html>

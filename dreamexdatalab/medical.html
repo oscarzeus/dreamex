@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - Medical Assessment</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .radio-item input[type="radio"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .vital-signs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .assessment-item {
+            margin-bottom: 1rem;
+        }
+
+        .assessment-options {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .photos-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .photo-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .photo-item {
+            position: relative;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-item .remove-photo {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .loading-text {
+            margin-left: 1rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .form-group {
+                width: 100%;
+            }
+
+            .checkbox-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .vital-signs-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Searchable dropdown styles */
+        .searchable-select-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .searchable-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .searchable-dropdown {
+            position: absolute;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: none;
+        }
+
+        .searchable-dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .searchable-dropdown-item:hover {
+            background-color: #f1f5f9;
+        }
+
+        .searchable-dropdown-item.active {
+            background-color: #e2e8f0;
+        }
+
+        .assessment-measurement {
+            margin-top: 0.5rem;
+            display: none;
+        }
+
+        .assessment-measurement input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 0.25rem;
+        }
+
+        .assessment-item.has-abnormal .assessment-measurement {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="form-container">
+        <div class="form-header">
+            <h1>Medical Assessment Form</h1>
+        </div>
+
+        <form id="medical-assessment-form" class="form-section">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="assessment-type">Assessment Type *</label>
+                    <select id="assessment-type" name="assessmentType" class="form-control" required>
+                        <option value="">Select Assessment Type</option>
+                        <option value="pre-employment">Pre-Employment</option>
+                        <option value="periodic">Periodic Medical</option>
+                        <option value="return-to-work">Return to Work</option>
+                        <option value="post-incident">Post-Incident</option>
+                        <option value="special-risk">Special Risk</option>
+                        <option value="exit-medical">Exit Medical</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="assessment-date">Assessment Date *</label>
+                    <input type="date" id="assessment-date" name="assessmentDate" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="location">Location *</label>
+                    <select id="location" name="location" class="form-control" required>
+                        <option value="">Select Location</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Employee Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="employee-id">Employee ID *</label>
+                        <input type="text" id="employee-id" name="employeeId" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="employee-name-dropdown">Employee Name *</label>
+                        <div class="dropdown-container">
+                            <button type="button" id="employee-name-dropdown" class="form-control dropdown-toggle" style="display: flex; justify-content: space-between; align-items: center;">
+                                <span id="selected-employee">Select Employee</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </button>
+                            <input type="hidden" id="employee-name-input" name="employeeName" required>
+                            <div id="employee-dropdown" class="dropdown-list" style="display: none;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="department">Department *</label>
+                        <input type="text" id="department" name="department" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="job-title">Job Title *</label>
+                        <input type="text" id="job-title" name="jobTitle" class="form-control" readonly>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="date-of-birth">Date of Birth</label>
+                        <input type="date" id="date-of-birth" name="dateOfBirth" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="gender">Gender</label>
+                        <input type="text" id="gender" name="gender" class="form-control" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Vital Signs</h3>
+                <div class="vital-signs-grid">
+                    <div class="form-group">
+                        <label for="blood-pressure">Blood Pressure (mmHg)</label>
+                        <input type="text" id="blood-pressure" name="bloodPressure" class="form-control" placeholder="e.g., 120/80">
+                    </div>
+                    <div class="form-group">
+                        <label for="heart-rate">Heart Rate (bpm)</label>
+                        <input type="number" id="heart-rate" name="heartRate" class="form-control" min="30" max="220">
+                    </div>
+                    <div class="form-group">
+                        <label for="respiratory-rate">Respiratory Rate (breaths/min)</label>
+                        <input type="number" id="respiratory-rate" name="respiratoryRate" class="form-control" min="8" max="60">
+                    </div>
+                    <div class="form-group">
+                        <label for="temperature">Temperature (°C)</label>
+                        <input type="number" id="temperature" name="temperature" class="form-control" step="0.1" min="35" max="42">
+                    </div>
+                    <div class="form-group">
+                        <label for="height">Height (cm)</label>
+                        <input type="number" id="height" name="height" class="form-control" min="100" max="250">
+                    </div>
+                    <div class="form-group">
+                        <label for="weight">Weight (kg)</label>
+                        <input type="number" id="weight" name="weight" class="form-control" step="0.1" min="30" max="250">
+                    </div>
+                    <div class="form-group">
+                        <label for="bmi">BMI</label>
+                        <input type="number" id="bmi" name="bmi" class="form-control" step="0.01" min="10" max="50" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label for="oxygen-saturation">Oxygen Saturation (%)</label>
+                        <input type="number" id="oxygen-saturation" name="oxygenSaturation" class="form-control" min="50" max="100">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Medical History</h3>
+                <p>Does the employee have a history of any of the following conditions?</p>
+                <div class="checkbox-grid">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-hypertension" name="historyHypertension">
+                        <label for="history-hypertension">Hypertension</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-diabetes" name="historyDiabetes">
+                        <label for="history-diabetes">Diabetes</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-asthma" name="historyAsthma">
+                        <label for="history-asthma">Asthma</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-heart-disease" name="historyHeartDisease">
+                        <label for="history-heart-disease">Heart Disease</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-stroke" name="historyStroke">
+                        <label for="history-stroke">Stroke</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-seizures" name="historySeizures">
+                        <label for="history-seizures">Seizures</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-allergies" name="historyAllergies">
+                        <label for="history-allergies">Allergies</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-back-injury" name="historyBackInjury">
+                        <label for="history-back-injury">Back Injury</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-joint-problems" name="historyJointProblems">
+                        <label for="history-joint-problems">Joint Problems</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="history-respiratory-conditions" name="historyRespiratoryConditions">
+                        <label for="history-respiratory-conditions">Respiratory Conditions</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="medical-history-notes">Additional Medical History Notes</label>
+                    <textarea id="medical-history-notes" name="medicalHistoryNotes" class="form-control" rows="4" placeholder="Enter any additional relevant medical history or details about conditions checked above..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Current Medications</h3>
+                <div class="form-group">
+                    <label>Is the employee currently taking any medications?</label>
+                    <div class="radio-group">
+                        <div class="radio-item">
+                            <input type="radio" id="medications-yes" name="takingMedications" value="yes">
+                            <label for="medications-yes">Yes</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="medications-no" name="takingMedications" value="no" checked>
+                            <label for="medications-no">No</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" id="medications-details-container" style="display: none;">
+                    <label for="medications-details">Medication Details</label>
+                    <textarea id="medications-details" name="medicationsDetails" class="form-control" rows="4" placeholder="List all current medications including name, dosage, frequency, and purpose..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Physical Examination</h3>
+                <div class="assessment-item">
+                    <label>General Appearance</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="appearance-normal" name="generalAppearance" value="normal" checked>
+                            <label for="appearance-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="appearance-abnormal" name="generalAppearance" value="abnormal">
+                            <label for="appearance-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="generalAppearance-measurement">Details/Measurements</label>
+                        <input type="text" id="generalAppearance-measurement" name="generalAppearanceMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+
+                <div class="assessment-item">
+                    <label>Skin</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="skin-normal" name="skin" value="normal" checked>
+                            <label for="skin-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="skin-abnormal" name="skin" value="abnormal">
+                            <label for="skin-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="skin-measurement">Details/Measurements</label>
+                        <input type="text" id="skin-measurement" name="skinMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+
+                <div class="assessment-item">
+                    <label>Head, Eyes, Ears, Nose, Throat (HEENT)</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="heent-normal" name="heent" value="normal" checked>
+                            <label for="heent-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="heent-abnormal" name="heent" value="abnormal">
+                            <label for="heent-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="heent-measurement">Details/Measurements</label>
+                        <input type="text" id="heent-measurement" name="heentMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+
+                <div class="assessment-item">
+                    <label>Cardiovascular</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="cardiovascular-normal" name="cardiovascular" value="normal" checked>
+                            <label for="cardiovascular-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="cardiovascular-abnormal" name="cardiovascular" value="abnormal">
+                            <label for="cardiovascular-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="cardiovascular-measurement">Details/Measurements</label>
+                        <input type="text" id="cardiovascular-measurement" name="cardiovascularMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+
+                <div class="assessment-item">
+                    <label>Respiratory</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="respiratory-normal" name="respiratory" value="normal" checked>
+                            <label for="respiratory-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="respiratory-abnormal" name="respiratory" value="abnormal">
+                            <label for="respiratory-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="respiratory-measurement">Details/Measurements</label>
+                        <input type="text" id="respiratory-measurement" name="respiratoryMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+
+                <div class="assessment-item">
+                    <label>Gastrointestinal</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="gastrointestinal-normal" name="gastrointestinal" value="normal" checked>
+                            <label for="gastrointestinal-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="gastrointestinal-abnormal" name="gastrointestinal" value="abnormal">
+                            <label for="gastrointestinal-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="gastrointestinal-measurement">Details/Measurements</label>
+                        <input type="text" id="gastrointestinal-measurement" name="gastrointestinalMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+
+                <div class="assessment-item">
+                    <label>Musculoskeletal</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="musculoskeletal-normal" name="musculoskeletal" value="normal" checked>
+                            <label for="musculoskeletal-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="musculoskeletal-abnormal" name="musculoskeletal" value="abnormal">
+                            <label for="musculoskeletal-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="musculoskeletal-measurement">Details/Measurements</label>
+                        <input type="text" id="musculoskeletal-measurement" name="musculoskeletalMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+
+                <div class="assessment-item">
+                    <label>Neurological</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="neurological-normal" name="neurological" value="normal" checked>
+                            <label for="neurological-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="neurological-abnormal" name="neurological" value="abnormal">
+                            <label for="neurological-abnormal">Abnormal</label>
+                        </div>
+                    </div>
+                    <div class="assessment-measurement">
+                        <label for="neurological-measurement">Details/Measurements</label>
+                        <input type="text" id="neurological-measurement" name="neurologicalMeasurement" class="form-control" placeholder="Enter details or measurements">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="physical-exam-notes">Physical Examination Notes</label>
+                    <textarea id="physical-exam-notes" name="physicalExamNotes" class="form-control" rows="4" placeholder="Enter any abnormal findings or additional observations from the physical examination..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Occupational Health Assessment</h3>
+                <div class="assessment-item">
+                    <label>Vision Test</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="vision-pass" name="visionTest" value="pass" checked>
+                            <label for="vision-pass">Pass</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="vision-fail" name="visionTest" value="fail">
+                            <label for="vision-fail">Fail</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="vision-na" name="visionTest" value="na">
+                            <label for="vision-na">N/A</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="assessment-item">
+                    <label>Hearing Test</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="hearing-pass" name="hearingTest" value="pass" checked>
+                            <label for="hearing-pass">Pass</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="hearing-fail" name="hearingTest" value="fail">
+                            <label for="hearing-fail">Fail</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="hearing-na" name="hearingTest" value="na">
+                            <label for="hearing-na">N/A</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="assessment-item">
+                    <label>Spirometry</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="spirometry-normal" name="spirometry" value="normal" checked>
+                            <label for="spirometry-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="spirometry-abnormal" name="spirometry" value="abnormal">
+                            <label for="spirometry-abnormal">Abnormal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="spirometry-na" name="spirometry" value="na">
+                            <label for="spirometry-na">N/A</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="assessment-item">
+                    <label>Range of Motion</label>
+                    <div class="assessment-options">
+                        <div class="radio-item">
+                            <input type="radio" id="rom-normal" name="rangeOfMotion" value="normal" checked>
+                            <label for="rom-normal">Normal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="rom-abnormal" name="rangeOfMotion" value="abnormal">
+                            <label for="rom-abnormal">Abnormal</label>
+                        </div>
+                        <div class="radio-item">
+                            <input type="radio" id="rom-na" name="rangeOfMotion" value="na">
+                            <label for="rom-na">N/A</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="occupational-notes">Occupational Assessment Notes</label>
+                    <textarea id="occupational-notes" name="occupationalNotes" class="form-control" rows="4" placeholder="Enter any additional notes related to occupational health tests..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Laboratory Tests</h3>
+                <div class="checkbox-grid">
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-cbc" name="testCBC">
+                        <label for="test-cbc">Complete Blood Count</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-urinalysis" name="testUrinalysis">
+                        <label for="test-urinalysis">Urinalysis</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-lipid-profile" name="testLipidProfile">
+                        <label for="test-lipid-profile">Lipid Profile</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-liver-function" name="testLiverFunction">
+                        <label for="test-liver-function">Liver Function Tests</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-kidney-function" name="testKidneyFunction">
+                        <label for="test-kidney-function">Kidney Function Tests</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-blood-sugar" name="testBloodSugar">
+                        <label for="test-blood-sugar">Blood Sugar</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-chest-xray" name="testChestXRay">
+                        <label for="test-chest-xray">Chest X-ray</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-ecg" name="testECG">
+                        <label for="test-ecg">ECG</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-drug-screen" name="testDrugScreen">
+                        <label for="test-drug-screen">Drug Screen</label>
+                    </div>
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="test-alcohol-screen" name="testAlcoholScreen">
+                        <label for="test-alcohol-screen">Alcohol Screen</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="lab-test-notes">Laboratory Test Results</label>
+                    <textarea id="lab-test-notes" name="labTestNotes" class="form-control" rows="4" placeholder="Enter any relevant laboratory test results or findings..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Medical Assessment</h3>
+                <div class="form-group">
+                    <label for="diagnosis">Diagnosis</label>
+                    <textarea id="diagnosis" name="diagnosis" class="form-control" rows="4" placeholder="Enter main diagnosis or findings from the assessment..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="treatment-plan">Treatment Plan</label>
+                    <textarea id="treatment-plan" name="treatmentPlan" class="form-control" rows="4" placeholder="Enter treatment plan or recommendations..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="followup-plan">Follow-up Plan</label>
+                    <textarea id="followup-plan" name="followupPlan" class="form-control" rows="4" placeholder="Enter any follow-up plans or actions..."></textarea>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Work Status</h3>
+                <div class="form-group">
+                    <label for="work-status">Work Status Assessment *</label>
+                    <select id="work-status" name="workStatus" class="form-control" required>
+                        <option value="">Select Work Status</option>
+                        <option value="fit-for-duty">Fit for Duty - No Restrictions</option>
+                        <option value="fit-with-restrictions">Fit for Duty - With Restrictions</option>
+                        <option value="temporarily-unfit">Temporarily Unfit for Duty</option>
+                        <option value="permanently-unfit">Permanently Unfit for Duty</option>
+                    </select>
+                </div>
+                <div id="restrictions-container" class="form-group" style="display: none;">
+                    <label for="work-restrictions">Work Restrictions</label>
+                    <textarea id="work-restrictions" name="workRestrictions" class="form-control" rows="4" placeholder="Describe specific work restrictions and their duration..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="next-assessment">Next Assessment Due</label>
+                    <input type="date" id="next-assessment" name="nextAssessment" class="form-control">
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Medical Practitioner Details</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="practitioner-name">Practitioner Name *</label>
+                        <input type="text" id="practitioner-name" name="practitionerName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="qualification">Qualification *</label>
+                        <input type="text" id="qualification" name="qualification" class="form-control" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="license-number">License Number *</label>
+                        <input type="text" id="license-number" name="licenseNumber" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signature-date">Date *</label>
+                        <input type="date" id="signature-date" name="signatureDate" class="form-control" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="photos-section">
+                <label>Supporting Documents</label>
+                <input type="file" id="document-upload" accept="image/*, application/pdf" multiple style="display: none;">
+                <button type="button" id="upload-document-btn" class="btn btn-secondary">
+                    <i class="fas fa-file-upload"></i> Upload Documents
+                </button>
+                <div class="photo-preview" id="document-preview"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Assessment</button>
+        </form>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <span class="loading-text">Saving medical assessment...</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Firebase from config
+            if (typeof firebase === 'undefined') {
+                console.error('Firebase SDK not loaded');
+                return;
+            }
+
+            // Set today's date as the default for date fields
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('assessment-date').value = today;
+            document.getElementById('signature-date').value = today;
+            
+            // Employee dropdown functionality
+            const employeeDropdownBtn = document.getElementById('employee-name-dropdown');
+            const employeeDropdown = document.getElementById('employee-dropdown');
+            const selectedEmployee = document.getElementById('selected-employee');
+            const employeeNameInput = document.getElementById('employee-name-input');
+            const departmentInput = document.getElementById('department');
+            const jobTitleInput = document.getElementById('job-title');
+            const dobInput = document.getElementById('date-of-birth');
+            const genderInput = document.getElementById('gender');
+            
+            // Toggle dropdown visibility
+            employeeDropdownBtn.addEventListener('click', function() {
+                if (employeeDropdown.style.display === 'none' || !employeeDropdown.style.display) {
+                    employeeDropdown.style.display = 'block';
+                    loadEmployees();
+                } else {
+                    employeeDropdown.style.display = 'none';
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!employeeDropdownBtn.contains(event.target) && !employeeDropdown.contains(event.target)) {
+                    employeeDropdown.style.display = 'none';
+                }
+            });
+            
+            // Function to load field options for assessment type
+            function loadAssessmentTypeOptions() {
+                const assessmentTypeSelect = document.getElementById('assessment-type');
+                
+                // Clear existing options except the first one
+                assessmentTypeSelect.innerHTML = '<option value="">Select Assessment Type</option>';
+                
+                firebase.database().ref('fieldOptions/assessment-type').once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const options = [];
+                            
+                            // Collect all enabled options
+                            snapshot.forEach((optionSnapshot) => {
+                                const optionData = optionSnapshot.val();
+                                if (optionData && optionData.enabled !== false) {
+                                    options.push({
+                                        value: optionData.value,
+                                        label: optionData.label
+                                    });
+                                }
+                            });
+                            
+                            // Sort options alphabetically by label
+                            options.sort((a, b) => a.label.localeCompare(b.label));
+                            
+                            // Add options to the dropdown
+                            options.forEach((opt) => {
+                                const option = document.createElement('option');
+                                option.value = opt.value;
+                                option.textContent = opt.label;
+                                assessmentTypeSelect.appendChild(option);
+                            });
+                        } else {
+                            // Fallback to default options if no custom options are found
+                            const defaultOptions = [
+                                { value: 'pre-employment', label: 'Pre-Employment' },
+                                { value: 'periodic', label: 'Periodic Medical' },
+                                { value: 'return-to-work', label: 'Return to Work' },
+                                { value: 'post-incident', label: 'Post-Incident' },
+                                { value: 'special-risk', label: 'Special Risk' },
+                                { value: 'exit-medical', label: 'Exit Medical' }
+                            ];
+                            
+                            defaultOptions.forEach((opt) => {
+                                const option = document.createElement('option');
+                                option.value = opt.value;
+                                option.textContent = opt.label;
+                                assessmentTypeSelect.appendChild(option);
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error loading assessment type options:', error);
+                    });
+            }
+
+            // Listen for field options changes from other pages
+            document.addEventListener('fieldOptionsChanged', function(event) {
+                if (event.detail.fieldType === 'assessment-type') {
+                    loadAssessmentTypeOptions();
+                }
+            });
+
+            // Load assessment type options when page loads
+            loadAssessmentTypeOptions();
+            
+            // Initialize department mapping
+            let departmentNames = {};
+            
+            // Function to load departments
+            function loadDepartments() {
+                return firebase.database().ref('departments').once('value')
+                    .then((snapshot) => {
+                        if (snapshot.exists()) {
+                            snapshot.forEach((deptSnapshot) => {
+                                const deptId = deptSnapshot.key;
+                                const deptData = deptSnapshot.val();
+                                departmentNames[deptId] = deptData.name || deptId;
+                            });
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error loading departments:', error);
+                    });
+            }
+            
+            // Function to load employees from Firebase
+            function loadEmployees() {
+                employeeDropdown.innerHTML = '<div class="dropdown-item loading">Loading employees...</div>';
+                
+                // First load departments, then load employees
+                loadDepartments().then(() => {
+                    firebase.database().ref('users').once('value')
+                        .then((snapshot) => {
+                            employeeDropdown.innerHTML = '';
+                            
+                            if (!snapshot.exists()) {
+                                employeeDropdown.innerHTML = '<div class="dropdown-item no-results">No employees found</div>';
+                                return;
+                            }
+                            
+                            // Add a search input at the top
+                            const searchDiv = document.createElement('div');
+                            searchDiv.className = 'dropdown-search';
+                            searchDiv.innerHTML = `
+                                <input type="text" id="employee-search" class="form-control" placeholder="Search by name or ID...">
+                            `;
+                            employeeDropdown.appendChild(searchDiv);
+                            
+                            const searchInput = document.getElementById('employee-search');
+                            searchInput.addEventListener('input', function() {
+                                filterEmployees(this.value.toLowerCase());
+                            });
+                            
+                            // Store employees in an array for sorting
+                            const employees = [];
+                            
+                            // Add all employee items
+                            snapshot.forEach((userSnapshot) => {
+                                const userId = userSnapshot.key;
+                                const userData = userSnapshot.val();
+                                
+                                // Get employee name from multiple possible fields
+                                const employeeName = userData.name || userData.displayName || 
+                                                ((userData.firstName && userData.lastName) ? 
+                                                    `${userData.firstName} ${userData.lastName}` : 
+                                                    userData.email || `User ${userId.substring(0, 5)}`);
+                                                    
+                                // Get employee ID from possible fields
+                                const employeeId = userData.employeeId || userData.id || '';
+                                
+                                // Get department name instead of ID
+                                const departmentId = userData.department || '';
+                                const departmentName = departmentNames[departmentId] || '';
+
+                                // Get date of birth and format it if exists
+                                let dateOfBirth = '';
+                                if (userData.dateOfBirth) {
+                                    // Format date to YYYY-MM-DD for the input
+                                    dateOfBirth = userData.dateOfBirth;
+                                }
+                                
+                                employees.push({
+                                    id: userId,
+                                    name: employeeName,
+                                    employeeId: employeeId,
+                                    departmentId: departmentId,
+                                    departmentName: departmentName,
+                                    jobTitle: userData.jobTitle || userData.role || '',
+                                    dateOfBirth: dateOfBirth,
+                                    gender: userData.gender || ''
+                                });
+                            });
+                            
+                            // Sort employees alphabetically by name
+                            employees.sort((a, b) => a.name.localeCompare(b.name));
+                            
+                            // Create and add employee items to dropdown
+                            employees.forEach(employee => {
+                                const item = document.createElement('div');
+                                item.className = 'dropdown-item';
+                                item.dataset.id = employee.id;
+                                item.dataset.name = employee.name;
+                                item.dataset.employeeId = employee.employeeId;
+                                item.dataset.departmentId = employee.departmentId;
+                                item.dataset.departmentName = employee.departmentName;
+                                item.dataset.jobTitle = employee.jobTitle;
+                                item.dataset.dateOfBirth = employee.dateOfBirth;
+                                item.dataset.gender = employee.gender;
+                                
+                                // Display both name and ID if available
+                                if (employee.employeeId) {
+                                    item.innerHTML = `<strong>${employee.name}</strong> <span class="employee-id">(ID: ${employee.employeeId})</span>`;
+                                } else {
+                                    item.textContent = employee.name;
+                                }
+                                
+                                // Modify the employee selection click handler to fetch date of birth from employee-medical-records
+                                item.addEventListener('click', function() {
+                                    const employeeId = this.dataset.id;
+
+                                    // Update selected employee display
+                                    selectedEmployee.textContent = this.dataset.name;
+                                    employeeNameInput.value = this.dataset.name;
+                                    
+                                    // Set employee ID from the dataset
+                                    const empId = this.dataset.employeeId || '';
+                                    document.getElementById('employee-id').value = empId;
+
+                                    // Fetch employee data for department and job title
+                                    firebase.database().ref('users/' + employeeId).once('value')
+                                        .then((snapshot) => {
+                                            const userData = snapshot.val();
+                                            if (userData) {
+                                                // Set department
+                                                const departmentId = userData.department || '';
+                                                const departmentName = departmentNames[departmentId] || '';
+                                                document.getElementById('department').value = departmentName;
+
+                                                // Set job title
+                                                document.getElementById('job-title').value = userData.jobTitle || userData.role || '';
+                                                
+                                                // Set gender if available
+                                                if (userData.gender) {
+                                                    document.getElementById('gender').value = userData.gender;
+                                                }
+                                            }
+                                        })
+                                        .catch((error) => {
+                                            console.error('Error loading employee data:', error);
+                                        });
+                                    
+                                    // Now fetch date of birth directly from the specific Firebase path
+                                    // Use employee ID to construct the path to the specific employee's medical record
+                                    const dobInput = document.getElementById('date-of-birth');
+                                    
+                                    // Extract employee ID code (like DX002) from the full employee ID
+                                    let employeeCode = empId;
+                                    if (empId && empId.includes('-')) {
+                                        employeeCode = empId.split('-')[0]; // If format is "DX002-something", get "DX002"
+                                    }
+                                    
+                                    if (employeeCode) {
+                                        firebase.database().ref('employee-medical-records/' + employeeCode + '/birthDate').once('value')
+                                            .then((snapshot) => {
+                                                if (snapshot.exists()) {
+                                                    const birthDate = snapshot.val();
+                                                    if (birthDate) {
+                                                        dobInput.value = birthDate;
+                                                    } else {
+                                                        dobInput.value = '';
+                                                        console.log('Birth date is null for employee code:', employeeCode);
+                                                    }
+                                                } else {
+                                                    dobInput.value = '';
+                                                    console.log('No medical record found for employee code:', employeeCode);
+                                                }
+                                            })
+                                            .catch((error) => {
+                                                console.error('Error fetching birth date from medical records:', error);
+                                                dobInput.value = '';
+                                            });
+                                    } else {
+                                        dobInput.value = '';
+                                        console.log('No valid employee code to fetch birth date');
+                                    }
+
+                                    // Close dropdown
+                                    employeeDropdown.style.display = 'none';
+                                });
+                                
+                                employeeDropdown.appendChild(item);
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('Error loading employees:', error);
+                            employeeDropdown.innerHTML = '<div class="dropdown-item error">Error loading employees</div>';
+                        });
+                });
+            }
+            
+            // Function to filter employees in dropdown
+            function filterEmployees(searchTerm) {
+                const items = employeeDropdown.getElementsByClassName('dropdown-item');
+                let resultsFound = false;
+                
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (!item.dataset || !item.dataset.name) continue;
+                    
+                    const nameMatch = item.dataset.name.toLowerCase().includes(searchTerm);
+                    const idMatch = item.dataset.employeeId && item.dataset.employeeId.toLowerCase().includes(searchTerm);
+                    
+                    if (nameMatch || idMatch) {
+                        item.style.display = 'block';
+                        resultsFound = true;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                }
+                
+                // Show a "no results" message if no matches were found
+                const noResultsMessage = employeeDropdown.querySelector('.no-results-message');
+                if (!resultsFound) {
+                    if (!noResultsMessage) {
+                        const message = document.createElement('div');
+                        message.className = 'dropdown-item no-results-message';
+                        message.textContent = 'No matching employees found';
+                        message.style.fontStyle = 'italic';
+                        message.style.color = '#6c757d';
+                        message.style.textAlign = 'center';
+                        employeeDropdown.appendChild(message);
+                    } else {
+                        noResultsMessage.style.display = 'block';
+                    }
+                } else if (noResultsMessage) {
+                    noResultsMessage.style.display = 'none';
+                }
+            }
+
+            // BMI Calculator
+            const heightInput = document.getElementById('height');
+            const weightInput = document.getElementById('weight');
+            const bmiInput = document.getElementById('bmi');
+
+            function calculateBMI() {
+                const height = parseFloat(heightInput.value);
+                const weight = parseFloat(weightInput.value);
+                
+                if (height && weight && height > 0 && weight > 0) {
+                    // BMI formula: weight (kg) / (height (m))²
+                    const heightInMeters = height / 100;
+                    const bmi = weight / (heightInMeters * heightInMeters);
+                    bmiInput.value = bmi.toFixed(2);
+                } else {
+                    bmiInput.value = '';
+                }
+            }
+
+            heightInput.addEventListener('input', calculateBMI);
+            weightInput.addEventListener('input', calculateBMI);
+
+            // Show/hide medication details based on radio selection
+            const medicationsYes = document.getElementById('medications-yes');
+            const medicationsNo = document.getElementById('medications-no');
+            const medicationsDetailsContainer = document.getElementById('medications-details-container');
+
+            medicationsYes.addEventListener('change', function() {
+                if (this.checked) {
+                    medicationsDetailsContainer.style.display = 'block';
+                }
+            });
+
+            medicationsNo.addEventListener('change', function() {
+                if (this.checked) {
+                    medicationsDetailsContainer.style.display = 'none';
+                }
+            });
+
+            // Show/hide restrictions details based on work status selection
+            const workStatusSelect = document.getElementById('work-status');
+            const restrictionsContainer = document.getElementById('restrictions-container');
+
+            workStatusSelect.addEventListener('change', function() {
+                if (this.value === 'fit-with-restrictions') {
+                    restrictionsContainer.style.display = 'block';
+                } else {
+                    restrictionsContainer.style.display = 'none';
+                }
+            });
+
+            // Document upload functionality
+            const documents = new Set();
+            const documentUpload = document.getElementById('document-upload');
+            const uploadDocumentBtn = document.getElementById('upload-document-btn');
+            const documentPreview = document.getElementById('document-preview');
+
+            uploadDocumentBtn.addEventListener('click', () => {
+                documentUpload.click();
+            });
+
+            documentUpload.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+                        // Add to document collection
+                        documents.add(file);
+                        
+                        // Create preview
+                        const reader = new FileReader();
+                        reader.onload = (function(theFile) {
+                            return function(e) {
+                                const documentItem = document.createElement('div');
+                                documentItem.className = 'photo-item';
+                                
+                                if (theFile.type.startsWith('image/')) {
+                                    // Image preview
+                                    const img = document.createElement('img');
+                                    img.src = e.target.result;
+                                    documentItem.appendChild(img);
+                                } else {
+                                    // PDF preview
+                                    const icon = document.createElement('div');
+                                    icon.innerHTML = '<i class="fas fa-file-pdf" style="font-size: 5rem; color: #dc3545; display: flex; height: 100%; justify-content: center; align-items: center;"></i>';
+                                    documentItem.appendChild(icon);
+                                }
+                                
+                                const removeBtn = document.createElement('button');
+                                removeBtn.className = 'remove-photo';
+                                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                                removeBtn.onclick = () => {
+                                    documentItem.remove();
+                                    documents.delete(file);
+                                };
+                                
+                                documentItem.appendChild(removeBtn);
+                                documentPreview.appendChild(documentItem);
+                            };
+                        })(file);
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+                
+                // Reset file input
+                documentUpload.value = '';
+            });
+
+            // Form submission
+            const medicalAssessmentForm = document.getElementById('medical-assessment-form');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            let editMode = false;
+            let assessmentId = null;
+
+            // Check if we're in edit mode by looking for an ID in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('id')) {
+                assessmentId = urlParams.get('id');
+                editMode = true;
+                // Load existing assessment data
+                loadExistingAssessment(assessmentId);
+            }
+
+            // Load existing assessment data for editing
+            function loadExistingAssessment(id) {
+                loadingOverlay.style.display = 'flex';
+                
+                firebase.database().ref('medical-assessments/' + id).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const assessment = snapshot.val();
+                            
+                            // Update page title to show we're editing
+                            document.querySelector('.form-header h1').textContent = 'Edit Medical Assessment';
+                            
+                            // Fill form fields with assessment data
+                            fillFormWithAssessment(assessment);
+                            
+                            loadingOverlay.style.display = 'none';
+                        } else {
+                            alert('Assessment not found. Redirecting to create new assessment.');
+                            window.location.href = 'medical.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading assessment:', error);
+                        alert('Error loading assessment. Redirecting to create new assessment.');
+                        window.location.href = 'medical.html';
+                    });
+            }
+
+            // Fill the form with assessment data
+            function fillFormWithAssessment(assessment) {
+                // Helper function to set form field values
+                const setFieldValue = (fieldId, value) => {
+                    const field = document.getElementById(fieldId);
+                    if (field && value !== undefined) {
+                        if (field.type === 'checkbox') {
+                            field.checked = value;
+                        } else if (field.type === 'radio') {
+                            const radioGroup = document.getElementsByName(field.name);
+                            radioGroup.forEach(radio => {
+                                radio.checked = (radio.value === value);
+                            });
+                        } else {
+                            field.value = value;
+                        }
+                    }
+                };
+
+                // Set text, select, and date field values
+                setFieldValue('assessment-type', assessment.assessmentType);
+                setFieldValue('assessment-date', assessment.assessmentDate);
+                setFieldValue('location', assessment.location);
+                setFieldValue('employee-id', assessment.employeeId);
+                setFieldValue('employee-name-input', assessment.employeeName);
+                setFieldValue('department', assessment.department);
+                setFieldValue('job-title', assessment.jobTitle);
+                setFieldValue('date-of-birth', assessment.dateOfBirth);
+                setFieldValue('gender', assessment.gender);
+
+                // Set vital signs
+                setFieldValue('blood-pressure', assessment.bloodPressure);
+                setFieldValue('heart-rate', assessment.heartRate);
+                setFieldValue('respiratory-rate', assessment.respiratoryRate);
+                setFieldValue('temperature', assessment.temperature);
+                setFieldValue('height', assessment.height);
+                setFieldValue('weight', assessment.weight);
+                setFieldValue('bmi', assessment.bmi);
+                setFieldValue('oxygen-saturation', assessment.oxygenSaturation);
+
+                // Set medical history checkboxes
+                if (assessment.medicalHistory) {
+                    Object.keys(assessment.medicalHistory).forEach(key => {
+                        setFieldValue('history-' + key, assessment.medicalHistory[key]);
+                    });
+                }
+                setFieldValue('medical-history-notes', assessment.medicalHistoryNotes);
+
+                // Set medications
+                if (assessment.takingMedications === 'yes') {
+                    setFieldValue('medications-yes', 'yes');
+                    document.getElementById('medications-details-container').style.display = 'block';
+                } else {
+                    setFieldValue('medications-no', 'no');
+                }
+                setFieldValue('medications-details', assessment.medicationsDetails);
+
+                // Set physical examination
+                if (assessment.physicalExam) {
+                    Object.entries(assessment.physicalExam).forEach(([key, value]) => {
+                        const radioGroup = document.getElementsByName(key);
+                        radioGroup.forEach(radio => {
+                            radio.checked = (radio.value === value);
+                        });
+                    });
+                }
+                setFieldValue('physical-exam-notes', assessment.physicalExamNotes);
+
+                // Set occupational health assessment
+                if (assessment.occupationalHealth) {
+                    Object.entries(assessment.occupationalHealth).forEach(([key, value]) => {
+                        const radioGroup = document.getElementsByName(key);
+                        radioGroup.forEach(radio => {
+                            radio.checked = (radio.value === value);
+                        });
+                    });
+                }
+                setFieldValue('occupational-notes', assessment.occupationalNotes);
+
+                // Set lab tests
+                if (assessment.labTests) {
+                    Object.keys(assessment.labTests).forEach(test => {
+                        setFieldValue('test-' + test, assessment.labTests[test]);
+                    });
+                }
+                setFieldValue('lab-test-notes', assessment.labTestNotes);
+
+                // Set assessment findings
+                setFieldValue('diagnosis', assessment.diagnosis);
+                setFieldValue('treatment-plan', assessment.treatmentPlan);
+                setFieldValue('followup-plan', assessment.followupPlan);
+
+                // Set work status
+                setFieldValue('work-status', assessment.workStatus);
+                if (assessment.workStatus === 'fit-with-restrictions') {
+                    document.getElementById('restrictions-container').style.display = 'block';
+                }
+                setFieldValue('work-restrictions', assessment.workRestrictions);
+                setFieldValue('next-assessment', assessment.nextAssessment);
+
+                // Set practitioner details
+                setFieldValue('practitioner-name', assessment.practitionerName);
+                setFieldValue('qualification', assessment.qualification);
+                setFieldValue('license-number', assessment.licenseNumber);
+                setFieldValue('signature-date', assessment.signatureDate);
+
+                // Load documents/images
+                if (assessment.documentUrls && Array.isArray(assessment.documentUrls)) {
+                    assessment.documentUrls.forEach(url => {
+                        if (url) {
+                            // Create a document preview with the URL
+                            const isPdf = url.toLowerCase().endsWith('.pdf');
+                            const documentItem = document.createElement('div');
+                            documentItem.className = 'photo-item';
+                            
+                            if (isPdf) {
+                                // PDF preview
+                                const icon = document.createElement('div');
+                                icon.innerHTML = '<i class="fas fa-file-pdf" style="font-size: 5rem; color: #dc3545; display: flex; height: 100%; justify-content: center; align-items: center;"></i>';
+                                documentItem.appendChild(icon);
+                            } else {
+                                // Image preview
+                                const img = document.createElement('img');
+                                img.src = url;
+                                documentItem.appendChild(img);
+                            }
+                            
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'remove-photo';
+                            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                            
+                            // Create a "fake" file object with the URL to allow removal
+                            const fakeFile = new File([new Blob()], 'existing-document.jpg', { type: isPdf ? 'application/pdf' : 'image/jpeg' });
+                            fakeFile.url = url;  // Store the URL in the file object
+                            
+                            removeBtn.onclick = () => {
+                                documentItem.remove();
+                                documents.delete(fakeFile);
+                            };
+                            
+                            documentItem.appendChild(removeBtn);
+                            documentPreview.appendChild(documentItem);
+                            
+                            // Add to our documents collection
+                            documents.add(fakeFile);
+                        }
+                    });
+                }
+            }
+
+            // Add this near the start of your DOMContentLoaded event handler
+            const locationSelect = document.getElementById('location');
+
+            // Function to load locations
+            function loadLocations() {
+                firebase.database().ref('locations').once('value')
+                    .then((snapshot) => {
+                        // Clear existing options except the first one
+                        locationSelect.innerHTML = '<option value="">Select Location</option>';
+                        
+                        snapshot.forEach((locationSnapshot) => {
+                            const location = locationSnapshot.val();
+                            const option = document.createElement('option');
+                            option.value = locationSnapshot.key;
+                            option.textContent = location.name || location;
+                            locationSelect.appendChild(option);
+                        });
+                    })
+                    .catch((error) => {
+                        console.error('Error loading locations:', error);
+                    });
+            }
+
+            // Load locations when page loads
+            loadLocations();
+
+            // Update the fillFormWithAssessment function to handle location as select
+            function fillFormWithAssessment(assessment) {
+                // ...existing code...
+                if (assessment.location) {
+                    // Wait for locations to load before setting value
+                    const checkLocationInterval = setInterval(() => {
+                        if (locationSelect.options.length > 1) {
+                            locationSelect.value = assessment.location;
+                            clearInterval(checkLocationInterval);
+                        }
+                    }, 100);
+                }
+                // ...existing code...
+            }
+
+            medicalAssessmentForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Show loading overlay
+                loadingOverlay.style.display = 'flex';
+                
+                try {
+                    // Collect form data
+                    const formData = new FormData(medicalAssessmentForm);
+                    const assessmentData = {};
+                    
+                    // Basic form fields
+                    formData.forEach((value, key) => {
+                        if (value && value !== '') {
+                            assessmentData[key] = value;
+                        }
+                    });
+                    
+                    // Structure medical history data
+                    const medicalHistory = {};
+                    document.querySelectorAll('[id^="history-"]').forEach(checkbox => {
+                        const condition = checkbox.id.replace('history-', '');
+                        medicalHistory[condition] = checkbox.checked;
+                    });
+                    assessmentData.medicalHistory = medicalHistory;
+                    
+                    // Structure physical examination data with measurements
+                    const physicalExam = {};
+                    ['generalAppearance', 'skin', 'heent', 'cardiovascular', 'respiratory', 'gastrointestinal', 'musculoskeletal', 'neurological'].forEach(system => {
+                        const selectedRadio = document.querySelector(`input[name="${system}"]:checked`);
+                        const measurementInput = document.getElementById(`${system}-measurement`);
+                        
+                        if (selectedRadio) {
+                            physicalExam[system] = {
+                                status: selectedRadio.value,
+                                measurement: measurementInput ? measurementInput.value : ''
+                            };
+                        }
+                    });
+                    assessmentData.physicalExam = physicalExam;
+                    
+                    // Structure occupational health assessment data
+                    const occupationalHealth = {};
+                    ['visionTest', 'hearingTest', 'spirometry', 'rangeOfMotion'].forEach(test => {
+                        const selectedRadio = document.querySelector(`input[name="${test}"]:checked`);
+                        if (selectedRadio) {
+                            occupationalHealth[test] = selectedRadio.value;
+                        }
+                    });
+                    assessmentData.occupationalHealth = occupationalHealth;
+                    
+                    // Structure laboratory tests data
+                    const labTests = {};
+                    document.querySelectorAll('[id^="test-"]').forEach(checkbox => {
+                        const test = checkbox.id.replace('test-', '');
+                        labTests[test] = checkbox.checked;
+                    });
+                    assessmentData.labTests = labTests;
+                    
+                    // Add metadata
+                    if (!editMode) {
+                        assessmentData.timestamp = firebase.database.ServerValue.TIMESTAMP;
+                        assessmentData.createdBy = firebase.auth().currentUser.uid;
+                    } else {
+                        assessmentData.updatedAt = firebase.database.ServerValue.TIMESTAMP;
+                        assessmentData.updatedBy = firebase.auth().currentUser.uid;
+                    }
+                    
+                    // Upload documents if any
+                    if (documents.size > 0) {
+                        const documentUrls = [];
+                        
+                        for (const file of documents) {
+                            // Skip files that are already uploaded (for edit mode)
+                            if (file.url) {
+                                documentUrls.push(file.url);
+                                continue;
+                            }
+                            
+                            // Generate a unique filename
+                            const filename = `medical-assessment-${Date.now()}-${file.name}`;
+                            const storageRef = firebase.storage().ref('medical-assessments/' + filename);
+                            
+                            // Upload the file
+                            const uploadTask = await storageRef.put(file);
+                            
+                            // Get the download URL
+                            const downloadUrl = await uploadTask.ref.getDownloadURL();
+                            documentUrls.push(downloadUrl);
+                        }
+                        
+                        // Add document URLs to assessment data
+                        if (documentUrls.length > 0) {
+                            assessmentData.documentUrls = documentUrls;
+                        }
+                    }
+                    
+                    // Save assessment to Firebase
+                    let dbRef;
+                    if (editMode && assessmentId) {
+                        dbRef = firebase.database().ref('medical-assessments/' + assessmentId);
+                        await dbRef.update(assessmentData);
+                        alert('Medical assessment updated successfully!');
+                    } else {
+                        dbRef = firebase.database().ref('medical-assessments').push();
+                        await dbRef.set(assessmentData);
+                        alert('Medical assessment created successfully!');
+                    }
+                    
+                    // Redirect to board page after successful submission
+                    window.location.href = 'medicalboard.html';
+                    
+                } catch (error) {
+                    console.error('Error saving assessment:', error);
+                    alert('An error occurred while saving the assessment. Please try again.');
+                    
+                    // Hide loading overlay
+                    loadingOverlay.style.display = 'none';
+                }
+            });
+
+            // Handle physical examination measurements
+            document.querySelectorAll('.assessment-item').forEach(item => {
+                const radioInputs = item.querySelectorAll('input[type="radio"]');
+                radioInputs.forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        if (this.value === 'abnormal') {
+                            item.classList.add('has-abnormal');
+                        } else {
+                            item.classList.remove('has-abnormal');
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get assessment ID from URL if in edit mode
+        const urlParams = new URLSearchParams(window.location.search);
+        const assessmentId = urlParams.get('id');
+        const isEditMode = !!assessmentId;
+
+        // Update page title and submit button text if in edit mode
+        if (isEditMode) {
+            document.querySelector('h1').textContent = 'Edit Medical Assessment';
+            document.querySelector('button[type="submit"]').textContent = 'Update Assessment';
+        }
+
+        // Initialize Firebase
+        if (typeof firebase === 'undefined') {
+            console.error('Firebase SDK not loaded');
+            return;
+        }
+
+        const form = document.getElementById('medical-assessment-form');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        // Load assessment data if in edit mode
+        if (isEditMode) {
+            loadingOverlay.style.display = 'flex';
+            firebase.database().ref('medical-assessments/' + assessmentId).once('value')
+                .then((snapshot) => {
+                    const assessment = snapshot.val();
+                    if (assessment) {
+                        // Populate employee name in dropdown
+                        const selectedEmployee = document.getElementById('selected-employee');
+                        const employeeNameInput = document.getElementById('employee-name-input');
+                        if (assessment.employeeName) {
+                            selectedEmployee.textContent = assessment.employeeName;
+                            employeeNameInput.value = assessment.employeeName;
+                            // Set employee ID
+                            document.getElementById('employee-id').value = assessment.employeeId || '';
+                            // Set department
+                            document.getElementById('department').value = assessment.department || '';
+                            // Set job title
+                            document.getElementById('job-title').value = assessment.jobTitle || '';
+                        }
+
+                        // Populate form fields with assessment data
+                        Object.entries(assessment).forEach(([key, value]) => {
+                            const element = form.elements[key];
+                            if (element) {
+                                if (element.type === 'date' && value) {
+                                    // Format date to YYYY-MM-DD for date inputs
+                                    if (typeof value === 'string') {
+                                        element.value = value.split('T')[0];
+                                    }
+                                } else if (element.type === 'checkbox') {
+                                    element.checked = value;
+                                } else if (element.type === 'file') {
+                                    // Skip file inputs, they are handled separately
+                                } else {
+                                    element.value = value;
+                                }
+                            }
+                        });
+
+                        // Handle document attachments
+                        if (assessment.documentUrls && assessment.documentUrls.length > 0) {
+                            // Make sure documents is defined and initialized
+                            if (typeof documents === 'undefined') {
+                                window.documents = new Set();
+                            }
+                            
+                            const documentPreview = document.getElementById('document-preview');
+                            assessment.documentUrls.forEach(url => {
+                                if (!url) return; // Skip null/undefined URLs
+                                
+                                const documentItem = document.createElement('div');
+                                documentItem.className = 'photo-item';
+                                const isPdf = typeof url === 'string' && url.toLowerCase().endsWith('.pdf');
+
+                                if (isPdf) {
+                                    // PDF preview
+                                    documentItem.innerHTML = `
+                                        <div style="height: 100%; display: flex; justify-content: center; align-items: center;">
+                                            <i class="fas fa-file-pdf" style="font-size: 5rem; color: #dc3545;"></i>
+                                        </div>
+                                    `;
+                                } else {
+                                    // Image preview
+                                    documentItem.innerHTML = `<img src="${url}" alt="Medical document">`;
+                                }
+
+                                // Add link to view document
+                                const viewLink = document.createElement('a');
+                                viewLink.href = url;
+                                viewLink.target = '_blank';
+                                viewLink.className = 'view-document';
+                                viewLink.innerHTML = `<i class="fas fa-external-link-alt"></i> View`;
+                                documentItem.appendChild(viewLink);
+
+                                // Add remove button
+                                const removeBtn = document.createElement('button');
+                                removeBtn.className = 'remove-photo';
+                                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                                
+                                // Create a file-like object to track this URL
+                                const fileObj = { 
+                                    url: url,
+                                    isExisting: true
+                                };
+                                
+                                removeBtn.onclick = () => {
+                                    documentItem.remove();
+                                    // Remove URL from documents Set
+                                    if (typeof documents !== 'undefined') {
+                                        documents.delete(fileObj);
+                                    }
+                                };
+                                documentItem.appendChild(removeBtn);
+
+                                // Add to preview container
+                                documentPreview.appendChild(documentItem);
+                                
+                                // Add to documents Set
+                                if (typeof documents !== 'undefined') {
+                                    documents.add(fileObj);
+                                }
+                            });
+                        }
+                        
+                        // Fix for medications display
+                        if (assessment.takingMedications === 'yes') {
+                            document.getElementById('medications-yes').checked = true;
+                            document.getElementById('medications-details-container').style.display = 'block';
+                        }
+                        
+                        // Fix for work restrictions display
+                        if (assessment.workStatus === 'fit-with-restrictions') {
+                            document.getElementById('restrictions-container').style.display = 'block';
+                        }
+                        
+                        // Calculate BMI if height and weight are present
+                        if (assessment.height && assessment.weight) {
+                            const height = parseFloat(assessment.height);
+                            const weight = parseFloat(assessment.weight);
+                            if (height > 0 && weight > 0) {
+                                const heightInMeters = height / 100;
+                                const bmi = weight / (heightInMeters * heightInMeters);
+                                document.getElementById('bmi').value = bmi.toFixed(2);
+                            }
+                        }
+                    } else {
+                        alert('Assessment not found');
+                        window.location.href = 'medicalboard.html';
+                    }
+                    loadingOverlay.style.display = 'none';
+                })
+                .catch((error) => {
+                    console.error('Error loading assessment:', error);
+                    alert('Error loading assessment data');
+                    loadingOverlay.style.display = 'none';
+                });
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                const formData = new FormData(form);
+                const assessment = {};
+                
+                // Convert FormData to object and ensure all required fields are present
+                formData.forEach((value, key) => {
+                    // Only add non-empty values, but preserve boolean values
+                    if (value !== '' || typeof value === 'boolean') {
+                        assessment[key] = value;
+                    }
+                });
+
+                // Ensure required fields are present
+                const requiredFields = [
+                    'assessmentType',
+                    'assessmentDate',
+                    'location',
+                    'employeeId',
+                    'employeeName'
+                ];
+
+                const missingFields = requiredFields.filter(field => !assessment[field]);
+                if (missingFields.length > 0) {
+                    throw new Error(`Missing required fields: ${missingFields.join(', ')}`);
+                }
+
+                // Handle document attachments
+                if (typeof documents !== 'undefined' && documents.size > 0) {
+                    const documentUrls = [];
+                    const uploadTasks = [];
+                    
+                    for (const item of documents) {
+                        if (item.isExisting && item.url) {
+                            // Keep existing document URL
+                            documentUrls.push(item.url);
+                        } else if (item instanceof File) {
+                            // Queue new file upload
+                            const filename = `medical-documents/${Date.now()}_${item.name}`;
+                            const storageRef = firebase.storage().ref(filename);
+                            uploadTasks.push(
+                                storageRef.put(item)
+                                    .then(snapshot => snapshot.ref.getDownloadURL())
+                                    .then(url => documentUrls.push(url))
+                            );
+                        }
+                    }
+                    
+                    // Wait for all uploads to complete
+                    if (uploadTasks.length > 0) {
+                        await Promise.all(uploadTasks);
+                    }
+                    
+                    // Add document URLs to assessment data
+                    if (documentUrls.length > 0) {
+                        assessment.documentUrls = documentUrls;
+                    }
+                } else if (isEditMode) {
+                    // In edit mode, preserve existing documents if no new documents were added
+                    const existingRef = await firebase.database().ref('medical-assessments/' + assessmentId).once('value');
+                    const existingData = existingRef.val();
+                    if (existingData && existingData.documentUrls) {
+                        assessment.documentUrls = existingData.documentUrls;
+                    }
+                }
+
+                // Add metadata
+                const currentUser = firebase.auth().currentUser;
+                if (!currentUser) {
+                    throw new Error('User not authenticated');
+                }
+
+                if (isEditMode) {
+                    assessment.updatedAt = firebase.database.ServerValue.TIMESTAMP;
+                    assessment.updatedBy = currentUser.uid;
+                    
+                    // Update the assessment
+                    await firebase.database().ref('medical-assessments/' + assessmentId).update(assessment);
+                    console.log('Assessment updated successfully:', assessmentId);
+                } else {
+                    assessment.createdAt = firebase.database.ServerValue.TIMESTAMP;
+                    assessment.createdBy = currentUser.uid;
+                    
+                    // Create new assessment
+                    const newRef = firebase.database().ref('medical-assessments').push();
+                    await newRef.set(assessment);
+                    console.log('Assessment created successfully:', newRef.key);
+                }
+
+                alert(isEditMode ? 'Assessment updated successfully!' : 'Assessment saved successfully!');
+                window.location.href = 'medicalboard.html';
+            } catch (error) {
+                console.error('Error saving assessment:', error);
+                alert(error.message || 'Error saving assessment. Please try again.');
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        // Initialize any other form functionalities (e.g., dynamic fields, validations)
+        // ...existing code for other form functionality...
+    });
+</script>
+
+    <script>
+        function loadUserData(userId) {
+            return database.ref('users/' + userId).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        // Populate the gender field
+                        document.getElementById('gender').value = userData.gender || 'Not specified';
+                        return userData;
+                    }
+                    return null;
+                })
+                .catch(error => {
+                    console.error('Error loading user data:', error);
+                    alert('Error loading user data: ' + error.message);
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // ...existing code...
+            
+            // When initializing a new medical assessment
+            function initializeMedicalForm(patientId) {
+                loadUserData(patientId).then(userData => {
+                    if (userData) {
+                        // Any other form initialization can go here
+                        console.log('User data loaded successfully');
+                    }
+                });
+            }
+            
+            // When loading an existing medical assessment
+            function loadMedicalAssessment(assessmentId) {
+                // ...existing code...
+                database.ref('medicalAssessments/' + assessmentId).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const data = snapshot.val();
+                            // Load user data first
+                            return loadUserData(data.patientId).then(() => {
+                                // Then populate the rest of the form
+                                populateForm(data);
+                            });
+                        }
+                    });
+            }
+            
+            // ...existing code...
+        });
+    </script>
+
+    <style>
+        /* Add dropdown styles */
+        .dropdown-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        .dropdown-toggle {
+            cursor: pointer;
+            text-align: left;
+        }
+        
+        .dropdown-list {
+            position: absolute;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .dropdown-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f1f5f9;
+        }
+        
+        .dropdown-search {
+            padding: 10px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 101;
+        }
+        
+        .dropdown-item.no-results,
+        .dropdown-item.loading,
+        .dropdown-item.error {
+            font-style: italic;
+            color: #6c757d;
+            cursor: default;
+        }
+    </style>
+</body>
+</html>

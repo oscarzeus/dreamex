@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSE System - New Water Quality Report</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .form-container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .form-header {
+            margin-bottom: 2rem;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-section {
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-section h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .form-group label .unit {
+            font-size: 0.85em;
+            color: #666;
+            font-weight: normal;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+
+        .form-text {
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+
+        .parameters-section {
+            margin-bottom: 2rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .parameters-section h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .parameters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .parameter-input {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        .parameter-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .parameters-container {
+            margin-bottom: 1rem;
+        }
+
+        .parameter-item {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .parameter-item .form-group {
+            margin-bottom: 0.5rem;
+        }
+
+        .info-tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 0.5rem;
+            color: #3498db;
+            cursor: help;
+        }
+
+        .info-tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 0.5rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+            font-weight: normal;
+        }
+
+        .info-tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .add-parameter-btn {
+            margin-top: 1rem;
+        }
+
+        .remove-parameter {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            color: #dc3545;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .photos-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .photo-preview {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .photo-item {
+            position: relative;
+            height: 150px;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-item .remove-photo {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(255, 0, 0, 0.7);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-file-upload {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        .btn-primary {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-normal { background-color: #d4edda; color: #155724; }
+        .status-warning { background-color: #fff3cd; color: #856404; }
+        .status-critical { background-color: #f8d7da; color: #721c24; }
+
+        /* Water type cards styles */
+        .water-types-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .water-type-card {
+            border: 2px solid #eee;
+            border-radius: 8px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            text-align: center;
+        }
+
+        .water-type-card:hover {
+            border-color: #3498db;
+            transform: translateY(-2px);
+        }
+
+        .water-type-card.selected {
+            border-color: #3498db;
+            background-color: #ebf5fb;
+        }
+
+        .water-type-card i {
+            font-size: 2rem;
+            color: #3498db;
+            margin-bottom: 0.5rem;
+        }
+
+        .water-type-description {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .water-type-description.active {
+            display: block;
+        }
+
+        .standard-section {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            background-color: #f8f9fa;
+        }
+
+        .standard-info {
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .sampling-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .loading-text {
+            margin-left: 1rem;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+
+        @media (max-width: 768px) {
+            .form-row {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .form-group {
+                width: 100%;
+            }
+
+            .parameter-inputs {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .btn-group button {
+                width: 100%;
+            }
+            
+            .water-types-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="form-container">
+        <div class="form-header">
+            <h1>New Water Quality Report</h1>
+        </div>
+
+        <form id="water-quality-form" class="form-section">
+            <div class="water-type-section">
+                <h3>Select Water Type</h3>
+                <div class="water-types-grid">
+                    <div class="water-type-card" data-type="drinking">
+                        <i class="fas fa-glass-water"></i>
+                        <h4>Drinking Water</h4>
+                    </div>
+                    <div class="water-type-card" data-type="surface">
+                        <i class="fas fa-water"></i>
+                        <h4>Surface Water</h4>
+                    </div>
+                    <div class="water-type-card" data-type="groundwater">
+                        <i class="fas fa-faucet-drip"></i>
+                        <h4>Groundwater</h4>
+                    </div>
+                    <div class="water-type-card" data-type="wastewater">
+                        <i class="fas fa-toilet"></i>
+                        <h4>Wastewater</h4>
+                    </div>
+                    <div class="water-type-card" data-type="rainwater">
+                        <i class="fas fa-cloud-rain"></i>
+                        <h4>Rainwater</h4>
+                    </div>
+                    <div class="water-type-card" data-type="bottled">
+                        <i class="fas fa-bottle-water"></i>
+                        <h4>Bottled Water</h4>
+                    </div>
+                    <div class="water-type-card" data-type="recreational">
+                        <i class="fas fa-person-swimming"></i>
+                        <h4>Recreational</h4>
+                    </div>
+                    <div class="water-type-card" data-type="raw">
+                        <i class="fas fa-droplet"></i>
+                        <h4>Raw Water</h4>
+                    </div>
+                    <div class="water-type-card" data-type="reclaimed">
+                        <i class="fas fa-recycle"></i>
+                        <h4>Reclaimed Water</h4>
+                    </div>
+                    <div class="water-type-card" data-type="industrial">
+                        <i class="fas fa-industry"></i>
+                        <h4>Industrial Water</h4>
+                    </div>
+                    <div class="water-type-card" data-type="ultrapure">
+                        <i class="fas fa-vial"></i>
+                        <h4>Ultrapure Water</h4>
+                    </div>
+                </div>
+                <input type="hidden" id="water-type" name="waterType" required>
+                <div id="water-type-description" class="water-type-description"></div>
+            </div>
+
+            <div class="standard-section">
+                <h3>Water Quality Standard</h3>
+                <div class="form-group">
+                    <label for="water-standard">Select Standard</label>
+                    <select id="water-standard" name="waterStandard" class="form-control" required>
+                        <option value="">Select a water type first</option>
+                    </select>
+                    <div id="standard-info" class="standard-info" style="display: none;"></div>
+                </div>
+            </div>
+
+            <div class="sampling-details">
+                <div class="form-group">
+                    <label for="location">Sampling Location</label>
+                    <input type="text" id="location" name="location" class="form-control" placeholder="e.g., Building A Water Tank, Facility 3 Cooling Tower" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="sampling-date">Sampling Date & Time</label>
+                    <input type="datetime-local" id="sampling-date" name="samplingDate" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="weather-conditions">Weather Conditions</label>
+                    <input type="text" id="weather-conditions" name="weatherConditions" class="form-control" placeholder="e.g., Sunny, 25°C, Light Breeze">
+                </div>
+            </div>
+
+            <div class="parameters-section" id="microbiological-parameters">
+                <h3>1. Microbiological Parameters</h3>
+                <div class="parameters-grid" id="microbiological-grid">
+                    <!-- Parameters will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="parameters-section" id="physical-parameters">
+                <h3>2. Physical Parameters</h3>
+                <div class="parameters-grid" id="physical-grid">
+                    <!-- Parameters will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="parameters-section" id="chemical-inorganic-parameters">
+                <h3>3. Chemical Parameters – Inorganic</h3>
+                <div class="parameters-grid" id="chemical-inorganic-grid">
+                    <!-- Parameters will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="parameters-section" id="chemical-organic-parameters">
+                <h3>4. Chemical Parameters – Organic</h3>
+                <div class="parameters-grid" id="chemical-organic-grid">
+                    <!-- Parameters will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="parameters-section" id="radiological-parameters">
+                <h3>5. Radiological Parameters</h3>
+                <div class="parameters-grid" id="radiological-grid">
+                    <!-- Parameters will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="parameters-section" id="disinfectant-parameters">
+                <h3>6. Disinfectant Residuals & Byproducts</h3>
+                <div class="parameters-grid" id="disinfectant-grid">
+                    <!-- Parameters will be dynamically added here -->
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="observations">Additional Observations</label>
+                <textarea id="observations" name="observations" class="form-control" rows="4" placeholder="Enter any observations about the water sample..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="recommendations">Recommendations</label>
+                <textarea id="recommendations" name="recommendations" class="form-control" rows="4" placeholder="Enter any recommendations based on the test results..."></textarea>
+            </div>
+
+            <div class="photos-section">
+                <label>Photos</label>
+                <input type="file" id="photo-upload" accept="image/*" multiple style="display: none;">
+                <button type="button" id="upload-photo-btn" class="btn btn-secondary">
+                    <i class="fas fa-camera"></i> Upload Photos
+                </button>
+                <div class="photo-preview" id="photo-preview"></div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Submit Report</button>
+        </form>
+    </main>
+
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner">
+            <i class="fas fa-spinner fa-spin fa-2x"></i>
+            <span class="loading-text">Saving report...</span>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 HSE Online System. All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/header-loader.js"></script>
+
+    <script>
+        // Water type descriptions and their applicable standards
+        const waterTypes = {
+            drinking: {
+                description: "Treated water intended for human consumption that meets local and international drinking water standards.",
+                standards: [
+                    "WHO", 
+                    "EPA_NPDWR", 
+                    "EU_DWD", 
+                    "CANADA_GUIDELINES", 
+                    "ADWG", 
+                    "CODEX",
+                    "ISO_DRINKING_COMBINED", 
+                    "INDIA_IS10500", 
+                    "SANS_241", 
+                    "JAPAN_DWQS", 
+                    "CHINA_GB5749"
+                ],
+                icon: "glass-water"
+            },
+            surface: {
+                description: "Water found in rivers, lakes, and streams, often used for various purposes including treatment for drinking water.",
+                standards: [
+                    "ISO_SURFACE", 
+                    "ASTM_SURFACE", 
+                    "WHO_SURFACE", 
+                    "WHO_WASTEWATER", 
+                    "UNEP_GEMS", 
+                    "EU_WFD", 
+                    "EPA_WQC", 
+                    "EPA_CWA", 
+                    "EPA_NRWQC", 
+                    "EU_PSD", 
+                    "CEQG", 
+                    "CWQG", 
+                    "ANZG", 
+                    "NWQMS", 
+                    "ISO_5667", 
+                    "ISO_10870", 
+                    "ISO_9408"
+                ],
+                icon: "water"
+            },
+            groundwater: {
+                description: "Water held underground in soil or rock, accessed via wells and springs.",
+                standards: ["ISO_GROUNDWATER", "WHO_GROUNDWATER", "ASTM_GROUNDWATER"],
+                icon: "faucet-drip"
+            },
+            wastewater: {
+                description: "Used water from domestic, industrial, or agricultural processes requiring treatment.",
+                standards: ["ISO", "EPA", "EN", "ASTM"],
+                icon: "toilet"
+            },
+            rainwater: {
+                description: "Collected precipitation for various uses including irrigation and domestic purposes.",
+                standards: ["WHO", "ISO", "ASTM", "BSI"],
+                icon: "cloud-rain"
+            },
+            bottled: {
+                description: "Packaged drinking water meeting specific quality and safety standards.",
+                standards: ["WHO", "EPA", "ISO", "BSI", "ASNZS"],
+                icon: "bottle-water"
+            },
+            recreational: {
+                description: "Water used for swimming, bathing, and other recreational activities.",
+                standards: ["WHO", "EPA", "ISO", "EN"],
+                icon: "person-swimming"
+            },
+            raw: {
+                description: "Untreated water from natural sources before any processing or treatment.",
+                standards: ["ISO_SURFACE", "WHO_SURFACE", "ASTM_SURFACE"],
+                icon: "droplet"
+            },
+            reclaimed: {
+                description: "Treated wastewater that can be reused for beneficial purposes such as irrigation or industrial processes.",
+                standards: ["EPA", "ISO", "WHO", "ASTM"],
+                icon: "recycle"
+            },
+            industrial: {
+                description: "Water used in manufacturing, processing, washing, diluting, cooling, or transporting industrial products.",
+                standards: ["ASTM", "ISO", "EPA", "WHO"],
+                icon: "industry"
+            },
+            ultrapure: {
+                description: "Highly treated water with extremely low levels of impurities, used in laboratory, pharmaceutical, and electronics industries.",
+                standards: ["ASTM", "ISO", "AAMI", "SEMI"],
+                icon: "vial"
+            }
+        };
+
+        // Standard specifications
+        const waterStandards = {
+            WHO: {
+                name: "WHO Guidelines for Drinking-water Quality",
+                description: "World Health Organization's comprehensive guidelines for safe drinking water quality",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    fecal_coliforms: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    nitrate: { max: 50, unit: "mg/L", critical: { max: 50 } },
+                    fluoride: { max: 1.5, unit: "mg/L", critical: { max: 1.5 } },
+                    lead: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    selenium: { max: 0.04, unit: "mg/L", critical: { max: 0.04 } },
+                    // Radiological
+                    gross_alpha: { max: 0.5, unit: "Bq/L", critical: { max: 0.5 } },
+                    gross_beta: { max: 1.0, unit: "Bq/L", critical: { max: 1.0 } },
+                    // Physical
+                    turbidity: { max: 5, unit: "NTU", critical: { max: 5 }, recommended: { max: 1 } },
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.0, max: 9.0 } },
+                    taste: { acceptableValues: ["none", "acceptable"], unit: "" },
+                    odor: { acceptableValues: ["none", "acceptable"], unit: "" }
+                }
+            },
+            EPA: {
+                name: "US EPA National Primary Drinking Water Regulations (NPDWR)",
+                description: "United States Environmental Protection Agency's legally enforceable standards for public water systems",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    total_coliform: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    nitrate: { max: 10, unit: "mg/L", critical: { max: 10 } },
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    lead: { max: 0.015, unit: "mg/L", critical: { max: 0.015 } },
+                    copper: { max: 1.3, unit: "mg/L", critical: { max: 1.3 } },
+                    // Disinfection Byproducts
+                    thms: { max: 0.08, unit: "mg/L", critical: { max: 0.08 } },
+                    haloacetic_acids: { max: 0.06, unit: "mg/L", critical: { max: 0.06 } },
+                    // Radiological
+                    radium: { max: 5, unit: "pCi/L", critical: { max: 5 } },
+                    uranium: { max: 30, unit: "µg/L", critical: { max: 30 } },
+                    // Physical
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 1 }, recommended: { max: 0.3 } }
+                }
+            },
+            EU: {
+                name: "European Drinking Water Directive (EU Directive 2020/2184)",
+                description: "European Union's latest directive for ensuring high-quality drinking water",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    enterococci: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    nitrate: { max: 50, unit: "mg/L", critical: { max: 50 } },
+                    lead: { max: 0.005, unit: "mg/L", critical: { max: 0.005 } },
+                    chromium: { max: 0.05, unit: "mg/L", critical: { max: 0.05 } },
+                    // Physical
+                    conductivity: { max: 2500, unit: "µS/cm", critical: { max: 2500 } },
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 1 } },
+                    ph: { min: 6.5, max: 9.5, unit: "", critical: { min: 6.5, max: 9.5 } }
+                }
+            },
+            WHO_WASTEWATER: {
+                name: "WHO Guidelines for the Safe Use of Wastewater, Excreta and Greywater",
+                description: "World Health Organization's guidelines for the safe management and reuse of wastewater, excreta and greywater",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 1000, unit: "CFU/100mL", critical: { max: 10000 } },
+                    helminth_eggs: { max: 1, unit: "eggs/L", critical: { max: 1 } },
+                    // Physical
+                    tss: { max: 50, unit: "mg/L", critical: { max: 100 } },
+                    // Chemical
+                    bod: { max: 30, unit: "mg/L", critical: { max: 60 } }
+                }
+            },
+            EPA_NPDWR: {
+                name: "US EPA National Primary Drinking Water Regulations (NPDWR)",
+                description: "United States Environmental Protection Agency's legally enforceable standards for public water systems",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    total_coliform: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    nitrate: { max: 10, unit: "mg/L", critical: { max: 10 } },
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    lead: { max: 0.015, unit: "mg/L", critical: { max: 0.015 } },
+                    copper: { max: 1.3, unit: "mg/L", critical: { max: 1.3 } },
+                    // Disinfection Byproducts
+                    thms: { max: 0.08, unit: "mg/L", critical: { max: 0.08 } },
+                    haloacetic_acids: { max: 0.06, unit: "mg/L", critical: { max: 0.06 } },
+                    // Radiological
+                    radium: { max: 5, unit: "pCi/L", critical: { max: 5 } },
+                    uranium: { max: 30, unit: "µg/L", critical: { max: 30 } },
+                    // Physical
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 1 }, recommended: { max: 0.3 } }
+                }
+            },
+            EU_DWD: {
+                name: "European Drinking Water Directive – EU Directive 2020/2184",
+                description: "European Union's latest directive for ensuring high-quality drinking water",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    enterococci: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    nitrate: { max: 50, unit: "mg/L", critical: { max: 50 } },
+                    lead: { max: 0.005, unit: "mg/L", critical: { max: 0.005 } },
+                    chromium: { max: 0.05, unit: "mg/L", critical: { max: 0.05 } },
+                    // Physical
+                    conductivity: { max: 2500, unit: "µS/cm", critical: { max: 2500 } },
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 1 } },
+                    ph: { min: 6.5, max: 9.5, unit: "", critical: { min: 6.5, max: 9.5 } }
+                }
+            },
+            CANADA_GUIDELINES: {
+                name: "Canadian Guidelines for Drinking Water Quality",
+                description: "Health Canada's guidelines for safe drinking water quality across Canadian provinces and territories",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    total_coliforms: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    lead: { max: 0.005, unit: "mg/L", critical: { max: 0.005 } },
+                    fluoride: { max: 1.5, unit: "mg/L", critical: { max: 1.5 } },
+                    nitrate: { max: 45, unit: "mg/L", critical: { max: 45 } },
+                    uranium: { max: 0.02, unit: "mg/L", critical: { max: 0.02 } },
+                    // Physical
+                    ph: { min: 7.0, max: 10.5, unit: "", critical: { min: 7.0, max: 10.5 } },
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 1 } }
+                }
+            },
+            ADWG: {
+                name: "Australian Drinking Water Guidelines (ADWG)",
+                description: "National framework for drinking water quality management in Australia",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    cadmium: { max: 0.002, unit: "mg/L", critical: { max: 0.002 } },
+                    copper: { max: 2.0, unit: "mg/L", critical: { max: 2.0 } },
+                    fluoride: { max: 1.5, unit: "mg/L", critical: { max: 1.5 } },
+                    lead: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    nitrate: { max: 50, unit: "mg/L", critical: { max: 50 } },
+                    // Physical
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.5, max: 8.5 } },
+                    tds: { max: 600, unit: "mg/L", recommended: { max: 600 } },
+                    turbidity: { max: 5, unit: "NTU", critical: { max: 5 } }
+                }
+            },
+            CODEX: {
+                name: "Codex Alimentarius CAC/RCP 32-1985 – Bottled/Packaged Drinking Water",
+                description: "International food standards for packaged and bottled water quality and safety",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/250mL", critical: { max: 0 } },
+                    pseudomonas_aeruginosa: { max: 0, unit: "CFU/250mL", critical: { max: 0 } },
+                    // Chemical
+                    antimony: { max: 0.005, unit: "mg/L", critical: { max: 0.005 } },
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    barium: { max: 0.7, unit: "mg/L", critical: { max: 0.7 } },
+                    boron: { max: 0.5, unit: "mg/L", critical: { max: 0.5 } },
+                    cadmium: { max: 0.003, unit: "mg/L", critical: { max: 0.003 } },
+                    chromium: { max: 0.05, unit: "mg/L", critical: { max: 0.05 } },
+                    // Physical
+                    color: { max: 15, unit: "TCU", critical: { max: 15 } },
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.5, max: 8.5 } },
+                    tds: { max: 1000, unit: "mg/L", critical: { max: 1000 } }
+                }
+            },
+            ISO_5667: {
+                name: "ISO 5667 series – Water sampling standards",
+                description: "International standards for water sampling techniques and preservation methods",
+                parameters: {
+                    // Sampling parameters
+                    sampling_temperature: { unit: "°C" },
+                    preservation_method: { acceptableValues: ["none", "acidification", "refrigeration", "freezing"], unit: "" },
+                    sampling_protocol: { acceptableValues: ["grab", "composite", "continuous"], unit: "" }
+                }
+            },
+            ISO_10523: {
+                name: "ISO 10523 – pH measurement in drinking water",
+                description: "International standard method for the determination of pH in water",
+                parameters: {
+                    // pH measurement
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.5, max: 8.5 } },
+                    temperature: { unit: "°C" },
+                    electrode_type: { acceptableValues: ["glass", "ISFET", "combined"], unit: "" }
+                }
+            },
+            ISO_7027: {
+                name: "ISO 7027 – Turbidity measurement",
+                description: "International standard for determination of turbidity in water quality testing",
+                parameters: {
+                    // Turbidity measurement
+                    turbidity_nephelometric: { max: 5, unit: "NTU", critical: { max: 5 } },
+                    turbidity_attenuated: { max: 5, unit: "FAU", critical: { max: 5 } },
+                    method: { acceptableValues: ["nephelometric", "attenuation"], unit: "" }
+                }
+            },
+            ISO_10304: {
+                name: "ISO 10304 – Ion chromatography for anions (e.g., nitrate, nitrite)",
+                description: "International standard method for the determination of dissolved anions by liquid chromatography",
+                parameters: {
+                    // Anions by ion chromatography
+                    nitrate: { max: 50, unit: "mg/L", critical: { max: 50 } },
+                    nitrite: { max: 0.5, unit: "mg/L", critical: { max: 0.5 } },
+                    chloride: { max: 250, unit: "mg/L", critical: { max: 250 } },
+                    fluoride: { max: 1.5, unit: "mg/L", critical: { max: 1.5 } },
+                    sulfate: { max: 250, unit: "mg/L", critical: { max: 250 } }
+                }
+            },
+            ISO_DRINKING_COMBINED: {
+                name: "ISO Combined Drinking Water Standards",
+                description: "Comprehensive collection of all ISO standards related to drinking water quality testing, monitoring, and assessment",
+                parameters: {
+                    // Physical Parameters (from ISO 7027, ISO 10523)
+                    turbidity_nephelometric: { max: 5, unit: "NTU", critical: { max: 5 }, standard: "ISO 7027" },
+                    turbidity_attenuated: { max: 5, unit: "FAU", critical: { max: 5 }, standard: "ISO 7027" },
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.0, max: 9.0 }, standard: "ISO 10523" },
+                    color: { max: 15, unit: "TCU", critical: { max: 15 }, standard: "ISO 7887" },
+                    conductivity: { max: 2500, unit: "μS/cm", critical: { max: 2500 }, standard: "ISO 7888" },
+                    tds: { max: 1000, unit: "mg/L", critical: { max: 1000 }, standard: "ISO 7888" },
+                    
+                    // Chemical Parameters - Inorganic (from ISO 10304, ISO 11885, ISO 17294)
+                    nitrate: { max: 50, unit: "mg/L", critical: { max: 50 }, standard: "ISO 10304-1" },
+                    nitrite: { max: 0.5, unit: "mg/L", critical: { max: 0.5 }, standard: "ISO 10304-1" },
+                    chloride: { max: 250, unit: "mg/L", critical: { max: 250 }, standard: "ISO 10304-1" },
+                    fluoride: { max: 1.5, unit: "mg/L", critical: { max: 1.5 }, standard: "ISO 10304-1" },
+                    sulfate: { max: 250, unit: "mg/L", critical: { max: 250 }, standard: "ISO 10304-1" },
+                    
+                    // Heavy Metals (from ISO 17294-2, ISO 11885)
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 }, standard: "ISO 17294-2" },
+                    lead: { max: 0.01, unit: "mg/L", critical: { max: 0.01 }, standard: "ISO 17294-2" },
+                    mercury: { max: 0.001, unit: "mg/L", critical: { max: 0.001 }, standard: "ISO 17294-2" },
+                    cadmium: { max: 0.003, unit: "mg/L", critical: { max: 0.003 }, standard: "ISO 17294-2" },
+                    chromium: { max: 0.05, unit: "mg/L", critical: { max: 0.05 }, standard: "ISO 17294-2" },
+                    copper: { max: 2.0, unit: "mg/L", critical: { max: 2.0 }, standard: "ISO 11885" },
+                    iron: { max: 0.2, unit: "mg/L", critical: { max: 0.3 }, standard: "ISO 11885" },
+                    manganese: { max: 0.05, unit: "mg/L", critical: { max: 0.1 }, standard: "ISO 11885" },
+                    
+                    // Microbiological (from ISO 9308-1, ISO 7899-2)
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 }, standard: "ISO 9308-1" },
+                    total_coliform: { max: 0, unit: "CFU/100mL", critical: { max: 0 }, standard: "ISO 9308-1" },
+                    enterococci: { max: 0, unit: "CFU/100mL", critical: { max: 0 }, standard: "ISO 7899-2" },
+                    
+                    // Disinfection By-products (from ISO 10301, ISO 23631)
+                    thms: { max: 0.1, unit: "mg/L", critical: { max: 0.1 }, standard: "ISO 10301" },
+                    bromate: { max: 0.01, unit: "mg/L", critical: { max: 0.01 }, standard: "ISO 23631" },
+                    
+                    // Organic Parameters (from ISO 11423, ISO 10301)
+                    benzene: { max: 0.001, unit: "mg/L", critical: { max: 0.001 }, standard: "ISO 11423-1" },
+                    trichloroethylene: { max: 0.02, unit: "mg/L", critical: { max: 0.02 }, standard: "ISO 10301" },
+                    tetrachloroethylene: { max: 0.04, unit: "mg/L", critical: { max: 0.04 }, standard: "ISO 10301" }
+                }
+            },
+            INDIA_IS10500: {
+                name: "Indian Standard IS 10500:2012 – Drinking Water Specification",
+                description: "Bureau of Indian Standards specifications for drinking water quality",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    total_coliform: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    aluminum: { max: 0.03, unit: "mg/L", critical: { max: 0.2 } },
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.05 } },
+                    copper: { max: 0.05, unit: "mg/L", critical: { max: 1.5 } },
+                    fluoride: { max: 1.0, unit: "mg/L", critical: { max: 1.5 } },
+                    iron: { max: 0.3, unit: "mg/L", critical: { max: 1.0 } },
+                    nitrate: { max: 45, unit: "mg/L", critical: { max: 45 } },
+                    lead: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    // Physical
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.5, max: 8.5 } },
+                    tds: { max: 500, unit: "mg/L", critical: { max: 2000 } },
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 5 } }
+                }
+            },
+            SANS_241: {
+                name: "South African National Standard (SANS 241) – Drinking Water Quality",
+                description: "South African specifications for drinking water safety and quality",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    total_coliforms: { max: 10, unit: "CFU/100mL", critical: { max: 10 } },
+                    heterotrophic_plate_count: { max: 1000, unit: "CFU/mL", critical: { max: 1000 } },
+                    // Chemical
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    cadmium: { max: 0.003, unit: "mg/L", critical: { max: 0.003 } },
+                    cyanide: { max: 0.07, unit: "mg/L", critical: { max: 0.07 } },
+                    iron: { max: 0.3, unit: "mg/L", critical: { max: 2.0 } },
+                    lead: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    nitrate: { max: 11, unit: "mg/L", critical: { max: 11 } },
+                    // Physical
+                    conductivity: { max: 170, unit: "mS/m", critical: { max: 170 } },
+                    ph: { min: 5.0, max: 9.7, unit: "", critical: { min: 5.0, max: 9.7 } },
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 5 } }
+                }
+            },
+            JAPAN_DWQS: {
+                name: "Japanese Drinking Water Quality Standards – Ministry of Health, Labour and Welfare",
+                description: "Japan's national standards for ensuring safe drinking water supply",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    cadmium: { max: 0.003, unit: "mg/L", critical: { max: 0.003 } },
+                    chromium: { max: 0.05, unit: "mg/L", critical: { max: 0.05 } },
+                    copper: { max: 1.0, unit: "mg/L", critical: { max: 1.0 } },
+                    lead: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    mercury: { max: 0.0005, unit: "mg/L", critical: { max: 0.0005 } },
+                    nitrate_nitrogen: { max: 10, unit: "mg/L", critical: { max: 10 } },
+                    // Physical
+                    color: { max: 5, unit: "degrees", critical: { max: 5 } },
+                    ph: { min: 5.8, max: 8.6, unit: "", critical: { min: 5.8, max: 8.6 } },
+                    turbidity: { max: 2, unit: "NTU", critical: { max: 2 } }
+                }
+            },
+            CHINA_GB5749: {
+                name: "Chinese Standards for Drinking Water Quality – GB 5749-2022",
+                description: "National standards for drinking water quality in China",
+                parameters: {
+                    // Microbiological
+                    ecoli: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    total_coliform: { max: 0, unit: "CFU/100mL", critical: { max: 0 } },
+                    // Chemical
+                    arsenic: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    cadmium: { max: 0.005, unit: "mg/L", critical: { max: 0.005 } },
+                    chromium: { max: 0.05, unit: "mg/L", critical: { max: 0.05 } },
+                    lead: { max: 0.01, unit: "mg/L", critical: { max: 0.01 } },
+                    mercury: { max: 0.001, unit: "mg/L", critical: { max: 0.001 } },
+                    nitrate: { max: 10, unit: "mg/L", critical: { max: 10 } },
+                    // Physical
+                    chromaticity: { max: 15, unit: "degrees", critical: { max: 15 } },
+                    turbidity: { max: 1, unit: "NTU", critical: { max: 1 } },
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.5, max: 8.5 } }
+                }
+            },
+            UNEP_GEMS: {
+                name: "UNEP GEMS/Water Programme",
+                description: "United Nations Environment Programme's Global Environment Monitoring System for freshwater quality assessment",
+                parameters: {
+                    // Physical
+                    ph: { min: 6.5, max: 8.5, unit: "", critical: { min: 6.0, max: 9.0 } },
+                    dissolved_oxygen: { min: 5, unit: "mg/L", critical: { min: 4 } },
+                    temperature: { max: 30, unit: "°C", critical: { max: 35 } },
+                    turbidity: { max: 25, unit: "NTU", critical: { max: 50 } },
+                    // Chemical
+                    nitrate: { max: 10, unit: "mg/L", critical: { max: 50 } },
+                    phosphate: { max: 0.5, unit: "mg/L", critical: { max: 1.0 } }
+                }
+            },
+            EU_WFD: {
+                name: "EU Water Framework Directive (WFD) – Directive 2000/60/EC",
+                description: "European Union's framework for water protection and management aiming to achieve good ecological status",
+                parameters: {
+                    // Biological
+                    phytoplankton: { acceptableValues: ["high", "good", "moderate", "poor", "bad"], unit: "" },
+                    macrophytes: { acceptableValues: ["high", "good", "moderate", "poor", "bad"], unit: "" },
+                    benthic_invertebrates: { acceptableValues: ["high", "good", "moderate", "poor", "bad"], unit: "" },
+                    fish: { acceptableValues: ["high", "good", "moderate", "poor", "bad"], unit: "" },
+                    // Chemical
+                    lead: { max: 0.0072, unit: "mg/L", critical: { max: 0.0072 } },
+                    mercury: { max: 0.00007, unit: "mg/L", critical: { max: 0.00007 } },
+                    nickel: { max: 0.02, unit: "mg/L", critical: { max: 0.02 } }
+                }
+            },
+            EPA_WQC: {
+                name: "US EPA Water Quality Criteria",
+                description: "Environmental Protection Agency's recommended water quality criteria for surface waters",
+                parameters: {
+                    // Physical
+                    temperature: { max: 28, unit: "°C", critical: { max: 32 } },
+                    dissolved_oxygen: { min: 5.0, unit: "mg/L", critical: { min: 4.0 } },
+                    ph: { min: 6.5, max: 9.0, unit: "", critical: { min: 6.0, max: 9.5 } },
+                    // Chemical
+                    ammonia: { max: 1.9, unit: "mg/L", critical: { max: 2.5 } },
+                    cadmium: { max: 0.00072, unit: "mg/L", critical: { max: 0.00072 } },
+                    copper: { max: 0.009, unit: "mg/L", critical: { max: 0.009 } },
+                    lead: { max: 0.0025, unit: "mg/L", critical: { max: 0.0025 } }
+                }
+            },
+            EPA_CWA: {
+                name: "US EPA Clean Water Act (CWA) – Section 304(a)",
+                description: "US regulations and standards for surface water quality to protect aquatic life and human health",
+                parameters: {
+                    // Chemical
+                    arsenic: { max: 0.15, unit: "mg/L", critical: { max: 0.15 } },
+                    chromium: { max: 0.57, unit: "mg/L", critical: { max: 0.57 } },
+                    mercury: { max: 0.00077, unit: "mg/L", critical: { max: 0.00077 } },
+                    pcbs: { max: 0.000064, unit: "mg/L", critical: { max: 0.000064 } },
+                    // Biological
+                    ecoli: { max: 126, unit: "CFU/100mL", critical: { max: 235 } }
+                }
+            },
+            EPA_NRWQC: {
+                name: "US EPA National Recommended Water Quality Criteria for Aquatic Life and Human Health",
+                description: "Recommended criteria by EPA to protect aquatic life and human health in surface waters",
+                parameters: {
+                    // Chemical
+                    aluminum: { max: 0.75, unit: "mg/L", critical: { max: 0.75 } },
+                    cadmium: { max: 0.0018, unit: "mg/L", critical: { max: 0.0018 } },
+                    copper: { max: 0.013, unit: "mg/L", critical: { max: 0.013 } },
+                    cyanide: { max: 0.022, unit: "mg/L", critical: { max: 0.022 } },
+                    zinc: { max: 0.12, unit: "mg/L", critical: { max: 0.12 } }
+                }
+            },
+            EU_PSD: {
+                name: "European Union Priority Substances Directive – 2013/39/EU",
+                description: "EU directive establishing environmental quality standards for priority substances in surface waters",
+                parameters: {
+                    // Chemical - Priority Substances
+                    benzene: { max: 0.01, unit: "mg/L", critical: { max: 0.05 } },
+                    cadmium: { max: 0.0008, unit: "mg/L", critical: { max: 0.0008 } },
+                    dichloromethane: { max: 0.02, unit: "mg/L", critical: { max: 0.02 } },
+                    fluoranthene: { max: 0.0063, unit: "mg/L", critical: { max: 0.0063 } },
+                    lead: { max: 0.0014, unit: "mg/L", critical: { max: 0.0014 } },
+                    mercury: { max: 0.00007, unit: "mg/L", critical: { max: 0.00007 } },
+                    nickel: { max: 0.004, unit: "mg/L", critical: { max: 0.004 } }
+                }
+            },
+            CEQG: {
+                name: "Canadian Environmental Quality Guidelines (CEQG)",
+                description: "Science-based guidelines for protecting aquatic ecosystems and environmental health in Canada",
+                parameters: {
+                    // Chemical
+                    arsenic: { max: 0.005, unit: "mg/L", critical: { max: 0.005 } },
+                    chromium: { max: 0.0089, unit: "mg/L", critical: { max: 0.0089 } },
+                    lead: { max: 0.001, unit: "mg/L", critical: { max: 0.001 } },
+                    mercury: { max: 0.000026, unit: "mg/L", critical: { max: 0.000026 } },
+                    // Physical
+                    dissolved_oxygen: { min: 5.5, unit: "mg/L", critical: { min: 5.5 } },
+                    ph: { min: 6.5, max: 9.0, unit: "", critical: { min: 6.5, max: 9.0 } }
+                }
+            },
+            CWQG: {
+                name: "Canadian Water Quality Guidelines for the Protection of Aquatic Life",
+                description: "Scientific benchmarks for protecting freshwater and marine life in Canada",
+                parameters: {
+                    // Chemical
+                    ammonia: { max: 0.019, unit: "mg/L", critical: { max: 0.019 } },
+                    benzene: { max: 0.37, unit: "mg/L", critical: { max: 0.37 } },
+                    chloride: { max: 120, unit: "mg/L", critical: { max: 640 } },
+                    copper: { max: 0.002, unit: "mg/L", critical: { max: 0.002 } },
+                    nitrate: { max: 13, unit: "mg/L", critical: { max: 13 } },
+                    zinc: { max: 0.03, unit: "mg/L", critical: { max: 0.03 } }
+                }
+            },
+            ANZG: {
+                name: "Australian and New Zealand Guidelines for Fresh and Marine Water Quality (ANZG 2018)",
+                description: "Guidelines for managing water quality in Australia and New Zealand",
+                parameters: {
+                    // Physical
+                    ph: { min: 6.5, max: 8.0, unit: "", critical: { min: 6.5, max: 8.0 } },
+                    dissolved_oxygen: { min: 85, unit: "% saturation", critical: { min: 80 } },
+                    turbidity: { max: 10, unit: "NTU", critical: { max: 25 } },
+                    // Chemical
+                    aluminium: { max: 0.055, unit: "mg/L", critical: { max: 0.055 } },
+                    arsenic: { max: 0.013, unit: "mg/L", critical: { max: 0.013 } },
+                    copper: { max: 0.0014, unit: "mg/L", critical: { max: 0.0014 } },
+                    zinc: { max: 0.008, unit: "mg/L", critical: { max: 0.008 } }
+                }
+            },
+            NWQMS: {
+                name: "Australian National Water Quality Management Strategy (NWQMS)",
+                description: "Framework for water quality management in Australia to protect environmental values",
+                parameters: {
+                    // Nutrients
+                    total_nitrogen: { max: 0.5, unit: "mg/L", critical: { max: 1.0 } },
+                    total_phosphorus: { max: 0.05, unit: "mg/L", critical: { max: 0.1 } },
+                    // Physical
+                    conductivity: { max: 1500, unit: "µS/cm", critical: { max: 2200 } },
+                    suspended_solids: { max: 25, unit: "mg/L", critical: { max: 50 } }
+                }
+            },
+            ISO_5667: {
+                name: "ISO 5667-6 – Guidelines for sampling rivers and streams",
+                description: "International standard providing guidance on the design of sampling programmes for rivers and streams",
+                parameters: {
+                    // Sampling parameters
+                    flow_rate: { unit: "m³/s" },
+                    sampling_depth: { unit: "m" },
+                    sampling_frequency: { acceptableValues: ["daily", "weekly", "monthly", "quarterly"], unit: "" }
+                }
+            },
+            ISO_10870: {
+                name: "ISO 10870 – Classification of surface water bodies using biological elements",
+                description: "International standard for classifying water quality status based on biological indicators",
+                parameters: {
+                    // Biological indices
+                    biotic_index: { min: 0, max: 10, unit: "" },
+                    diversity_index: { min: 0, max: 5, unit: "" },
+                    ecological_quality_ratio: { min: 0, max: 1, unit: "" }
+                }
+            },
+            ISO_9408: {
+                name: "ISO 9408 – Evaluation of biodegradability of organic compounds in surface water",
+                description: "Standard method for evaluating the biodegradability of organic compounds in aquatic environments",
+                parameters: {
+                    // Biodegradability parameters
+                    biodegradation_rate: { min: 0, max: 100, unit: "%" },
+                    doc_removal: { min: 0, max: 100, unit: "%" },
+                    oxygen_uptake: { unit: "mg/L" }
+                }
+            }
+        };
+
+        // Parameter categories
+        const parameterCategories = {
+            microbiological: ["ecoli", "total_coliform", "fecal_coliforms", "enterococci", "pseudomonas", "heterotrophic_plate_count"],
+            physical: ["ph", "turbidity", "color", "tds", "conductivity", "temperature", "taste", "odor", "hardness", "dissolved_oxygen"],
+            chemicalInorganic: ["nitrate", "nitrite", "ammonia", "chloride", "sulfate", "fluoride", "iron", "manganese", "arsenic", "lead", "copper", "zinc", "aluminum", "selenium", "mercury", "cadmium", "chromium"],
+            chemicalOrganic: ["toc", "pesticides_total", "vocs", "benzene", "trichloroethylene", "tetrachloroethylene"],
+            radiological: ["gross_alpha", "gross_beta", "radium", "uranium"],
+            disinfectants: ["free_chlorine", "total_chlorine", "chlorine_dioxide", "thms", "haloacetic_acids", "bromate", "chlorite"]
+        };
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Hide parameter sections initially
+            document.querySelectorAll('.parameters-section').forEach(section => {
+                section.style.display = 'none';
+            });
+
+            const waterTypeCards = document.querySelectorAll('.water-type-card');
+            const waterTypeInput = document.getElementById('water-type');
+            const waterTypeDescription = document.getElementById('water-type-description');
+            const standardSelect = document.getElementById('water-standard');
+            const standardInfo = document.getElementById('standard-info');
+            const photoUpload = document.getElementById('photo-upload');
+            const uploadPhotoBtn = document.getElementById('upload-photo-btn');
+            const photoPreview = document.getElementById('photo-preview');
+            const photos = new Set();
+
+            // Set default sampling date and time
+            document.getElementById('sampling-date').value = new Date().toISOString().slice(0, 16);
+
+            // Water type selection
+            waterTypeCards.forEach(card => {
+                const type = card.dataset.type;
+                const typeInfo = waterTypes[type];
+                
+                // Add icon to card if not already present
+                if (typeInfo && typeInfo.icon) {
+                    const iconElement = card.querySelector('i');
+                    if (iconElement) {
+                        iconElement.className = `fas fa-${typeInfo.icon}`;
+                    }
+                }
+                
+                card.addEventListener('click', function() {
+                    const type = this.dataset.type;
+                    
+                    // Update selection visual
+                    waterTypeCards.forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    
+                    // Update hidden input
+                    waterTypeInput.value = type;
+                    
+                    // Show description
+                    const typeInfo = waterTypes[type];
+                    waterTypeDescription.innerHTML = `
+                        <p>${typeInfo.description}</p>
+                    `;
+                    waterTypeDescription.classList.add('active');
+                    
+                    // Update standards dropdown
+                    updateStandardsDropdown(type);
+                });
+            });
+
+            // Update standards dropdown based on water type
+            function updateStandardsDropdown(waterType) {
+                const applicableStandards = waterTypes[waterType].standards;
+                standardSelect.innerHTML = '<option value="">Select Water Quality Standard</option>';
+                
+                // Hide all parameter sections
+                document.querySelectorAll('.parameters-section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                applicableStandards.forEach(standardCode => {
+                    const standard = waterStandards[standardCode];
+                    if (standard) {
+                        // Only include standards that have actual water quality parameters
+                        // Skip standards that only relate to sampling procedures or methodology
+                        const hasQualityParameters = Object.keys(standard.parameters).some(param => {
+                            const paramDetails = standard.parameters[param];
+                            // Check if the parameter has limits, critical values, or acceptable values
+                            return (paramDetails.max !== undefined || 
+                                   paramDetails.min !== undefined || 
+                                   (paramDetails.critical && (paramDetails.critical.max !== undefined || paramDetails.critical.min !== undefined)) ||
+                                   paramDetails.acceptableValues !== undefined);
+                        });
+                        
+                        if (hasQualityParameters) {
+                            const option = document.createElement('option');
+                            option.value = standardCode;
+                            option.textContent = standard.name;
+                            standardSelect.appendChild(option);
+                        }
+                    }
+                });
+            }
+
+            // Create parameter input field
+            function createParameterInput(category, paramName, paramDetails) {
+                const gridContainer = document.getElementById(`${category}-grid`);
+                if (!gridContainer) return;
+                
+                const paramElement = document.createElement('div');
+                paramElement.classList.add('parameter-input');
+                
+                // Create label with unit and tooltip if available
+                let labelContent = paramName.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                let unitText = '';
+                let tooltipText = '';
+                
+                if (paramDetails) {
+                    // Add unit if available
+                    if (paramDetails.unit) {
+                        unitText = `<span class="unit">(${paramDetails.unit})</span>`;
+                    }
+                    
+                    // Add tooltip with limit information if available
+                    let limitInfo = [];
+                    if (paramDetails.min !== undefined && paramDetails.max !== undefined) {
+                        limitInfo.push(`Acceptable range: ${paramDetails.min} - ${paramDetails.max}`);
+                    } else if (paramDetails.min !== undefined) {
+                        limitInfo.push(`Minimum: ${paramDetails.min}`);
+                    } else if (paramDetails.max !== undefined) {
+                        limitInfo.push(`Maximum: ${paramDetails.max}`);
+                    }
+                    
+                    if (limitInfo.length > 0) {
+                        tooltipText = `
+                            <div class="info-tooltip">
+                                <i class="fas fa-info-circle"></i>
+                                <span class="tooltip-text">${limitInfo.join('<br>')}</span>
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Create input element with placeholder and validation
+                let inputAttributes = '';
+                if (paramDetails) {
+                    if (paramDetails.min !== undefined) {
+                        inputAttributes += ` min="${paramDetails.min}"`;
+                    }
+                    if (paramDetails.max !== undefined) {
+                        inputAttributes += ` max="${paramDetails.max}"`;
+                    }
+                    
+                    if (paramDetails.acceptableValues) {
+                        // For parameters with predefined values, create a select dropdown
+                        paramElement.innerHTML = `
+                            <label for="param-${paramName}">${labelContent} ${unitText} ${tooltipText}</label>
+                            <select id="param-${paramName}" name="${paramName}" class="form-control">
+                                <option value="">Select...</option>
+                                ${paramDetails.acceptableValues.map(val => `<option value="${val}">${val}</option>`).join('')}
+                            </select>
+                        `;
+                    } else {
+                        // For numeric parameters, create an input field
+                        paramElement.innerHTML = `
+                            <label for="param-${paramName}">${labelContent} ${unitText} ${tooltipText}</label>
+                            <input type="number" step="0.0001" id="param-${paramName}" name="${paramName}" 
+                                class="form-control" placeholder="Enter value" ${inputAttributes}>
+                        `;
+                    }
+                } else {
+                    // Generic input for parameters without detailed specifications
+                    paramElement.innerHTML = `
+                        <label for="param-${paramName}">${labelContent} ${unitText} ${tooltipText}</label>
+                        <input type="number" step="0.0001" id="param-${paramName}" name="${paramName}" 
+                            class="form-control" placeholder="Enter value">
+                    `;
+                }
+                
+                gridContainer.appendChild(paramElement);
+                return paramElement;
+            }
+
+            // Update parameter sections based on selected standard
+            standardSelect.addEventListener('change', function() {
+                const selectedStandard = this.value;
+                const standardData = waterStandards[selectedStandard];
+                
+                // Clear existing parameters
+                document.querySelectorAll('.parameters-grid').forEach(grid => {
+                    grid.innerHTML = '';
+                });
+                
+                // Hide all parameter sections
+                document.querySelectorAll('.parameters-section').forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                if (standardData) {
+                    // Show standard info with detailed summary of ALL parameters
+                    standardInfo.innerHTML = `
+                        <p><strong>${standardData.name}</strong> - ${standardData.description}</p>
+                        <div class="standard-summary">
+                            <h4>Key Parameters:</h4>
+                            <ul>
+                                ${Object.entries(standardData.parameters)
+                                    .map(([param, details]) => {
+                                        let limitText = '';
+                                        
+                                        if (details.min !== undefined && details.max !== undefined) {
+                                            limitText = `Range: ${details.min} - ${details.max} ${details.unit || ''}`;
+                                        } else if (details.min !== undefined) {
+                                            limitText = `Min: ${details.min} ${details.unit || ''}`;
+                                        } else if (details.max !== undefined) {
+                                            limitText = `Max: ${details.max} ${details.unit || ''}`;
+                                        } else if (details.acceptableValues) {
+                                            limitText = `Values: ${details.acceptableValues.join(', ')}`;
+                                        }
+                                        
+                                        return `<li>${param.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}: ${limitText}</li>`;
+                                    }).join('')
+                                }
+                            </ul>
+                        </div>
+                    `;
+                    standardInfo.style.display = 'block';
+                    
+                    // Create parameter inputs based on standard
+                    const parameters = standardData.parameters;
+                    const categoryParams = {
+                        microbiological: [],
+                        physical: [],
+                        chemicalInorganic: [],
+                        chemicalOrganic: [],
+                        radiological: [],
+                        disinfectants: []
+                    };
+                    
+                    // Categorize parameters
+                    Object.keys(parameters).forEach(paramName => {
+                        let category = null;
+                        
+                        // Find the category for this parameter
+                        for (const cat in parameterCategories) {
+                            if (parameterCategories[cat].includes(paramName)) {
+                                category = cat;
+                                break;
+                            }
+                        }
+                        
+                        // If category found, add parameter to that category
+                        if (category) {
+                            categoryParams[category].push({
+                                name: paramName,
+                                details: parameters[paramName]
+                            });
+                        }
+                    });
+                    
+                    // Create inputs for each category
+                    Object.keys(categoryParams).forEach(category => {
+                        const params = categoryParams[category];
+                        if (params.length > 0) {
+                            // Show this parameter section
+                            const section = document.getElementById(`${category}-parameters`);
+                            if (section) {
+                                section.style.display = 'block';
+                            }
+                            
+                            // Add parameters to the grid
+                            params.forEach(param => {
+                                createParameterInput(category, param.name, param.details);
+                            });
+                        }
+                    });
+                } else {
+                    standardInfo.style.display = 'none';
+                }
+            });
+
+            // Handle photo upload
+            uploadPhotoBtn.addEventListener('click', () => {
+                photoUpload.click();
+            });
+
+            photoUpload.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        // Add to our photo collection
+                        photos.add(file);
+                        
+                        // Create preview
+                        const reader = new FileReader();
+                        reader.onload = (function(theFile) {
+                            return function(e) {
+                                const photoItem = createPhotoPreview(e.target.result, theFile);
+                                photoPreview.appendChild(photoItem);
+                            };
+                        })(file);
+                        
+                        reader.readAsDataURL(file);
+                    }
+                });
+                
+                // Reset file input
+                photoUpload.value = '';
+            });
+
+            // Create photo preview element
+            function createPhotoPreview(src, file) {
+                const div = document.createElement('div');
+                div.className = 'photo-item';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-photo';
+                removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                removeBtn.onclick = () => {
+                    div.remove();
+                    photos.delete(file);
+                };
+                
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                return div;
+            }
+
+            // Form submission
+            const waterQualityForm = document.getElementById('water-quality-form');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            let editMode = false;
+            let reportId = null;
+
+            // Check if we're in edit mode by looking for an ID in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('id')) {
+                reportId = urlParams.get('id');
+                editMode = true;
+                // Load existing report data
+                loadExistingReport(reportId);
+            }
+
+            // Load existing report data for editing
+            function loadExistingReport(id) {
+                loadingOverlay.style.display = 'flex';
+                
+                firebase.database().ref('water-quality-reports/' + id).once('value')
+                    .then(snapshot => {
+                        if (snapshot.exists()) {
+                            const report = snapshot.val();
+                            
+                            // Update page title to show we're editing
+                            document.querySelector('.form-header h1').textContent = 'Edit Water Quality Report';
+                            
+                            // Select the water type
+                            const waterTypeCard = document.querySelector(`.water-type-card[data-type="${report.waterType}"]`);
+                            if (waterTypeCard) {
+                                waterTypeCard.click(); // This will trigger the card selection event
+                            }
+                            
+                            // Wait a bit for the standards dropdown to populate
+                            setTimeout(() => {
+                                // Select the water standard
+                                if (report.waterStandard) {
+                                    document.getElementById('water-standard').value = report.waterStandard;
+                                    // Trigger the change event to load parameters
+                                    const event = new Event('change');
+                                    document.getElementById('water-standard').dispatchEvent(event);
+                                }
+                                
+                                // Wait a bit for parameters to load
+                                setTimeout(() => {
+                                    // Set location and other general fields
+                                    document.getElementById('location').value = report.location || '';
+                                    
+                                    // Set sampling date
+                                    if (report.samplingDate) {
+                                        const date = new Date(report.samplingDate);
+                                        if (!isNaN(date.getTime())) {
+                                            document.getElementById('sampling-date').value = date.toISOString().slice(0, 16);
+                                        }
+                                    }
+                                    
+                                    document.getElementById('weather-conditions').value = report.weatherConditions || '';
+                                    
+                                    // Set parameter values
+                                    if (report.parameters) {
+                                        Object.entries(report.parameters).forEach(([param, value]) => {
+                                            const input = document.querySelector(`[name="${param}"]`);
+                                            if (input) {
+                                                input.value = value;
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Set observations and recommendations
+                                    document.getElementById('observations').value = report.observations || '';
+                                    document.getElementById('recommendations').value = report.recommendations || '';
+                                    
+                                    // Load photos
+                                    if (report.photoUrls && Array.isArray(report.photoUrls)) {
+                                        report.photoUrls.forEach(url => {
+                                            if (url) {
+                                                // Create a photo preview directly without fetching
+                                                const file = new File([new Blob()], 'report-photo.jpg', { type: 'image/jpeg' });
+                                                // Store the URL in the file object for later use
+                                                file.url = url;
+                                                
+                                                // Add to our photos collection
+                                                photos.add(file);
+                                                
+                                                // Create preview with the URL directly
+                                                const photoItem = createPhotoPreview(url, file);
+                                                photoPreview.appendChild(photoItem);
+                                            }
+                                        });
+                                    }
+                                    
+                                    // Hide loading overlay
+                                    loadingOverlay.style.display = 'none';
+                                }, 500);
+                            }, 300);
+                        } else {
+                            alert('Report not found. Redirecting to create new report.');
+                            window.location.href = 'water.html';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading report:', error);
+                        alert('Error loading report. Redirecting to create new report.');
+                        window.location.href = 'water.html';
+                    });
+            }
+
+            waterQualityForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Validate required fields
+                const waterType = waterTypeInput.value;
+                const waterStandard = standardSelect.value;
+                const location = document.getElementById('location').value;
+                const samplingDate = document.getElementById('sampling-date').value;
+                
+                if (!waterType || !waterStandard || !location || !samplingDate) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+                
+                // Show loading overlay
+                loadingOverlay.style.display = 'flex';
+                
+                try {
+                    // Collect all parameter values
+                    const parameters = {};
+                    const parameterInputs = document.querySelectorAll('.parameter-input input, .parameter-input select');
+                    
+                    parameterInputs.forEach(input => {
+                        const name = input.getAttribute('name');
+                        const value = input.value;
+                        
+                        if (name && value) {
+                            parameters[name] = value;
+                        }
+                    });
+                    
+                    // Calculate water quality status
+                    const status = calculateWaterQualityStatus(parameters, waterType, waterStandard);
+                    
+                    // Create report object
+                    const report = {
+                        waterType: waterType,
+                        waterStandard: waterStandard,
+                        location: location,
+                        samplingDate: new Date(samplingDate).toISOString(),
+                        weatherConditions: document.getElementById('weather-conditions').value,
+                        status: status,
+                        parameters: parameters,
+                        observations: document.getElementById('observations').value,
+                        recommendations: document.getElementById('recommendations').value,
+                        updatedAt: new Date().toISOString()
+                    };
+                    
+                    // If it's a new report, add created timestamp and user ID
+                    if (!editMode) {
+                        report.timestamp = new Date().toISOString();
+                        report.createdBy = firebase.auth().currentUser.uid;
+                    }
+                    
+                    // Upload photos if any
+                    if (photos.size > 0) {
+                        const photoUrls = [];
+                        
+                        for (const file of photos) {
+                            // Skip files that are already uploaded (for edit mode)
+                            if (file.url) {
+                                photoUrls.push(file.url);
+                                continue;
+                            }
+                            
+                            const storageRef = firebase.storage().ref('water-quality-reports/' + 
+                                                                  new Date().getTime() + '-' + file.name);
+                            
+                            // Upload the file
+                            const uploadTask = await storageRef.put(file);
+                            
+                            // Get the download URL
+                            const downloadUrl = await uploadTask.ref.getDownloadURL();
+                            photoUrls.push(downloadUrl);
+                        }
+                        
+                        // Add photo URLs to report
+                        if (photoUrls.length > 0) {
+                            report.photoUrls = photoUrls;
+                        }
+                    }
+                    
+                    // Save report to Firebase - either update existing or create new
+                    let dbRef;
+                    if (editMode && reportId) {
+                        dbRef = firebase.database().ref('water-quality-reports/' + reportId);
+                        await dbRef.update(report);
+                        alert('Water quality report updated successfully!');
+                    } else {
+                        dbRef = firebase.database().ref('water-quality-reports').push();
+                        await dbRef.set(report);
+                        alert('Water quality report created successfully!');
+                    }
+                    
+                    // Redirect to board page after successful submission
+                    window.location.href = 'water-board.html';
+                    
+                } catch (error) {
+                    console.error('Error saving report:', error);
+                    alert('An error occurred while saving the report. Please try again.');
+                    
+                    // Hide loading overlay
+                    loadingOverlay.style.display = 'none';
+                }
+            });
+
+            // Function to calculate water quality status
+            function calculateWaterQualityStatus(parameters, waterType, standard) {
+                let criticalParams = 0;
+                let warningParams = 0;
+
+                const selectedStandard = waterStandards[standard];
+                if (!selectedStandard) return 'normal'; // Default to normal if no standard selected
+
+                Object.entries(selectedStandard.parameters).forEach(([param, limits]) => {
+                    if (!parameters[param]) return;
+
+                    const value = parseFloat(parameters[param]);
+                    if (isNaN(value)) return;
+                    
+                    // Check critical limits
+                    if (limits.critical) {
+                        if (limits.critical.min !== undefined && value < limits.critical.min) criticalParams++;
+                        if (limits.critical.max !== undefined && value > limits.critical.max) criticalParams++;
+                    }
+
+                    // Check warning limits
+                    if (limits.min && value < limits.min) warningParams++;
+                    if (limits.max && value > limits.max) warningParams++;
+                });
+
+                if (criticalParams > 0) return 'critical';
+                if (warningParams > 0) return 'warning';
+                return 'normal';
+            }
+        });
+    </script>
+</body>
+</html>

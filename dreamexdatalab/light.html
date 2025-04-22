@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>Lighting Calculator - HSE System</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .calculator-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .calculator-header {
+            margin-bottom: 30px;
+        }
+
+        .calculator-form {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .room-types {
+            margin-top: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .dimensions-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .dimension-input input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .area-result {
+            grid-column: 1 / -1;
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .area-result label {
+            margin-bottom: 5px;
+        }
+
+        #roomArea {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        h3 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .light-bulbs-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .lumen-result, .bulbs-result {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        #requiredLumens {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 5px;
+        }
+
+        .bulb-entry {
+            display: grid;
+            grid-template-columns: 1fr auto auto;
+            gap: 10px;
+            align-items: start;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .bulb-content {
+            display: grid;
+            gap: 10px;
+        }
+
+        .bulb-type-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .quantity-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .bulb-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-bulb-btn, .remove-bulb-btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .add-bulb-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .remove-bulb-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .bulb-result {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .auto-calculate-btn {
+            padding: 12px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 15px;
+            width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        .auto-calculate-btn:hover {
+            background-color: #45a049;
+        }
+
+        .placement-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .placement-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .spacing-info, .grid-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .ceiling-grid {
+            aspect-ratio: 1;
+            border: 2px solid #ddd;
+            position: relative;
+            margin: 20px auto;
+            max-width: 800px;
+            background: #fcfcfc;
+            padding: 40px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .bulb-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+
+        .legend-bulb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .legend-bulb::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            top: -4px;
+            left: -4px;
+            border-radius: 50%;
+            background: radial-gradient(circle, currentColor 0%, transparent 70%);
+            opacity: 0.2;
+        }
+
+        .legend-text {
+            font-size: 0.9em;
+            color: #333;
+        }
+
+        /* Bulb type specific styles */
+        .bulb-led {
+            color: #4CAF50;
+        }
+
+        .bulb-fluorescent {
+            color: #2196F3;
+        }
+
+        .bulb-halogen {
+            color: #FFC107;
+        }
+
+        .grid-background {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            bottom: 40px;
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            pointer-events: none;
+        }
+
+        .bulb-point {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bulb-point::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: currentColor;
+            border-radius: 50%;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        .bulb-point::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            left: -50%;
+            top: -50%;
+            background: radial-gradient(circle, currentColor 0%, transparent 70%);
+            opacity: 0.15;
+            border-radius: 50%;
+        }
+
+        .bulb-point:hover {
+            transform: translate(-50%, -50%) scale(1.1);
+        }
+
+        .bulb-point:hover::after {
+            opacity: 0.25;
+        }
+
+        /* Standard-specific bulb colors */
+        .bulb-point.ies {
+            color: #ffd700;
+        }
+
+        .bulb-point.en12464 {
+            color: #4CAF50;
+        }
+
+        .bulb-point.iso {
+            color: #2196F3;
+        }
+
+        .bulb-point.as2560 {
+            color: #9C27B0;
+        }
+
+        .grid-line {
+            position: absolute;
+            background: #eee;
+        }
+
+        .grid-dimension {
+            position: absolute;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .grid-measurement {
+            position: absolute;
+            font-size: 11px;
+            color: #444;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 2px 4px;
+            border-radius: 2px;
+            pointer-events: none;
+        }
+
+        .measurement-line {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .dimension-line {
+            position: absolute;
+            background: #333;
+            height: 1px;
+            pointer-events: none;
+        }
+
+        .dimension-line.vertical {
+            width: 1px;
+            height: auto;
+        }
+
+        .extension-line {
+            position: absolute;
+            background: #333;
+            pointer-events: none;
+        }
+
+        .extension-line.horizontal {
+            width: 1px;
+            height: 6px;
+        }
+
+        .extension-line.vertical {
+            height: 1px;
+            width: 6px;
+        }
+
+        .dimension-text {
+            position: absolute;
+            background: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #333;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            border: 1px solid #ddd;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        .ceiling-grid {
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        /* Update existing measurement styles */
+        .grid-measurement {
+            display: none; /* Hide old measurements */
+        }
+
+        .measurement-line.horizontal,
+        .measurement-line.vertical {
+            border: none;
+        }
+
+        .dimension-text {
+            position: absolute;
+            background: white;
+            padding: 4px 8px;
+            font-size: 12px;
+            color: #333;
+            border-radius: 4px;
+            white-space: nowrap;
+            pointer-events: none;
+            border: 1px solid #ddd;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 2;
+        }
+
+        .measurement-arrow {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-width: 0 2px 2px 0;
+            border-style: solid;
+            border-color: #333;
+        }
+
+        .measurement-arrow.start {
+            transform: rotate(135deg);
+        }
+
+        .measurement-arrow.end {
+            transform: rotate(-45deg);
+        }
+
+        .room-outline {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            right: 40px;
+            bottom: 40px;
+            border: 2px solid #333;
+            pointer-events: none;
+        }
+
+        .wall-label {
+            position: absolute;
+            background: #f8f9fa;
+            padding: 2px 6px;
+            font-size: 11px;
+            color: #666;
+            border-radius: 2px;
+        }
+
+        .wall-label.top {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .wall-label.bottom {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .wall-label.left {
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+        }
+
+        .wall-label.right {
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%) rotate(90deg);
+        }
+
+        .submit-report-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-report-btn:hover {
+            background-color: #0056b3;
+        }
+
+        .form-actions {
+            margin-top: 20px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            text-align: right;
+        }
+
+        .submit-report-btn {
+            padding: 10px 20px;
+        }
+
+        .submit-report-btn i {
+            margin-right: 8px;
+        }
+
+        .calculator-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .save-calc-btn, .load-calc-btn {
+            padding: 8px 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .saved-calc-item {
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin: 5px 0;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .saved-calc-item button {
+            padding: 5px 10px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="header-placeholder"></div>
+
+    <main class="calculator-container">
+        <div class="calculator-header">
+            <h1>Lighting Calculator</h1>
+        </div>
+
+        <div class="calculator-controls">
+            <button class="save-calc-btn" onclick="saveCalculation()">
+                <i class="fas fa-save"></i> Save Calculation
+            </button>
+            <button class="load-calc-btn" onclick="showLoadDialog()">
+                <i class="fas fa-folder-open"></i> Load Saved
+            </button>
+        </div>
+
+        <div class="calculator-form">
+            <div class="form-group">
+                <label for="reportName">Report Name:</label>
+                <input type="text" id="reportName" placeholder="Enter a name for this report" class="form-control">
+            </div>
+            
+            <div class="form-group">
+                <label for="standard">Lighting Standard:</label>
+                <select id="standard" onchange="updateRoomTypes()">
+                    <option value="">Select a standard...</option>
+                    <option value="iso">ISO Standard</option>
+                    <option value="en">European Standard (EN 12464-1)</option>
+                    <option value="ies">IES Standard (North America)</option>
+                    <option value="as">Australian Standard (AS/NZS 1680)</option>
+                </select>
+            </div>
+
+            <div class="form-group room-types hidden" id="isoRooms">
+                <label for="isoRoomType">Room Type (ISO):</label>
+                <select id="isoRoomType">
+                    <option value="">Select room type...</option>
+                    <option value="bedroom">Bedroom (100 lux)</option>
+                    <option value="office">Office (500 lux)</option>
+                    <option value="classroom">Classroom (300 lux)</option>
+                    <option value="corridor">Corridor (100 lux)</option>
+                </select>
+            </div>
+
+            <div class="form-group room-types hidden" id="enRooms">
+                <label for="enRoomType">Room Type (EN):</label>
+                <select id="enRoomType">
+                    <option value="">Select room type...</option>
+                    <option value="bedroom">Bedroom (150 lux)</option>
+                    <option value="office">Office (500 lux)</option>
+                    <option value="classroom">Classroom (300 lux)</option>
+                    <option value="corridor">Corridor (100 lux)</option>
+                </select>
+            </div>
+
+            <div class="form-group room-types hidden" id="iesRooms">
+                <label for="iesRoomType">Room Type (IES):</label>
+                <select id="iesRoomType">
+                    <option value="">Select room type...</option>
+                    <option value="bedroom">Bedroom (150 lux)</option>
+                    <option value="office">Office (500 lux)</option>
+                    <option value="classroom">Classroom (400 lux)</option>
+                    <option value="corridor">Corridor (150 lux)</option>
+                </select>
+            </div>
+
+            <div class="form-group room-types hidden" id="asRooms">
+                <label for="asRoomType">Room Type (AS/NZS):</label>
+                <select id="asRoomType">
+                    <option value="">Select room type...</option>
+                    <option value="bedroom">Bedroom (160 lux)</option>
+                    <option value="office">Office (320 lux)</option>
+                    <option value="classroom">Classroom (320 lux)</option>
+                    <option value="corridor">Corridor (160 lux)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="dimensionsSection">
+                <h3>Room Dimensions</h3>
+                <div class="dimensions-grid">
+                    <div class="dimension-input">
+                        <label for="roomLength">Length (meters):</label>
+                        <input type="number" id="roomLength" min="0" step="0.1" onchange="calculateArea()">
+                    </div>
+                    <div class="dimension-input">
+                        <label for="roomWidth">Width (meters):</label>
+                        <input type="number" id="roomWidth" min="0" step="0.1" onchange="calculateArea()">
+                    </div>
+                    <div class="dimension-input">
+                        <label for="roomHeight">Height (meters):</label>
+                        <input type="number" id="roomHeight" min="0" step="0.1" onchange="calculateArea()">
+                    </div>
+                    <div class="area-result">
+                        <label>Floor Area:</label>
+                        <div id="roomArea">0 m²</div>
+                    </div>
+                    <div class="area-result">
+                        <label>Volume:</label>
+                        <div id="roomVolume">0 m³</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="lightBulbsSection">
+                <h3>Light Bulbs</h3>
+                <div class="light-bulbs-grid">
+                    <div class="lumen-result">
+                        <label>Required Lumens:</label>
+                        <div id="requiredLumens">0 lumens</div>
+                    </div>
+                    <button class="auto-calculate-btn" onclick="autoCalculateBulbs()">
+                        <i class="fas fa-magic"></i> Auto-Calculate Optimal Bulb Distribution
+                    </button>
+                    <div id="bulbEntriesContainer">
+                        <!-- Bulb entries will be added here -->
+                    </div>
+                    <button class="add-bulb-btn" onclick="addBulbEntry()">
+                        <i class="fas fa-plus"></i> Add Light Bulb Type
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group" id="bulbPlacementSection">
+                <h3>Bulb Placement</h3>
+                <div class="placement-container">
+                    <div class="placement-standard-selector">
+                        <label for="placementStandard">Placement Standard:</label>
+                        <select id="placementStandard" onchange="calculateBulbPlacement()">
+                            <option value="ies">IES (North American Standard)</option>
+                            <option value="en12464">EN 12464-1 (European Standard)</option>
+                            <option value="iso">ISO Standard</option>
+                            <option value="as2560">AS/NZS 2560 (Australian/NZ Standard)</option>
+                        </select>
+                    </div>
+                    <div class="placement-info">
+                        <div class="spacing-info">
+                            <label>Recommended Spacing:</label>
+                            <div id="spacingInfo">-</div>
+                        </div>
+                        <div class="grid-info">
+                            <label>Grid Layout:</label>
+                            <div id="gridInfo">-</div>
+                        </div>
+                    </div>
+                    <div class="standards-info">
+                        <h4>Standard-Specific Guidelines</h4>
+                        <div id="standardGuidelines" class="technical-info">
+                            <!-- Guidelines will be updated based on selected standard -->
+                        </div>
+                        <div id="rcr-info" class="technical-info">Room Cavity Ratio: -</div>
+                        <div id="uniformity-info" class="technical-info">Uniformity Ratio: -</div>
+                    </div>
+                    <div class="ceiling-grid" id="ceilingGrid">
+                        <!-- Grid will be generated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group" id="submitSection">
+                <button class="submit-report-btn" onclick="submitReport()">
+                    <i class="fas fa-paper-plane"></i> Submit Lighting Report
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <div id="loadDialog" class="modal hidden">
+        <div class="modal-content">
+            <h3>Saved Calculations</h3>
+            <div id="savedCalcsList"></div>
+            <button class="close-modal-btn" onclick="closeLoadDialog()">Close</button>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <!-- Custom scripts -->
+    <script src="js/header-loader.js"></script>
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCUTmTn0rRBb0M-UkQJxnUMrWqXYU_BgIc",
+            authDomain: "users-8be65.firebaseapp.com",
+            databaseURL: "https://users-8be65-default-rtdb.firebaseio.com",
+            projectId: "users-8be65",
+            storageBucket: "users-8be65.firebasestorage.app",
+            messagingSenderId: "829083030831",
+            appId: "1:829083030831:web:36a370e62691e560bc3dda"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
+
+        // Check authentication
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = 'login.html';
+            }
+        });
+
+        function updateRoomTypes() {
+            // Hide all room type selectors
+            document.querySelectorAll('.room-types').forEach(el => {
+                el.classList.add('hidden');
+            });
+
+            // Show the relevant room type selector based on the selected standard
+            const standard = document.getElementById('standard').value;
+            if (standard) {
+                document.getElementById(standard + 'Rooms').classList.remove('hidden');
+                calculateRequiredLumens();
+            }
+        }
+
+        function getLuxForRoom(standard, roomType) {
+            const luxValues = {
+                'iso': {
+                    'bedroom': 100,
+                    'office': 500,
+                    'classroom': 300,
+                    'corridor': 100
+                },
+                'en': {
+                    'bedroom': 150,
+                    'office': 500,
+                    'classroom': 300,
+                    'corridor': 100
+                },
+                'ies': {
+                    'bedroom': 150,
+                    'office': 500,
+                    'classroom': 400,
+                    'corridor': 150
+                },
+                'as': {
+                    'bedroom': 160,
+                    'office': 320,
+                    'classroom': 320,
+                    'corridor': 160
+                }
+            };
+
+            return luxValues[standard]?.[roomType] || 0;
+        }
+
+        function getBulbTypeSelectHTML() {
+            return `
+                <div class="bulb-type-row">
+                    <select class="bulb-type-select" onchange="calculateAllBulbs()">
+                        <option value="">Select bulb type...</option>
+                        <option value="led-600">LED 600 lumens (7W)</option>
+                        <option value="led-800">LED 800 lumens (9W)</option>
+                        <option value="led-1100">LED 1100 lumens (12W)</option>
+                        <option value="led-1600">LED 1600 lumens (15W)</option>
+                        <option value="fluorescent-1200">Fluorescent 1200 lumens (18W)</option>
+                        <option value="fluorescent-2000">Fluorescent 2000 lumens (30W)</option>
+                        <option value="halogen-800">Halogen 800 lumens (50W)</option>
+                        <option value="halogen-1200">Halogen 1200 lumens (70W)</option>
+                    </select>
+                    <input type="number" class="quantity-input" min="0" value="0" placeholder="Quantity" onchange="calculateAllBulbs()">
+                </div>
+            `;
+        }
+
+        function createBulbEntry() {
+            const entry = document.createElement('div');
+            entry.className = 'bulb-entry';
+            entry.innerHTML = `
+                <div class="bulb-content">
+                    <label>Select Bulb Type:</label>
+                    ${getBulbTypeSelectHTML()}
+                    <div class="bulb-result">Suggested: 0 bulbs | Using: 0 bulbs</div>
+                </div>
+                <div class="bulb-controls">
+                    <button class="remove-bulb-btn" onclick="removeBulbEntry(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            return entry;
+        }
+
+        function addBulbEntry() {
+            const container = document.getElementById('bulbEntriesContainer');
+            const entry = createBulbEntry();
+            container.appendChild(entry);
+            calculateAllBulbs();
+        }
+
+        function removeBulbEntry(button) {
+            const entry = button.closest('.bulb-entry');
+            entry.remove();
+            calculateAllBulbs();
+        }
+
+        function getBulbLumens(bulbType) {
+            const lumensMap = {
+                'led-600': 600,
+                'led-800': 800,
+                'led-1100': 1100,
+                'led-1600': 1600,
+                'fluorescent-1200': 1200,
+                'fluorescent-2000': 2000,
+                'halogen-800': 800,
+                'halogen-1200': 1200
+            };
+            return lumensMap[bulbType] || 0;
+        }
+
+        function calculateRequiredLumens() {
+            const area = parseFloat(document.getElementById('roomArea').textContent) || 0;
+            const standard = document.getElementById('standard').value;
+            const roomTypeElement = document.getElementById(standard + 'RoomType');
+            const roomType = roomTypeElement ? roomTypeElement.value : '';
+            
+            const luxValue = getLuxForRoom(standard, roomType);
+            const requiredLumens = area * luxValue;
+            
+            document.getElementById('requiredLumens').textContent = Math.ceil(requiredLumens) + ' lumens';
+            calculateAllBulbs();
+        }
+
+        function calculateAllBulbs() {
+            const requiredLumens = parseInt(document.getElementById('requiredLumens').textContent) || 0;
+            const entries = document.querySelectorAll('.bulb-entry');
+            let totalLumens = 0;
+            
+            entries.forEach(entry => {
+                const select = entry.querySelector('.bulb-type-select');
+                const quantityInput = entry.querySelector('.quantity-input');
+                const resultDiv = entry.querySelector('.bulb-result');
+                const bulbType = select.value;
+                const bulbLumens = getBulbLumens(bulbType);
+                const manualQuantity = parseInt(quantityInput.value) || 0;
+                
+                const suggestedBulbs = bulbLumens > 0 ? Math.ceil(requiredLumens / bulbLumens) : 0;
+                const actualLumens = bulbLumens * manualQuantity;
+                totalLumens += actualLumens;
+                
+                resultDiv.textContent = `Suggested: ${suggestedBulbs} bulbs | Using: ${manualQuantity} bulbs`;
+            });
+
+            // Update total lumens status
+            const totalLumensStatus = document.getElementById('totalLumensStatus');
+            if (!totalLumensStatus) {
+                const statusDiv = document.createElement('div');
+                statusDiv.id = 'totalLumensStatus';
+                statusDiv.className = 'lumen-result';
+                statusDiv.style.marginTop = '20px';
+                document.querySelector('.light-bulbs-grid').appendChild(statusDiv);
+            }
+            
+            const percentage = (totalLumens / requiredLumens * 100).toFixed(1);
+            const statusClass = totalLumens >= requiredLumens ? 'success' : 'warning';
+            document.getElementById('totalLumensStatus').innerHTML = `
+                <div>Total Provided: ${totalLumens} lumens</div>
+                <div style="color: ${statusClass === 'success' ? 'green' : 'orange'}">
+                    ${percentage}% of required illumination
+                </div>
+            `;
+
+            calculateBulbPlacement();
+        }
+
+        function autoCalculateBulbs() {
+            const requiredLumens = parseInt(document.getElementById('requiredLumens').textContent) || 0;
+            if (requiredLumens <= 0) {
+                alert('Please set room dimensions and type first to calculate required lumens.');
+                return;
+            }
+
+            // Clear existing entries
+            const container = document.getElementById('bulbEntriesContainer');
+            container.innerHTML = '';
+
+            // Get all available bulb types sorted by lumens (highest to lowest)
+            const bulbTypes = [
+                { type: 'led-1600', lumens: 1600, name: 'LED 1600 lumens (15W)' },
+                { type: 'fluorescent-2000', lumens: 2000, name: 'Fluorescent 2000 lumens (30W)' },
+                { type: 'led-1100', lumens: 1100, name: 'LED 1100 lumens (12W)' },
+                { type: 'fluorescent-1200', lumens: 1200, name: 'Fluorescent 1200 lumens (18W)' },
+                { type: 'led-800', lumens: 800, name: 'LED 800 lumens (9W)' },
+                { type: 'halogen-1200', lumens: 1200, name: 'Halogen 1200 lumens (70W)' },
+                { type: 'led-600', lumens: 600, name: 'LED 600 lumens (7W)' },
+                { type: 'halogen-800', lumens: 800, name: 'Halogen 800 lumens (50W)' }
+            ].sort((a, b) => b.lumens - a.lumens);
+
+            let remainingLumens = requiredLumens;
+            const distribution = [];
+
+            // First pass: use larger bulbs to cover most of the area
+            bulbTypes.forEach(bulb => {
+                if (remainingLumens > 0) {
+                    const count = Math.floor(remainingLumens / bulb.lumens);
+                    if (count > 0) {
+                        distribution.push({
+                            type: bulb.type,
+                            count: count,
+                            lumens: bulb.lumens
+                        });
+                        remainingLumens -= count * bulb.lumens;
+                    }
+                }
+            });
+
+            // Second pass: cover remaining lumens with smallest suitable bulb
+            if (remainingLumens > 0) {
+                const smallestBulb = bulbTypes[bulbTypes.length - 1];
+                const extraCount = Math.ceil(remainingLumens / smallestBulb.lumens);
+                distribution.push({
+                    type: smallestBulb.type,
+                    count: extraCount,
+                    lumens: smallestBulb.lumens
+                });
+            }
+
+            // Create entries for each bulb in the distribution
+            distribution.forEach(item => {
+                const entry = createBulbEntry();
+                container.appendChild(entry);
+                
+                // Set the values
+                const select = entry.querySelector('.bulb-type-select');
+                const quantityInput = entry.querySelector('.quantity-input');
+                
+                select.value = item.type;
+                quantityInput.value = item.count;
+            });
+
+            // Recalculate totals
+            calculateAllBulbs();
+        }
+
+        function calculateArea() {
+            const length = parseFloat(document.getElementById('roomLength').value) || 0;
+            const width = parseFloat(document.getElementById('roomWidth').value) || 0;
+            const height = parseFloat(document.getElementById('roomHeight').value) || 0;
+            
+            const area = length * width;
+            const volume = length * width * height;
+            
+            document.getElementById('roomArea').textContent = area.toFixed(2) + ' m²';
+            document.getElementById('roomVolume').textContent = volume.toFixed(2) + ' m³';
+            calculateRequiredLumens();
+            calculateBulbPlacement();
+        }
+
+        function calculateRCR(length, width, height, mountingHeight) {
+            // Room Cavity Ratio calculation based on IES standards
+            const rcr = (5 * height * (length + width)) / (length * width);
+            return rcr;
+        }
+
+        function calculateSpacingCriteria(mountingHeight) {
+            // IES recommended spacing-to-mounting-height ratio
+            // Typically 1.0 to 1.5 for uniform illumination
+            return 1.2 * mountingHeight; // Using 1.2 as a balanced ratio
+        }
+
+        function getStandardGuidelines(standard) {
+            const guidelines = {
+                'ies': {
+                    name: 'IES (North American Standard)',
+                    spacing: 'Spacing-to-mounting-height ratio: 1.0 to 1.5',
+                    uniformity: 'Max/Min uniformity ratio should not exceed 3:1',
+                    mounting: 'Recommended mounting height: 0.5m below ceiling',
+                    notes: 'Uses Room Cavity Ratio (RCR) for room proportions'
+                },
+                'en12464': {
+                    name: 'EN 12464-1 (European Standard)',
+                    spacing: 'Maximum spacing determined by luminaire photometry',
+                    uniformity: 'Minimum uniformity ratio (Emin/Eavg): 0.6',
+                    mounting: 'Mounting height based on UGR (Unified Glare Rating)',
+                    notes: 'Emphasizes visual comfort and energy efficiency'
+                },
+                'iso': {
+                    name: 'ISO Standard',
+                    spacing: 'Spacing factor based on luminaire classification',
+                    uniformity: 'Minimum uniformity ratio: 0.7',
+                    mounting: 'Flexible mounting height based on application',
+                    notes: 'Focuses on maintainability and sustainability'
+                },
+                'as2560': {
+                    name: 'AS/NZS 2560 (Australian/NZ Standard)',
+                    spacing: 'Spacing based on illuminance uniformity requirements',
+                    uniformity: 'Minimum uniformity ratio: 0.5',
+                    mounting: 'Mounting height varies by application class',
+                    notes: 'Considers ambient light and glare control'
+                }
+            };
+            return guidelines[standard] || guidelines['ies'];
+        }
+
+        function calculateSpacingByStandard(standard, mountingHeight, length, width) {
+            const spacingFactors = {
+                'ies': 1.2,              // IES typical spacing criterion
+                'en12464': 1.3,          // EN 12464-1 recommended
+                'iso': 1.4,              // ISO standard spacing
+                'as2560': 1.25           // AS/NZS typical spacing
+            };
+            
+            const uniformityRatios = {
+                'ies': 0.33,             // 3:1 max/min ratio
+                'en12464': 0.6,          // European standard
+                'iso': 0.7,              // ISO standard
+                'as2560': 0.5            // Australian standard
+            };
+
+            return {
+                maxSpacing: mountingHeight * (spacingFactors[standard] || 1.2),
+                uniformityRatio: uniformityRatios[standard] || 0.6
+            };
+        }
+
+        function addGridMeasurements(grid, spacingX, spacingY, length, width, rows, cols) {
+            // Add horizontal measurements
+            for (let row = 0; row <= rows; row++) {
+                const y = (row * spacingY / width) * 100;
+                
+                if (row < rows) {
+                    // Create dimension line
+                    const dimensionLine = document.createElement('div');
+                    dimensionLine.className = 'dimension-line';
+                    dimensionLine.style.left = '0';
+                    dimensionLine.style.width = '100%';
+                    dimensionLine.style.top = ((row * spacingY / width) * 100 + (spacingY / width * 50)) + '%';
+                    grid.appendChild(dimensionLine);
+
+                    // Create extension lines
+                    const leftExtension = document.createElement('div');
+                    leftExtension.className = 'extension-line horizontal';
+                    leftExtension.style.left = '0';
+                    leftExtension.style.top = ((row * spacingY / width) * 100 + (spacingY / width * 50)) + '%';
+                    leftExtension.style.transform = 'translateY(-50%)';
+                    grid.appendChild(leftExtension);
+
+                    const rightExtension = document.createElement('div');
+                    rightExtension.className = 'extension-line horizontal';
+                    rightExtension.style.right = '0';
+                    rightExtension.style.top = ((row * spacingY / width) * 100 + (spacingY / width * 50)) + '%';
+                    rightExtension.style.transform = 'translateY(-50%)';
+                    grid.appendChild(rightExtension);
+
+                    // Add measurement text
+                    const measure = document.createElement('div');
+                    measure.className = 'dimension-text';
+                    measure.textContent = spacingY.toFixed(2) + ' m';
+                    measure.style.top = ((row * spacingY / width) * 100 + (spacingY / width * 50)) + '%';
+                    measure.style.right = '-35px';
+                    measure.style.transform = 'translateY(-50%)';
+                    grid.appendChild(measure);
+                }
+            }
+
+            // Add vertical measurements
+            for (let col = 0; col <= cols; col++) {
+                const x = (col * spacingX / length) * 100;
+                
+                if (col < cols) {
+                    // Create dimension line
+                    const dimensionLine = document.createElement('div');
+                    dimensionLine.className = 'dimension-line vertical';
+                    dimensionLine.style.top = '0';
+                    dimensionLine.style.height = '100%';
+                    dimensionLine.style.left = ((col * spacingX / length) * 100 + (spacingX / length * 50)) + '%';
+                    grid.appendChild(dimensionLine);
+
+                    // Create extension lines
+                    const topExtension = document.createElement('div');
+                    topExtension.className = 'extension-line vertical';
+                    topExtension.style.top = '0';
+                    topExtension.style.left = ((col * spacingX / length) * 100 + (spacingX / length * 50)) + '%';
+                    topExtension.style.transform = 'translateX(-50%)';
+                    grid.appendChild(topExtension);
+
+                    const bottomExtension = document.createElement('div');
+                    bottomExtension.className = 'extension-line vertical';
+                    bottomExtension.style.bottom = '0';
+                    bottomExtension.style.left = ((col * spacingX / length) * 100 + (spacingX / length * 50)) + '%';
+                    bottomExtension.style.transform = 'translateX(-50%)';
+                    grid.appendChild(bottomExtension);
+
+                    // Add measurement text
+                    const measure = document.createElement('div');
+                    measure.className = 'dimension-text';
+                    measure.textContent = spacingX.toFixed(2) + ' m';
+                    measure.style.left = ((col * spacingX / length) * 100 + (spacingX / length * 50)) + '%';
+                    measure.style.bottom = '-25px';
+                    measure.style.transform = 'translateX(-50%)';
+                    grid.appendChild(measure);
+                }
+            }
+
+            // Add wall offset measurements
+            // Left wall
+            const leftWallMeasure = document.createElement('div');
+            leftWallMeasure.className = 'dimension-text';
+            leftWallMeasure.textContent = (spacingX / 2).toFixed(2) + ' m';
+            leftWallMeasure.style.left = '0';
+            leftWallMeasure.style.top = '-25px';
+            leftWallMeasure.style.transform = 'translateX(-50%)';
+            grid.appendChild(leftWallMeasure);
+
+            // Right wall
+            const rightWallMeasure = document.createElement('div');
+            rightWallMeasure.className = 'dimension-text';
+            rightWallMeasure.textContent = (spacingX / 2).toFixed(2) + ' m';
+            rightWallMeasure.style.right = '0';
+            rightWallMeasure.style.top = '-25px';
+            rightWallMeasure.style.transform = 'translateX(50%)';
+            grid.appendChild(rightWallMeasure);
+
+            // Top wall
+            const topWallMeasure = document.createElement('div');
+            topWallMeasure.className = 'dimension-text';
+            topWallMeasure.textContent = (spacingY / 2).toFixed(2) + ' m';
+            topWallMeasure.style.left = '-35px';
+            topWallMeasure.style.top = '0';
+            topWallMeasure.style.transform = 'translateY(-50%)';
+            grid.appendChild(topWallMeasure);
+
+            // Bottom wall
+            const bottomWallMeasure = document.createElement('div');
+            bottomWallMeasure.className = 'dimension-text';
+            bottomWallMeasure.textContent = (spacingY / 2).toFixed(2) + ' m';
+            bottomWallMeasure.style.left = '-35px';
+            bottomWallMeasure.style.bottom = '0';
+            bottomWallMeasure.style.transform = 'translateY(50%)';
+            grid.appendChild(bottomWallMeasure);
+
+            // Add room dimensions
+            const roomWidthMeasure = document.createElement('div');
+            roomWidthMeasure.className = 'dimension-text';
+            roomWidthMeasure.textContent = width.toFixed(2) + ' m';
+            roomWidthMeasure.style.left = '-35px';
+            roomWidthMeasure.style.top = '50%';
+            roomWidthMeasure.style.transform = 'translateY(-50%) rotate(-90deg)';
+            roomWidthMeasure.style.transformOrigin = 'right center';
+            grid.appendChild(roomWidthMeasure);
+
+            const roomLengthMeasure = document.createElement('div');
+            roomLengthMeasure.className = 'dimension-text';
+            roomLengthMeasure.textContent = length.toFixed(2) + ' m';
+            roomLengthMeasure.style.left = '50%';
+            roomLengthMeasure.style.bottom = '-25px';
+            roomLengthMeasure.style.transform = 'translateX(-50%)';
+            grid.appendChild(roomLengthMeasure);
+        }
+
+        function calculateBulbPlacement() {
+            const length = parseFloat(document.getElementById('roomLength').value) || 0;
+            const width = parseFloat(document.getElementById('roomWidth').value) || 0;
+            const height = parseFloat(document.getElementById('roomHeight').value) || 0;
+            const totalBulbs = Array.from(document.querySelectorAll('.quantity-input'))
+                .reduce((sum, input) => sum + (parseInt(input.value) || 0), 0);
+            const standard = document.getElementById('placementStandard').value;
+
+            if (length <= 0 || width <= 0 || height <= 0 || totalBulbs <= 0) {
+                document.getElementById('spacingInfo').textContent = 'Please enter room dimensions and add bulbs';
+                document.getElementById('gridInfo').textContent = '-';
+                document.getElementById('ceilingGrid').innerHTML = '';
+                return;
+            }
+
+            // Get standard-specific guidelines
+            const guidelines = getStandardGuidelines(standard);
+            document.getElementById('standardGuidelines').innerHTML = `
+                <strong>${guidelines.name}</strong><br>
+                • ${guidelines.spacing}<br>
+                • ${guidelines.uniformity}<br>
+                • ${guidelines.mounting}<br>
+                • ${guidelines.notes}
+            `;
+
+            // Calculate spacing based on selected standard
+            const mountingHeight = height - 0.5;
+            const { maxSpacing, uniformityRatio } = calculateSpacingByStandard(standard, mountingHeight, length, width);
+            const rcr = calculateRCR(length, width, height, mountingHeight);
+
+            // Calculate grid layout
+            const minRows = Math.ceil(width / maxSpacing);
+            const minCols = Math.ceil(length / maxSpacing);
+            
+            let rows = Math.max(minRows, Math.round(Math.sqrt(totalBulbs * (width / length))));
+            let cols = Math.max(minCols, Math.round(Math.sqrt(totalBulbs * (length / width))));
+
+            while (rows * cols < totalBulbs) {
+                if (length > width) cols++;
+                else rows++;
+            }
+
+            const spacingX = length / (cols + 1);
+            const spacingY = width / (rows + 1);
+
+            // Update info displays
+            document.getElementById('spacingInfo').innerHTML = `
+                X: ${spacingX.toFixed(2)}m (${(spacingX/mountingHeight).toFixed(2)} × mounting height)<br>
+                Y: ${spacingY.toFixed(2)}m (${(spacingY/mountingHeight).toFixed(2)} × mounting height)
+            `;
+            document.getElementById('gridInfo').textContent = `${rows} × ${cols} grid`;
+            document.getElementById('rcr-info').textContent = `Room Cavity Ratio: ${rcr.toFixed(2)}`;
+            document.getElementById('uniformity-info').textContent = 
+                `Uniformity Ratio: ${uniformityRatio.toFixed(2)} (Standard minimum: ${uniformityRatio})`;
+
+            // Generate visual grid
+            const grid = document.getElementById('ceilingGrid');
+            grid.innerHTML = '';
+
+            // Add grid background
+            const gridBg = document.createElement('div');
+            gridBg.className = 'grid-background';
+            grid.appendChild(gridBg);
+
+            // Add room outline
+            const outline = document.createElement('div');
+            outline.className = 'room-outline';
+            grid.appendChild(outline);
+
+            // Add wall labels
+            const walls = ['top', 'bottom', 'left', 'right'];
+            walls.forEach(position => {
+                const label = document.createElement('div');
+                label.className = `wall-label ${position}`;
+                label.textContent = position === 'left' || position === 'right' ? `${width}m` : `${length}m`;
+                grid.appendChild(label);
+            });
+
+            // Add bulb points with standard-specific styling
+            let bulbsPlaced = 0;
+            for (let row = 1; row <= rows && bulbsPlaced < totalBulbs; row++) {
+                for (let col = 1; col <= cols && bulbsPlaced < totalBulbs; col++) {
+                    const x = (col * spacingX / length) * 100;
+                    const y = (row * spacingY / width) * 100;
+                    
+                    const bulb = document.createElement('div');
+                    bulb.className = `bulb-point ${standard}`;
+                    bulb.style.left = x + '%';
+                    bulb.style.top = y + '%';
+                    bulb.title = `Position: ${spacingX.toFixed(2)}m, ${spacingY.toFixed(2)}m\nStandard: ${guidelines.name}`;
+                    
+                    grid.appendChild(bulb);
+                    bulbsPlaced++;
+                }
+            }
+
+            // Add measurements between bulbs
+            addGridMeasurements(grid, spacingX, spacingY, length, width, rows, cols);
+
+            // After adding bulb points and measurements
+            const bulbTypes = Array.from(document.querySelectorAll('.bulb-entry')).map(entry => ({
+                type: entry.querySelector('.bulb-type-select').value,
+                quantity: parseInt(entry.querySelector('.quantity-input').value) || 0
+            })).filter(bulb => bulb.type && bulb.quantity > 0);
+
+            // Add bulb type class to each bulb point
+            bulbsPlaced = 0;
+            for (let row = 1; row <= rows && bulbsPlaced < totalBulbs; row++) {
+                for (let col = 1; col <= cols && bulbsPlaced < totalBulbs; col++) {
+                    const x = (col * spacingX / length) * 100;
+                    const y = (row * spacingY / width) * 100;
+                    
+                    // Find which bulb type this point represents
+                    let currentBulb = null;
+                    let bulbCount = 0;
+                    for (const bulb of bulbTypes) {
+                        bulbCount += bulb.quantity;
+                        if (bulbsPlaced < bulbCount) {
+                            currentBulb = bulb;
+                            break;
+                        }
+                    }
+                    
+                    if (currentBulb) {
+                        const bulb = document.createElement('div');
+                        const bulbType = currentBulb.type.split('-')[0]; // Get 'led', 'fluorescent', or 'halogen'
+                        bulb.className = `bulb-point bulb-${bulbType}`;
+                        bulb.style.left = x + '%';
+                        bulb.style.top = y + '%';
+                        const lumens = getBulbLumens(currentBulb.type);
+                        bulb.title = `${bulbType.toUpperCase()} - ${lumens} lumens\nPosition: ${spacingX.toFixed(2)}m, ${spacingY.toFixed(2)}m`;
+                        
+                        grid.appendChild(bulb);
+                        bulbsPlaced++;
+                    }
+                }
+            }
+
+            // Create legend after placing bulbs
+            createBulbLegend(grid, bulbTypes);
+        }
+
+        function createBulbLegend(grid, bulbTypes) {
+            const legend = document.createElement('div');
+            legend.className = 'bulb-legend';
+            
+            // Create unique entries for each bulb type
+            const uniqueBulbs = [...new Set(bulbTypes.map(bulb => {
+                const type = bulb.type.split('-')[0]; // Get 'led', 'fluorescent', or 'halogen'
+                const lumens = getBulbLumens(bulb.type);
+                return { type, lumens, quantity: bulb.quantity };
+            }))];
+
+            uniqueBulbs.forEach(bulb => {
+                if (bulb.quantity > 0) {
+                    const item = document.createElement('div');
+                    item.className = 'legend-item';
+                    
+                    const bulbIcon = document.createElement('div');
+                    bulbIcon.className = `legend-bulb bulb-${bulb.type}`;
+                    
+                    const text = document.createElement('span');
+                    text.className = 'legend-text';
+                    text.textContent = `${bulb.type.charAt(0).toUpperCase() + bulb.type.slice(1)} (${bulb.lumens} lumens)`;
+                    
+                    item.appendChild(bulbIcon);
+                    item.appendChild(text);
+                    legend.appendChild(item);
+                }
+            });
+
+            grid.parentElement.insertBefore(legend, grid.nextSibling);
+        }
+
+        async function submitReport() {
+            const submitBtn = document.querySelector('.submit-report-btn');
+            const originalBtnContent = submitBtn.innerHTML;
+            
+            try {
+                if (!auth.currentUser) {
+                    alert('Please sign in to submit a report');
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+
+                // Get room dimensions and validate
+                const length = parseFloat(document.getElementById('roomLength').value);
+                const width = parseFloat(document.getElementById('roomWidth').value);
+                const height = parseFloat(document.getElementById('roomHeight').value);
+
+                if (!length || !width || !height) {
+                    throw new Error('Please enter valid room dimensions');
+                }
+
+                // Get standard and room type
+                const standard = document.getElementById('standard').value;
+                const roomTypeElement = document.getElementById(standard + 'RoomType');
+                const roomType = roomTypeElement ? roomTypeElement.value : '';
+
+                if (!standard || !roomType) {
+                    throw new Error('Please select a lighting standard and room type');
+                }
+
+                // Get required and actual lumens
+                const requiredLumens = parseInt(document.getElementById('requiredLumens').textContent.match(/(\d+)/)?.[1] || '0');
+                const totalLumensMatch = document.getElementById('totalLumensStatus')?.querySelector('div')?.textContent.match(/(\d+)/);
+                const actualLumens = parseInt(totalLumensMatch?.[1] || '0');
+
+                // Get uniformity ratio
+                const uniformityText = document.getElementById('uniformity-info')?.textContent || '';
+                const uniformityMatch = uniformityText.match(/(\d+\.\d+)/);
+                const uniformityRatio = parseFloat(uniformityMatch?.[1] || '0');
+
+                // Get bulb data
+                const bulbs = getBulbData();
+                if (!bulbs.length) {
+                    throw new Error('Please add at least one bulb type with quantity');
+                }
+
+                const reportId = `light-report-${Date.now()}`;
+                const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+                const reportData = {
+                    id: reportId,
+                    name: document.getElementById('reportName').value || 'Untitled Report',
+                    roomDetails: { length, width, height },
+                    standard,
+                    roomType,
+                    bulbs,
+                    requiredLumens,
+                    actualLumens,
+                    uniformityRatio,
+                    status: 'pending',
+                    createdBy: auth.currentUser.email,
+                    userId: auth.currentUser.uid,
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toLocaleTimeString(),
+                    timestamp
+                };
+
+                // Save to multiple locations in parallel
+                await Promise.all([
+                    // 1. Save to Firestore collection
+                    db.collection('lightingReports').doc(reportId).set(reportData),
+
+                    // 2. Save to user's Realtime Database path
+                    rtdb.ref(`users/${auth.currentUser.uid}/reports/lighting/${reportId}`).set({
+                        id: reportId,
+                        date: reportData.date,
+                        time: reportData.time,
+                        standard: reportData.standard,
+                        roomType: reportData.roomType,
+                        requiredLumens: reportData.requiredLumens,
+                        status: reportData.status,
+                        timestamp: Date.now()
+                    }),
+
+                    // 3. Save to global Realtime Database path
+                    rtdb.ref(`lighting-reports/${reportId}`).set({
+                        ...reportData,
+                        timestamp: Date.now()
+                    }),
+
+                    // 4. Save to global archive path (organized by year/month)
+                    rtdb.ref(`archive/lighting-reports/${new Date().getFullYear()}/${new Date().getMonth() + 1}/${reportId}`).set({
+                        ...reportData,
+                        timestamp: Date.now()
+                    }),
+
+                    // 5. Save to organization's reports (if org ID exists)
+                    auth.currentUser.orgId ? 
+                        rtdb.ref(`organizations/${auth.currentUser.orgId}/lighting-reports/${reportId}`).set({
+                            ...reportData,
+                            timestamp: Date.now()
+                        }) : Promise.resolve()
+                ]);
+
+                alert('Report submitted successfully!');
+                window.location.href = 'lightboard.html';
+
+            } catch (error) {
+                console.error('Error submitting report:', error);
+                alert('Error submitting report: ' + error.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnContent;
+            }
+        }
+
+        function getBulbData() {
+            const bulbsContainer = document.getElementById('bulbEntriesContainer');
+            const bulbs = [];
+            
+            if (bulbsContainer) {
+                bulbsContainer.querySelectorAll('.bulb-entry').forEach(entry => {
+                    const select = entry.querySelector('.bulb-type-select');
+                    const quantityInput = entry.querySelector('.quantity-input');
+                    
+                    if (select && select.value && quantityInput && quantityInput.value) {
+                        const type = select.value;
+                        const quantity = parseInt(quantityInput.value);
+                        const lumens = getBulbLumens(type);
+                        
+                        if (type && quantity && lumens) {
+                            bulbs.push({ type, quantity, lumens });
+                        }
+                    }
+                });
+            }
+            
+            return bulbs;
+        }
+
+        async function saveCalculation() {
+            try {
+                if (!auth.currentUser) {
+                    alert('Please sign in to save calculations');
+                    return;
+                }
+
+                const name = prompt('Enter a name for this calculation:');
+                if (!name) return;
+
+                const calcData = {
+                    name,
+                    timestamp: Date.now(),
+                    roomDetails: {
+                        length: parseFloat(document.getElementById('roomLength').value) || 0,
+                        width: parseFloat(document.getElementById('roomWidth').value) || 0,
+                        height: parseFloat(document.getElementById('roomHeight').value) || 0
+                    },
+                    standard: document.getElementById('standard').value,
+                    roomType: document.getElementById(`${document.getElementById('standard').value}RoomType`)?.value,
+                    bulbs: getBulbData(),
+                    requiredLumens: parseInt(document.getElementById('requiredLumens').textContent) || 0,
+                    placementStandard: document.getElementById('placementStandard').value,
+                    userId: auth.currentUser.uid,
+                    createdBy: auth.currentUser.email,
+                    createdAt: Date.now(),
+                    status: 'draft'
+                };
+
+                const calcId = `light-calc-${Date.now()}`;
+
+                // Save to multiple locations in parallel
+                await Promise.all([
+                    // Save to user's saved calculations
+                    rtdb.ref(`users/${auth.currentUser.uid}/saved-calculations/lighting/${calcId}`).set(calcData),
+
+                    // Save to global lighting reports
+                    rtdb.ref(`lighting-reports/${calcId}`).set({
+                        ...calcData,
+                        id: calcId // Include report ID in global storage
+                    })
+                ]);
+
+                alert('Calculation saved successfully!');
+            } catch (error) {
+                console.error('Error saving calculation:', error);
+                alert('Error saving calculation: ' + error.message);
+            }
+        }
+
+        async function showLoadDialog() {
+            if (!auth.currentUser) {
+                alert('Please sign in to load calculations');
+                return;
+            }
+
+            const dialog = document.getElementById('loadDialog');
+            const listContainer = document.getElementById('savedCalcsList');
+            listContainer.innerHTML = '<div>Loading...</div>';
+            dialog.classList.remove('hidden');
+
+            try {
+                const snapshot = await rtdb.ref(`users/${auth.currentUser.uid}/saved-calculations/lighting`).once('value');
+                const calculations = snapshot.val() || {};
+                
+                listContainer.innerHTML = Object.entries(calculations)
+                    .sort(([,a], [,b]) => b.timestamp - a.timestamp)
+                    .map(([key, calc]) => `
+                        <div class="saved-calc-item">
+                            <span>${calc.name} (${new Date(calc.timestamp).toLocaleDateString()})</span>
+                            <div>
+                                <button onclick="loadCalculation('${key}')">Load</button>
+                                <button onclick="deleteCalculation('${key}')" class="delete-btn">Delete</button>
+                            </div>
+                        </div>
+                    `).join('') || '<div>No saved calculations found</div>';
+            } catch (error) {
+                console.error('Error loading calculations:', error);
+                listContainer.innerHTML = 'Error loading calculations';
+            }
+        }
+
+        function closeLoadDialog() {
+            document.getElementById('loadDialog').classList.add('hidden');
+        }
+
+        async function loadCalculation(key) {
+            try {
+                const snapshot = await rtdb.ref(`users/${auth.currentUser.uid}/saved-calculations/lighting/${key}`).once('value');
+                const data = snapshot.val();
+                if (!data) throw new Error('Calculation not found');
+
+                // Load room details
+                document.getElementById('roomLength').value = data.roomDetails.length;
+                document.getElementById('roomWidth').value = data.roomDetails.width;
+                document.getElementById('roomHeight').value = data.roomDetails.height;
+                
+                // Load standard and room type
+                document.getElementById('standard').value = data.standard;
+                updateRoomTypes();
+                document.getElementById(`${data.standard}RoomType`).value = data.roomType;
+                
+                // Load bulbs
+                const container = document.getElementById('bulbEntriesContainer');
+                container.innerHTML = '';
+                data.bulbs.forEach(bulb => {
+                    const entry = createBulbEntry();
+                    container.appendChild(entry);
+                    entry.querySelector('.bulb-type-select').value = bulb.type;
+                    entry.querySelector('.quantity-input').value = bulb.quantity;
+                });
+                
+                // Load placement standard
+                document.getElementById('placementStandard').value = data.placementStandard;
+                
+                // Recalculate everything
+                calculateArea();
+                calculateAllBulbs();
+                calculateBulbPlacement();
+                
+                closeLoadDialog();
+                alert('Calculation loaded successfully!');
+            } catch (error) {
+                console.error('Error loading calculation:', error);
+                alert('Error loading calculation: ' + error.message);
+            }
+        }
+
+        async function deleteCalculation(key) {
+            if (confirm('Are you sure you want to delete this calculation?')) {
+                try {
+                    await rtdb.ref(`users/${auth.currentUser.uid}/saved-calculations/lighting/${key}`).remove();
+                    showLoadDialog(); // Refresh the list
+                } catch (error) {
+                    console.error('Error deleting calculation:', error);
+                    alert('Error deleting calculation: ' + error.message);
+                }
+            }
+        }
+
+        // Add initial bulb entry when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            addBulbEntry();
+            calculateBulbPlacement();
+        });
+
+        // Add event listeners for room type changes
+        document.querySelectorAll('select[id$="RoomType"]').forEach(select => {
+            select.addEventListener('change', calculateRequiredLumens);
+        });
+    </script>
+</body>
+</html>
